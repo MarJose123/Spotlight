@@ -1,0 +1,105 @@
+name: "Spotlight"
+services:
+  spotlight-api:
+    container_name: spotlight-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    working_dir: /usr/src/spotlight
+    command: >
+      sh -c "bun install --cwd api &&
+             bun run --cwd api start:dev"
+    volumes:
+      - ./api:/usr/src/spotlight/api
+      - api-node-modules:/usr/src/spotlight/api/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - path: ./api/.env
+        required: true
+    environment:
+      DB_CONNECTION: postgres
+      DB_HOST: spotlight-db
+      DB_PORT: "5432"
+      DB_DATABASE: spotlight
+      DB_USERNAME: spotlight
+      DB_PASSWORD: spotlight
+    ports:
+      - "${API_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/api/v1/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    depends_on:
+      spotlight-db:
+        condition: service_healthy
+    networks:
+      - spotlight
+
+  spotlight-web:
+    container_name: spotlight-web
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    working_dir: /usr/src/spotlight
+    command: >
+      sh -c "bun install --cwd web &&
+             bun run --cwd web dev"
+    volumes:
+      - ./web:/usr/src/spotlight/web
+      - web-node-modules:/usr/src/spotlight/web/node_modules
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    healthcheck:
+      test: [ "CMD", "bun", "-e", "fetch('http://localhost:5173').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      spotlight-db:
+        condition: service_healthy
+      spotlight-api:
+        condition: service_healthy
+    networks:
+      - spotlight
+
+
+  spotlight-db:
+    container_name: spotlight-db
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spotlight
+      POSTGRES_PASSWORD: spotlight
+      POSTGRES_DB: spotlight
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # Check for the actual database, not just a server accepting connections.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - spotlight-db-data:/var/lib/postgresql/data
+    networks:
+      - spotlight
+
+
+networks:
+  spotlight:
+    name: spotlight
+
+volumes:
+  spotlight-db-data:
+    driver: local
+  api-node-modules:
+    driver: local
+  web-node-modules:
+    driver: local

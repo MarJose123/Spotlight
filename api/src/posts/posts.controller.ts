@@ -88,6 +88,14 @@ export class PostsController {
     return await this.postsService.likePost(dto);
   }
 
+  @ApiOperation({
+    summary: 'Like post by id',
+    description: 'Like post by id',
+  })
+  @ApiOkResponse({
+    description: 'success',
+    type: Posts,
+  })
   @Post('/:id/like')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
