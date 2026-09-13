@@ -31,3 +31,6 @@ script/
 *.md
 **/**/*.md
 **/*.md
+collections
+script
+LICENSE
