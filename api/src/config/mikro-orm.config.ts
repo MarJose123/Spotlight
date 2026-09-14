@@ -1,12 +1,12 @@
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
-import { SqliteDriver } from '@mikro-orm/sqlite';
 import type { Options } from '@mikro-orm/core';
 import { closeSync, existsSync, mkdirSync, openSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { DatabaseConfig } from './database.config';
 import { SeedManager } from '@mikro-orm/seeder';
 import { Migrator } from '@mikro-orm/migrations';
+import { MySqlDriver } from '@mikro-orm/mysql';
 
 function isDevelopment(): boolean {
   return (process.env.NODE_ENV ?? 'development') === 'development';
@@ -53,10 +53,10 @@ export function buildMikroOrmOptions(db: DatabaseConfig): Partial<Options> {
     },
   };
 
-  if (db.connection === 'postgres') {
+  if (db.connection === 'mariadb' || db.connection === 'mysql') {
     return {
       ...common,
-      driver: PostgreSqlDriver,
+      driver: MySqlDriver,
       dbName: db.database,
       host: db.host,
       port: db.port,
@@ -65,11 +65,13 @@ export function buildMikroOrmOptions(db: DatabaseConfig): Partial<Options> {
     };
   }
 
-  // SQLite is the default driver.
-  ensureSqliteDatabaseFile(db.database);
   return {
     ...common,
-    driver: SqliteDriver,
+    driver: PostgreSqlDriver,
     dbName: db.database,
+    host: db.host,
+    port: db.port,
+    user: db.username,
+    password: db.password,
   };
 }

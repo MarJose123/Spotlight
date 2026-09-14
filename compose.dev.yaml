@@ -1,7 +1,8 @@
-name: "Spotlight"
+name: ""
 services:
   spotlight-api:
     container_name: spotlight-api
+    image: spotlight-api:latest
     restart: unless-stopped
     build:
       context: .
@@ -21,7 +22,7 @@ services:
     environment:
       DB_CONNECTION: postgres
       DB_HOST: spotlight-db
-      DB_PORT: "5432"
+      DB_PORT: 5432
       DB_DATABASE: spotlight
       DB_USERNAME: spotlight
       DB_PASSWORD: spotlight
@@ -41,6 +42,7 @@ services:
 
   spotlight-web:
     container_name: spotlight-web
+    image: spotlight-web:latest
     restart: unless-stopped
     build:
       context: .
@@ -52,6 +54,8 @@ services:
     volumes:
       - ./web:/usr/src/spotlight/web
       - web-node-modules:/usr/src/spotlight/web/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${WEB_PORT:-5173}:5173"
     healthcheck:

@@ -1,9 +1,9 @@
 import { registerAs } from '@nestjs/config';
 
-export type DatabaseConnection = 'sqlite' | 'postgres';
+export type DatabaseConnection = 'mysql' | 'mariadb' | 'postgres';
 
 export interface DatabaseConfig {
-  /** Database driver to use: `sqlite` (default) or `postgres`. */
+  /** Database driver to use: `mysql`, `mariadb` or `postgres` (default) . */
   connection: DatabaseConnection;
   /**
    * SQLite: path to the database file (relative to the project root).
@@ -16,23 +16,13 @@ export interface DatabaseConfig {
   password?: string;
 }
 
-/** Values of `DB_CONNECTION` that select the PostgreSQL driver. */
-const POSTGRES_CONNECTIONS = new Set(['postgres', 'postgresql', 'pg']);
-
 export default registerAs('database', (): DatabaseConfig => {
-  const connection: DatabaseConnection = POSTGRES_CONNECTIONS.has(
-    (process.env.DB_CONNECTION ?? 'sqlite').toLowerCase(),
-  )
-    ? 'postgres'
-    : 'sqlite';
 
   return {
-    connection,
-    database:
-      process.env.DB_DATABASE ??
-      (connection === 'postgres' ? 'spotlight' : './src/database/spotlight.db'),
+    connection: (process.env.DB_CONNECTION ?? 'postgres') as DatabaseConnection,
+    database: process.env.DB_DATABASE ?? 'postgres',
     host: process.env.DB_HOST ?? '127.0.0.1',
-    port: Number(process.env.DB_PORT) || (connection === 'postgres' ? 5432 : 0),
+    port: Number(process.env.DB_PORT ?? 5432),
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
   };
