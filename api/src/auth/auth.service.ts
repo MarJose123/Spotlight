@@ -62,6 +62,8 @@ export class AuthService {
       throw new UnauthorizedException({ message: 'Invalid refresh token' });
     if (storedToken.expiresAt.getTime() < Date.now())
       throw new UnauthorizedException({ message: 'Refresh token expired' });
+    if(storedToken.revokedAt)
+      throw new UnauthorizedException({ message: 'Refresh token revoked' })
 
     const user = await this.em.findOne(User, { id: storedToken.userId });
     if (!user)
