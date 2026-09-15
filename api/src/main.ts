@@ -107,6 +107,6 @@ async function bootstrap() {
   // Bind to all interfaces so the containerised dev stack (compose.dev.yaml)
   // is reachable through its published ports; Fastify would otherwise default
   // to `localhost` and only accept connections from inside the container.
-  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+  await app.listen(Number(process.env.PORT ?? 3000), '0.0.0.0');
 }
 void bootstrap();
