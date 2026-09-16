@@ -12,13 +12,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
-import { PaginationQueryDto } from '../common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '../common/dto/pagination/pagination-response.dto';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { User } from '@/users/entities/user.entity';
+import { UsersService } from '@/users/users.service';
+import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
+import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
+import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,

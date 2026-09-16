@@ -1,8 +1,8 @@
 import { Enum } from '@mikro-orm/decorators/legacy';
 import { IsNotEmpty } from 'class-validator';
-import { AttachmentType } from '../enums/attachment-type.enum';
-import { PostType } from '../enums/post-type.enum';
-import { User } from '../../users/entities/user.entity';
+import { AttachmentType } from '@/posts/enums/attachment-type.enum';
+import { PostType } from '@/posts/enums/post-type.enum';
+import { User } from '@/users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePostDto {

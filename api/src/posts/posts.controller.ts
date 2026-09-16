@@ -10,14 +10,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { PaginationQueryDto } from '../common/dto/pagination/pagination-query.dto';
-import { PostsService } from './posts.service';
-import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
-import { CreatePostDto } from './dto/create-post.dto';
+import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
+import { PostsService } from '@/posts/posts.service';
+import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
+import { CreatePostDto } from '@/posts/dto/create-post.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
-import { Posts } from './entities/posts.entity';
-import { PaginationResponseDto } from '../common/dto/pagination/pagination-response.dto';
-import { LikePostDto } from './dto/like-post.dto';
+import { Posts } from '@/posts/entities/posts.entity';
+import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
+import { LikePostDto } from '@/posts/dto/like-post.dto';
 import { minutes, seconds, Throttle } from '@nestjs/throttler';
 
 @ApiBearerAuth()

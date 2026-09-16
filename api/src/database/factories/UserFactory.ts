@@ -1,5 +1,5 @@
 import { Factory } from '@mikro-orm/seeder';
-import { User } from '../../users/entities/user.entity';
+import { User } from '@/users/entities/user.entity';
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 

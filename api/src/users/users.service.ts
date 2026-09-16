@@ -1,10 +1,10 @@
 import { EntityManager, wrap } from '@mikro-orm/core';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { PaginationQueryDto } from '../common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '../common/dto/pagination/pagination-response.dto';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { User } from '@/users/entities/user.entity';
+import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
+import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import bcrypt from 'bcrypt';
 
 @Injectable()

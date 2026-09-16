@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/entities/user.entity';
-import { JwtPayloadInterface } from './interface/jwt-payload.interface';
+import { User } from '@/users/entities/user.entity';
+import { JwtPayloadInterface } from '@/auth/interface/jwt-payload.interface';
 import { createHash, randomBytes } from 'node:crypto';
 
 @Injectable()

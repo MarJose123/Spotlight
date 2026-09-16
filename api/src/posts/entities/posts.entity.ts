@@ -8,11 +8,11 @@ import {
   OneToMany,
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
-import { AttachmentType } from '../enums/attachment-type.enum';
+import { AttachmentType } from '@/posts/enums/attachment-type.enum';
 import { IsNotEmpty } from 'class-validator';
-import { PostType } from '../enums/post-type.enum';
-import { User } from '../../users/entities/user.entity';
-import { Likes } from './likes.entity';
+import { PostType } from '@/posts/enums/post-type.enum';
+import { User } from '@/users/entities/user.entity';
+import { Likes } from '@/posts/entities/likes.entity';
 import { Collection, type Rel } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 

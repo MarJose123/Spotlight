@@ -8,11 +8,11 @@ import {
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import { IsOptional } from 'class-validator';
-import { UserStatus } from '../enums/status.enum';
+import { UserStatus } from '@/users/enums/status.enum';
 import { Exclude } from 'class-transformer';
 import { Collection } from '@mikro-orm/core';
-import { Posts } from '../../posts/entities/posts.entity';
-import { Likes } from '../../posts/entities/likes.entity';
+import { Posts } from '@/posts/entities/posts.entity';
+import { Likes } from '@/posts/entities/likes.entity';
 
 @Entity()
 export class User {
@@ -37,7 +37,8 @@ export class User {
 
   @Property({ hidden: true })
   @Exclude()
-  password!: string;
+  @IsOptional()
+  password: string | undefined;
 
   @Property()
   @Enum({ items: () => UserStatus, default: UserStatus.ACTIVE })

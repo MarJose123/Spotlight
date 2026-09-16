@@ -18,6 +18,8 @@
     "typescript/no-floating-promises": "warn",
     "typescript/no-unsafe-argument": "warn",
 
+    "import/no-relative-parent-imports": "error",
+
     "eslint/no-unused-vars": [
       "warn",
       {

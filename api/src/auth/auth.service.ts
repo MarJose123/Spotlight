@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from '../users/entities/user.entity';
+import { User } from '@/users/entities/user.entity';
 import bcrypt from 'bcrypt';
 import { CredentialDto } from './dto/credential.dto';
 import { JwtTokenDto } from './dto/jwt-token.dto';
@@ -29,7 +29,7 @@ export class AuthService {
    */
   async authenticate(cred: CredentialDto): Promise<JwtTokenDto> {
     const user = await this.em.findOne(User, { email: cred.email });
-    if (!user || !(await bcrypt.compare(cred.password, user.password))) {
+    if (!user || !( user.password && await bcrypt.compare(cred.password, user.password))) {
       throw new UnauthorizedException({
         message: 'These credentials do not match our records.',
       });

@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
-import { PaginationQueryDto } from '../common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '../common/dto/pagination/pagination-response.dto';
+import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
+import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import { Posts } from './entities/posts.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { LikePostDto } from './dto/like-post.dto';
 import { Likes } from './entities/likes.entity';
-import { PostLikeResponseDto } from '../common/dto/post-like-response.dto';
+import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
 
 @Injectable()
 export class PostsService {
