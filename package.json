@@ -2,7 +2,7 @@
   "name": "spotlight",
   "version": "1.0.0",
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^22.20.3",
     "tsx": "^4.23.13"
   },
   "description": "Spotlight is an internal recognition tool that helps teams celebrate and appreciate their coworkers. Employees can easily post commendations, give shout-outs, and recognize great work, helping foster a positive culture of appreciation and making achievements visible across the organization.",

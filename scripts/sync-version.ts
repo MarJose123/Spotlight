@@ -7,10 +7,10 @@ interface PackageJson {
   [key: string]: unknown;
 }
 
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(path.dirname(), "..");
 const rootPackagePath = path.join(root, "package.json");
 
-const apps = ["apps", "web"];
+const apps = ["api", "web"];
 
 const rootPackage: PackageJson = JSON.parse(
   fs.readFileSync(rootPackagePath, "utf8"),
