@@ -3,7 +3,7 @@
 
   "ignorePatterns": ["eslint.config.mjs", "dist/**"],
 
-  "plugins": ["typescript", "import"],
+  "plugins": ["typescript", "import", "eslint", "typescript", "unicorn", "oxc"],
 
   "options": {
     "typeAware": true
