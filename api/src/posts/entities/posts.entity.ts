@@ -33,8 +33,8 @@ export class Posts {
   @IsNotEmpty()
   attachmentType!: AttachmentType;
 
-  @ApiProperty({ type: 'string', format: 'uri' })
-  @Property({ type: 'string' })
+  @ApiProperty({ type: 'array', items: { type: 'string' } })
+  @Property({ type: 'string', array: true })
   @IsNotEmpty()
   attachment!: string;
 
