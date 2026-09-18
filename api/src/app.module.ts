@@ -12,6 +12,8 @@ import { PostsModule } from './posts/posts.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { minutes, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { BucketModule } from './bucket/bucket.module';
+import bucketConfig from '@/config/bucket.config';
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, AppConfig],
+      load: [databaseConfig, AppConfig, bucketConfig],
     }),
     MikroOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -38,6 +40,7 @@ import { APP_GUARD } from '@nestjs/core';
     AuthModule,
     HealthModule,
     PostsModule,
+    BucketModule,
   ],
   controllers: [AppController],
   providers: [

@@ -29,7 +29,10 @@ export class AuthService {
    */
   async authenticate(cred: CredentialDto): Promise<JwtTokenDto> {
     const user = await this.em.findOne(User, { email: cred.email });
-    if (!user || !( user.password && await bcrypt.compare(cred.password, user.password))) {
+    if (
+      !user ||
+      !(user.password && (await bcrypt.compare(cred.password, user.password)))
+    ) {
       throw new UnauthorizedException({
         message: 'These credentials do not match our records.',
       });
@@ -62,8 +65,8 @@ export class AuthService {
       throw new UnauthorizedException({ message: 'Invalid refresh token' });
     if (storedToken.expiresAt.getTime() < Date.now())
       throw new UnauthorizedException({ message: 'Refresh token expired' });
-    if(storedToken.revokedAt)
-      throw new UnauthorizedException({ message: 'Refresh token revoked' })
+    if (storedToken.revokedAt)
+      throw new UnauthorizedException({ message: 'Refresh token revoked' });
 
     const user = await this.em.findOne(User, { id: storedToken.userId });
     if (!user)

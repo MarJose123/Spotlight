@@ -17,7 +17,6 @@ export interface DatabaseConfig {
 }
 
 export default registerAs('database', (): DatabaseConfig => {
-
   return {
     connection: (process.env.DB_CONNECTION ?? 'postgres') as DatabaseConnection,
     database: process.env.DB_DATABASE ?? 'postgres',
