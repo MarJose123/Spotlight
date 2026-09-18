@@ -6,9 +6,11 @@
     "tsx": "^4.23.13"
   },
   "description": "Spotlight is an internal recognition tool that helps teams celebrate and appreciate their coworkers. Employees can easily post commendations, give shout-outs, and recognize great work, helping foster a positive culture of appreciation and making achievements visible across the organization.",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "private": true,
   "scripts": {
+    "license:audit": "node scripts/audit-licenses.mjs",
+    "license:notices": "node scripts/audit-licenses.mjs --write",
     "version:sync": "tsx ./script/sync-version.ts"
   }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="SPDX-FileCopyrightText: 2026 Marjose Darang&#10;SPDX-License-Identifier: AGPL-3.0&#10;&#10;Part of Spotlight. Licensed under the GNU Affero General Public License,&#10;version 3 only. See the LICENSE file at the repository root for the full terms." />
+    <option name="keyword" value="SPDX-FileCopyrightText|Copyright" />
+    <option name="allowReplaceKeyword" value="" />
+    <option name="myName" value="AGPL-3.0" />
+  </copyright>
+</component>

@@ -196,3 +196,21 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
 
 For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+
+
+# License
+
+Copyright (C) 2026 Marjose Darang
+
+Spotlight Web is free software licensed under the **GNU Affero General Public
+License, version 3 only** (SPDX: `AGPL-3.0`). You may redistribute and/or
+modify it under the terms of that license. See [LICENSE](./LICENSE) for the full
+text.
+
+This program is distributed in the hope that it will be useful, but **without any
+warranty**; without even the implied warranty of merchantability or fitness for a
+particular purpose.
+
+Spotlight Web is served to users over a network, so AGPL Section 13 applies: the
+footer includes a **Source** link offering users the Corresponding Source of the
+running version. Keep that link pointed at the code that is actually deployed.

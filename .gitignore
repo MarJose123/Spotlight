@@ -1,3 +1,7 @@
-.idea
+# Ignore the IDE's local state, but keep the shared copyright profile in VCS.
+# Note: the parent .idea directory must not itself be excluded, otherwise the
+# negation below cannot take effect.
+.idea/*
+!.idea/copyright/
 .reasonix
 /node_modules

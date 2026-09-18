@@ -93,6 +93,24 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
+## NestJS
+
+This project is built with [Nest](https://github.com/nestjs/nest), which is
+[MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Copyright (C) 2026 Marjose Darang
+
+Spotlight API is free software licensed under the **GNU Affero General Public
+License, version 3 only** (SPDX: `AGPL-3.0`). You may redistribute and/or
+modify it under the terms of that license. See [LICENSE](./LICENSE) for the full
+text.
+
+This program is distributed in the hope that it will be useful, but **without any
+warranty**; without even the implied warranty of merchantability or fitness for a
+particular purpose.
+
+Because this API is reachable over a network, AGPL Section 13 applies: if you run
+a modified version and let users interact with it remotely, you must prominently
+offer those users the Corresponding Source of your modified version.
