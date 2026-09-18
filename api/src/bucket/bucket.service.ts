@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -30,6 +31,21 @@ export class BucketService {
     });
 
     this.bucket = configService.getOrThrow<string>('bucket.bucketName');
+  }
+
+  async getTemporaryUrl(key: string): Promise<string> {
+    const params = {
+      Bucket: this.bucket,
+      Key: key,
+    };
+
+    const command = new GetObjectCommand(params);
+
+    return getSignedUrl(this.s3Client, command, {
+      expiresIn: Number(
+        this.configService.getOrThrow<number>('bucket.expiration'),
+      ),
+    });
   }
 
   async deleteFile(key: string): Promise<void> {
