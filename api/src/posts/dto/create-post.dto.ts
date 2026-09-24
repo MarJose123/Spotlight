@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Enum } from '@mikro-orm/decorators/legacy';
-import { IsNotEmpty } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString, } from 'class-validator';
 import { AttachmentType } from '@/posts/enums/attachment-type.enum';
 import { PostType } from '@/posts/enums/post-type.enum';
 import { User } from '@/users/entities/user.entity';
@@ -27,9 +27,15 @@ export class CreatePostDto {
   @IsNotEmpty()
   attachmentType!: AttachmentType;
 
-  @ApiProperty({ type: 'string', format: 'uri', required: true })
-  @IsNotEmpty()
-  attachment!: string;
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string', format: 'uri' },
+    required: true,
+  })
+  @ArrayNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  attachment!: string[];
 
   @ApiProperty({
     type: 'string',
