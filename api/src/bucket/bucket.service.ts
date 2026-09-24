@@ -18,6 +18,7 @@ export class BucketService {
 
   constructor(private readonly configService: ConfigService) {
     this.s3Client = new S3Client({
+      endpoint: configService.getOrThrow<string>('bucket.endpoint'),
       region: configService.getOrThrow<string>('bucket.region'),
       credentials: {
         accessKeyId: configService.getOrThrow<string>('bucket.accessKeyId'),
@@ -31,6 +32,7 @@ export class BucketService {
         connectionTimeout: 5000,
         socketTimeout: 5000,
       },
+      forcePathStyle: true,
     });
 
     this.bucket = configService.getOrThrow<string>('bucket.bucketName');
