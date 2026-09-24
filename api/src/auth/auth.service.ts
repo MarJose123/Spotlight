@@ -8,22 +8,27 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from '@/users/entities/user.entity';
 import bcrypt from 'bcrypt';
-import { CredentialDto } from './dto/credential.dto';
-import { JwtTokenDto } from './dto/jwt-token.dto';
-import { EntityManager } from '@mikro-orm/core';
-import { TokenService } from './token.service';
-import { RefreshToken } from './entities/refresh-token.entity';
+import { CredentialDto } from '@/auth/dto/credential.dto';
+import { JwtTokenDto } from '@/auth/dto/jwt-token.dto';
+import { EntityManager, EntityRepository } from '@mikro-orm/core';
+import { TokenService } from '@/auth/token.service';
+import { RefreshToken } from '@/auth/entities/refresh-token.entity';
+import { InjectRepository } from '@mikro-orm/nestjs';
 
 @Injectable()
 export class AuthService {
   constructor(
     private tokenService: TokenService,
+    @InjectRepository(User)
+    private readonly userRepository: EntityRepository<User>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: EntityRepository<RefreshToken>,
     private readonly em: EntityManager,
   ) {}
 
   /** Validates the user email and returns true if it exists. */
   async validateUserEmail(email: string): Promise<User | null> {
-    const user = await this.em.findOne(User, { email });
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       return null;
     }
@@ -35,7 +40,7 @@ export class AuthService {
    * Logs in a user by email and password.
    */
   async authenticate(cred: CredentialDto): Promise<JwtTokenDto> {
-    const user = await this.em.findOne(User, { email: cred.email });
+    const user = await this.userRepository.findOne({ email: cred.email });
     if (
       !user ||
       !(user.password && (await bcrypt.compare(cred.password, user.password)))
@@ -56,7 +61,7 @@ export class AuthService {
       expiresAt: this.getRefreshTokenExpiration(),
     });
 
-    this.em.persist(refreshTokenModel);
+    this.refreshTokenRepository.create(refreshTokenModel);
     await this.em.flush();
 
     return new JwtTokenDto(user, token, refreshToken, 300);
@@ -67,7 +72,7 @@ export class AuthService {
    */
   async refresh(token: string) {
     const tokenHash = this.tokenService.hashRefreshToken(token);
-    const storedToken = await this.em.findOne(RefreshToken, { tokenHash });
+    const storedToken = await this.refreshTokenRepository.findOne( { tokenHash });
     if (!storedToken)
       throw new UnauthorizedException({ message: 'Invalid refresh token' });
     if (storedToken.expiresAt.getTime() < Date.now())
@@ -75,7 +80,7 @@ export class AuthService {
     if (storedToken.revokedAt)
       throw new UnauthorizedException({ message: 'Refresh token revoked' });
 
-    const user = await this.em.findOne(User, { id: storedToken.userId });
+    const user = await this.userRepository.findOne({ id: storedToken.userId });
     if (!user)
       throw new UnauthorizedException({
         message: 'Invalid authenticated user',
@@ -91,7 +96,7 @@ export class AuthService {
    */
   async logout(refreshToken: string) {
     const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
-    const storedToken = await this.em.findOne(RefreshToken, { tokenHash });
+    const storedToken = await this.refreshTokenRepository.findOne({ tokenHash });
     if (!storedToken) return;
 
     storedToken.revokedAt = new Date();

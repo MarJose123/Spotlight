@@ -14,6 +14,9 @@ import { createSecretKey } from 'node:crypto';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenService } from './token.service';
 import { TokenCron } from './cron/token.cron';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { User } from '@/users/entities/user.entity';
+import { RefreshToken } from '@/auth/entities/refresh-token.entity';
 
 @Module({
   imports: [
@@ -29,8 +32,9 @@ import { TokenCron } from './cron/token.cron';
         signOptions: { expiresIn: '5m' },
       }),
     }),
+    MikroOrmModule.forFeature([User, RefreshToken]),
   ],
   providers: [AuthService, JwtStrategy, TokenService, TokenCron],
-  exports: [AuthService, PassportModule],
+  exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule {}
