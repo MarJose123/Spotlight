@@ -5,15 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import {
-  Entity,
-  Enum,
-  Index,
-  PrimaryKey,
-  Property,
-  ManyToOne,
-  OneToMany,
-} from '@mikro-orm/decorators/legacy';
+import { Entity, Enum, Index, ManyToOne, OneToMany, PrimaryKey, Property, } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import { AttachmentType } from '@/posts/enums/attachment-type.enum';
 import { IsNotEmpty } from 'class-validator';
@@ -23,7 +15,7 @@ import { Likes } from '@/posts/entities/likes.entity';
 import { Collection, type Rel } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity()
+@Entity({ tableName: 'posts' })
 export class Posts {
   @ApiProperty({ type: 'string', format: 'uuid' })
   @PrimaryKey({ type: 'uuid' })
@@ -43,7 +35,7 @@ export class Posts {
   @ApiProperty({ type: 'array', items: { type: 'string' } })
   @Property({ type: 'string', array: true })
   @IsNotEmpty()
-  attachment!: string;
+  attachment!: string[];
 
   @ApiProperty({
     type: 'string',

@@ -15,7 +15,7 @@ import { Posts } from '@/posts/entities/posts.entity';
 import { Likes } from '@/posts/entities/likes.entity';
 import { UserRole } from '@/users/enums/role.enum';
 
-@Entity()
+@Entity({ tableName: 'users' })
 export class User {
   @Index()
   @PrimaryKey({ type: 'uuid' })
