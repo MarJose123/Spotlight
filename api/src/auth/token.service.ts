@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/users/entities/user.entity';
-import { JwtPayloadInterface } from '@/auth/interface/jwt-payload.interface';
+import { PayloadInterface } from '@/auth/interface/payload.interface';
 import { createHash, randomBytes } from 'node:crypto';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class TokenService {
   constructor(private readonly jwtService: JwtService) {}
 
   createAccessToken(user: User): string {
-    const payload: JwtPayloadInterface = {
+    const payload: PayloadInterface = {
       email: user.email,
       sub: user.id,
     };

@@ -5,7 +5,13 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-export interface JwtPayloadInterface {
+import { FastifyRequest } from 'fastify';
+
+export interface PayloadInterface {
   email: string;
   sub: string;
+}
+
+export interface AuthenticatedRequest extends FastifyRequest {
+  user: object | undefined; // or your JWT payload type
 }

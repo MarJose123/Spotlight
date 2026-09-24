@@ -23,7 +23,7 @@ import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
 import { User } from '@/users/entities/user.entity';
 import { UsersService } from '@/users/users.service';
-import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
+import { Auth } from '@/auth/guard/auth.guard';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import {
@@ -40,6 +40,7 @@ import {
   version: '1',
 })
 @ApiBearerAuth()
+@UseGuards(Auth)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -52,7 +53,6 @@ export class UsersController {
     description: 'Get all the users',
   })
   @Get()
-  @UseGuards(JwtAuthGuard)
   findAll(
     @Query()
     pagination: PaginationQueryDto,

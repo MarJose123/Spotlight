@@ -5,26 +5,12 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import {
-  Body,
-  Controller,
-  HttpCode,
-  Post,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UnauthorizedException, UseGuards, } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { CredentialLoginDto } from './auth/dto/credential-login.dto';
-import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
+import { Auth } from '@/auth/guard/auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -59,7 +45,7 @@ export class AppController {
   @ApiResponse({ status: 204, description: 'Logged out successfully' })
   @HttpCode(204)
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(Auth)
   async logout(@Body('refresh_token') refreshToken: string) {
     await this.authService.logout(refreshToken);
 

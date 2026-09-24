@@ -8,7 +8,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, } from '@nestjs/common';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PostsService } from '@/posts/posts.service';
-import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
+import { Auth } from '@/auth/guard/auth.guard';
 import { CreatePostDto } from '@/posts/dto/create-post.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { Posts } from '@/posts/entities/posts.entity';
@@ -20,6 +20,7 @@ import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto
 
 @ApiBearerAuth()
 @Controller('posts')
+@UseGuards(Auth)
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
@@ -35,7 +36,6 @@ export class PostsController {
     type: PaginationResponseDto<Posts>,
   })
   @Get()
-  @UseGuards(JwtAuthGuard)
   async getPosts(@Query() paginationQuery: PaginationQueryDto) {
     return this.postsService.findAll(paginationQuery);
   }
@@ -49,7 +49,6 @@ export class PostsController {
     type: PaginationResponseDto<Posts>,
   })
   @Get('/user/:id')
-  @UseGuards(JwtAuthGuard)
   async getPostsByUser(
     @Query() paginationQuery: PaginationQueryDto,
     @Param('id') id: string,
@@ -66,7 +65,6 @@ export class PostsController {
     type: Posts,
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
   async createPost(@Body() dto: CreatePostDto) {
     return this.postsService.create(dto);
   }
@@ -80,7 +78,6 @@ export class PostsController {
     type: Posts,
   })
   @Put('/like')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Throttle({
     default: { limit: 2, ttl: seconds(1), blockDuration: minutes(5) },
@@ -98,7 +95,6 @@ export class PostsController {
     type: Posts,
   })
   @Post('/:id/like')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Throttle({
     default: { limit: 2, ttl: seconds(1), blockDuration: minutes(5) },
@@ -116,7 +112,6 @@ export class PostsController {
     type: 'string',
   })
   @Get('/upload/pre-signed')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async uploadPhotos(@Query() dto: GeneratePresignedUrlDto) {
     return await this.bucketService.generatePresignedUploadUrl(dto);

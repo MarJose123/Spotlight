@@ -5,14 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import {
-  Entity,
-  Enum,
-  Index,
-  PrimaryKey,
-  Property,
-  OneToMany,
-} from '@mikro-orm/decorators/legacy';
+import { Entity, Enum, Index, OneToMany, PrimaryKey, Property, } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import { IsOptional } from 'class-validator';
 import { UserStatus } from '@/users/enums/status.enum';
@@ -20,6 +13,7 @@ import { Exclude } from 'class-transformer';
 import { Collection } from '@mikro-orm/core';
 import { Posts } from '@/posts/entities/posts.entity';
 import { Likes } from '@/posts/entities/likes.entity';
+import { UserRole } from '@/users/enums/role.enum';
 
 @Entity()
 export class User {
@@ -46,6 +40,10 @@ export class User {
   @Exclude()
   @IsOptional()
   password: string | undefined;
+
+  @Property()
+  @Enum({ items: () => UserRole, default: UserRole.USER })
+  type: UserRole = UserRole.USER;
 
   @Property()
   @Enum({ items: () => UserStatus, default: UserStatus.ACTIVE })
