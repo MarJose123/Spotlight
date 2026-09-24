@@ -5,18 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, } from '@nestjs/common';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PostsService } from '@/posts/posts.service';
 import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
@@ -26,11 +15,16 @@ import { Posts } from '@/posts/entities/posts.entity';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import { LikePostDto } from '@/posts/dto/like-post.dto';
 import { minutes, seconds, Throttle } from '@nestjs/throttler';
+import { BucketService } from '@/bucket/bucket.service';
+import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
 
 @ApiBearerAuth()
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly bucketService: BucketService,
+  ) {}
 
   @ApiOperation({
     summary: 'Get all post',
@@ -111,5 +105,20 @@ export class PostsController {
   })
   async likePostById(@Param('id') id: string, @Body('user') user: string) {
     return await this.postsService.likePost({ post: id, user });
+  }
+
+  @ApiOperation({
+    summary: 'Upload Photo URL',
+    description: 'Retrieve Presigned Upload URL',
+  })
+  @ApiOkResponse({
+    description: 'success',
+    type: 'string',
+  })
+  @Get('/upload/pre-signed')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async uploadPhotos(@Query() dto: GeneratePresignedUrlDto) {
+    return await this.bucketService.generatePresignedUploadUrl(dto);
   }
 }

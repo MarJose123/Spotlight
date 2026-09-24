@@ -7,13 +7,9 @@
  */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client, } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
 
 @Injectable()
 export class BucketService {
@@ -66,20 +62,15 @@ export class BucketService {
     await this.s3Client.send(command);
   }
 
-  async generatePresignedUrl(
-    key: string,
-    filename: string,
-    contentType: string,
-    fileSize: number,
-  ): Promise<{
+  async generatePresignedUploadUrl(dto: GeneratePresignedUrlDto): Promise<{
     url: string;
     path: string;
   }> {
     const params = {
       Bucket: this.bucket,
-      Key: key,
-      ContentType: contentType,
-      ContentLength: fileSize,
+      Key: dto.key,
+      ContentType: dto.contentType,
+      ContentLength: dto.fileSize,
     };
 
     const command = new PutObjectCommand(params);
@@ -90,6 +81,6 @@ export class BucketService {
       ),
     });
 
-    return { url: uploadUrl, path: key };
+    return { url: uploadUrl, path: dto.key };
   }
 }

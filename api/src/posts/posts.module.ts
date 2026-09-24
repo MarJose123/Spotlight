@@ -9,9 +9,10 @@ import { Module } from '@nestjs/common';
 import { PostsController } from '@/posts/posts.controller';
 import { PostsService } from '@/posts/posts.service';
 import { AuthModule } from '@/auth/auth.module';
+import { BucketService } from '@/bucket/bucket.service';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, BucketService],
   controllers: [PostsController],
   providers: [PostsService],
 })
