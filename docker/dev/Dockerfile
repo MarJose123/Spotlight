@@ -32,7 +32,6 @@ COPY docker/dev/entrypoint.sh /usr/local/bin/spotlight-entrypoint
 RUN chmod 755 /usr/local/bin/spotlight-entrypoint
 
 ENTRYPOINT ["/usr/local/bin/spotlight-entrypoint"]
-CMD ["bun", "run", "--cwd", "api", "start:dev"]
 
 EXPOSE 3000
 EXPOSE 5173
