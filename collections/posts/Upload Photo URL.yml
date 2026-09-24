@@ -1,0 +1,29 @@
+info:
+  name: Upload Photo URL
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{domain}}:{{port}}/api/{{version}}/posts/upload/pre-signed-url?key=posts/photo&filename=test.png&contentType=.jpg&fileSize=1000"
+  params:
+    - name: key
+      value: posts/photo
+      type: query
+    - name: filename
+      value: test.png
+      type: query
+    - name: contentType
+      value: .jpg
+      type: query
+    - name: fileSize
+      value: "1000"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,20 @@
+info:
+  name: Get User by ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{domain}}:{{port}}/api/{{version}}/users/:id"
+  params:
+    - name: id
+      value: c5622426-f92f-4375-933c-1ca06d349e5e
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

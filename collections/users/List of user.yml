@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: "{{domain}}:{{port}}/api/{{version}}/users?page=2&limit=2"
+  url: "{{domain}}:{{port}}/api/{{version}}/users?page=1&limit=2"
   params:
     - name: page
-      value: "2"
+      value: "1"
       type: query
     - name: limit
       value: "2"
