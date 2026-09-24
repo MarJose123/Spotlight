@@ -17,7 +17,7 @@ export class PostsFactory extends Factory<Posts> {
   definition(): Partial<Posts> {
     return {
       content: faker.lorem.sentence(),
-      attachment: faker.image.url(),
+      attachment: [faker.image.url()],
       attachmentType: AttachmentType.IMAGE,
       postType: PostType.USER,
     };
