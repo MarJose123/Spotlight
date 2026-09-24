@@ -13,8 +13,6 @@ services:
       context: .
       dockerfile: docker/dev/Dockerfile
     working_dir: /usr/src/spotlight
-    # Dependencies are installed when the image is built (see
-    # docker/dev/Dockerfile); the container only has to run the dev server.
     command: ["bun", "run", "--cwd", "api", "start:dev"]
     volumes:
       - ./api:/usr/src/spotlight/api
@@ -25,12 +23,20 @@ services:
       - path: ./api/.env
         required: true
     environment:
+      # Workspace whose node_modules the entry point keeps in sync with bun.lock.
+      SPOTLIGHT_WORKSPACE: api
       DB_CONNECTION: postgres
       DB_HOST: spotlight-db
       DB_PORT: 5432
       DB_DATABASE: spotlight
       DB_USERNAME: spotlight
       DB_PASSWORD: spotlight
+      # S3 Bucket or compatible
+      BUCKET_ENDPOINT: http://spotlight-bucket:9000
+      BUCKET_NAME: spotlight
+      BUCKET_REGION: us-east-1
+      BUCKET_ACCESS_KEY_ID: dev
+      BUCKET_SECRET_ACCESS_KEY: dev-password
     ports:
       - "${API_PORT:-3000}:3000"
     healthcheck:
@@ -41,6 +47,8 @@ services:
       start_period: 12s
     depends_on:
       spotlight-db:
+        condition: service_healthy
+      spotlight-bucket:
         condition: service_healthy
     networks:
       - spotlight
@@ -53,9 +61,10 @@ services:
       context: .
       dockerfile: docker/dev/Dockerfile
     working_dir: /usr/src/spotlight
-    # Dependencies are installed when the image is built (see
-    # docker/dev/Dockerfile); the container only has to run the dev server.
     command: ["bun", "run", "--cwd", "web", "dev"]
+    environment:
+      # Workspace whose node_modules the entry point keeps in sync with bun.lock.
+      SPOTLIGHT_WORKSPACE: web
     volumes:
       - ./web:/usr/src/spotlight/web
       - web-node-modules:/usr/src/spotlight/web/node_modules
@@ -70,12 +79,34 @@ services:
       retries: 10
       start_period: 5s
     depends_on:
-      spotlight-db:
-        condition: service_healthy
       spotlight-api:
         condition: service_healthy
     networks:
       - spotlight
+
+  spotlight-bucket:
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
+    container_name: spotlight-bucket
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: dev
+      MINIO_ROOT_PASSWORD: dev-password
+    ports:
+      - "9000:9000" # S3 API Port
+      - "9001:9001" # Console Port
+    healthcheck:
+      test:  ["CMD", "silo", "healthcheck", "ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - spotlight
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - spotlight-bucket-data:/data
 
 
   spotlight-db:
@@ -107,6 +138,8 @@ networks:
 
 volumes:
   spotlight-db-data:
+    driver: local
+  spotlight-bucket-data:
     driver: local
   api-node-modules:
     driver: local
