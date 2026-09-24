@@ -8,6 +8,7 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('bucket', () => ({
+  endpoint: process.env.BUCKET_ENDPOINT,
   region: process.env.BUCKET_REGION,
   accessKeyId: process.env.BUCKET_ACCESS_KEY_ID,
   secretAccessKey: process.env.BUCKET_SECRET_ACCESS_KEY,
