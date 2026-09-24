@@ -111,7 +111,7 @@ export class PostsController {
     description: 'success',
     type: 'string',
   })
-  @Get('/upload/pre-signed')
+  @Get('/upload/pre-signed-url')
   @HttpCode(HttpStatus.OK)
   async uploadPhotos(@Query() dto: GeneratePresignedUrlDto) {
     return await this.bucketService.generatePresignedUploadUrl(dto);
