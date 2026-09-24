@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { EntityManager, wrap } from '@mikro-orm/core';
+import { EntityManager, EntityRepository, wrap } from '@mikro-orm/core';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
@@ -13,10 +13,15 @@ import { User } from '@/users/entities/user.entity';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import bcrypt from 'bcrypt';
+import { InjectRepository } from '@mikro-orm/nestjs';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly em: EntityManager) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: EntityRepository<User>,
+    private readonly em: EntityManager,
+  ) {}
 
   /** Returns all users. */
   async findAll(
@@ -25,8 +30,7 @@ export class UsersService {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
-    const [data, total] = await this.em.findAndCount(
-      User,
+    const [data, total] = await this.userRepository.findAndCount(
       {},
       { offset: skip, limit, orderBy: { createdAt: 'desc' } },
     );
@@ -36,7 +40,7 @@ export class UsersService {
 
   /** Returns a single user by id, or throws 404. */
   async findById(id: string): Promise<User> {
-    const user = await this.em.findOne(User, { id });
+    const user = await this.userRepository.findOne({ id });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
@@ -45,7 +49,7 @@ export class UsersService {
 
   /** Returns a single user by email or null when it does not exist. */
   async findByEmail(email: string): Promise<User | null> {
-    return this.em.findOne(User, { email });
+    return this.userRepository.findOne({ email });
   }
 
   /** Creates and persists a new user from the given DTO. */
@@ -54,7 +58,7 @@ export class UsersService {
     Object.assign(user, dto, {
       password: bcrypt.hashSync(dto.password, 12),
     });
-    this.em.persist(user);
+    this.userRepository.create(user);
     await this.em.flush();
     return user;
   }
@@ -75,8 +79,7 @@ export class UsersService {
   /** Deletes a user by id and returns the removed user (or throws 404). */
   async remove(id: string): Promise<User> {
     const user = await this.findById(id);
-    this.em.remove(user);
-    await this.em.flush();
+    await this.em.remove(user).flush();
     return user;
   }
 }

@@ -6,18 +6,25 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
-import { Posts } from './entities/posts.entity';
-import { CreatePostDto } from './dto/create-post.dto';
-import { LikePostDto } from './dto/like-post.dto';
-import { Likes } from './entities/likes.entity';
+import { Posts } from '@/posts/entities/posts.entity';
+import { CreatePostDto } from '@/posts/dto/create-post.dto';
+import { LikePostDto } from '@/posts/dto/like-post.dto';
+import { Likes } from '@/posts/entities/likes.entity';
 import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
+import { InjectRepository } from '@mikro-orm/nestjs';
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly em: EntityManager) {}
+  constructor(
+    @InjectRepository(Posts)
+    private readonly postRepository: EntityRepository<Posts>,
+    @InjectRepository(Likes)
+    private readonly likesRepository: EntityRepository<Likes>,
+    private readonly em: EntityManager,
+  ) {}
 
   /** Returns all posts. */
   async findAll(
@@ -26,8 +33,7 @@ export class PostsService {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
-    const [data, total] = await this.em.findAndCount(
-      Posts,
+    const [data, total] = await this.postRepository.findAndCount(
       {},
       {
         offset: skip,
@@ -42,7 +48,10 @@ export class PostsService {
 
   /** Returns a single user by id, or throws 404. */
   async findById(id: string): Promise<Posts> {
-    const post = await this.em.findOne(Posts, { id }, { populate: ['likes'] });
+    const post = await this.postRepository.findOne(
+      { id },
+      { populate: ['likes'] },
+    );
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
@@ -60,8 +69,7 @@ export class PostsService {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
-    const [data, total] = await this.em.findAndCount(
-      Posts,
+    const [data, total] = await this.postRepository.findAndCount(
       { user: userId },
       {
         offset: skip,
@@ -78,7 +86,7 @@ export class PostsService {
   async create(dto: CreatePostDto): Promise<Posts> {
     const post = new Posts();
     Object.assign(post, dto);
-    this.em.persist(post);
+    this.postRepository.create(post);
     await this.em.flush();
 
     return post;
@@ -100,7 +108,7 @@ export class PostsService {
       throw new NotFoundException(`Post with id ${dto.post} not found`);
     }
 
-    const existingLike = await this.em.findOne(Likes, {
+    const existingLike = await this.likesRepository.findOne({
       post: dto.post,
       user: dto.user,
     });
@@ -118,7 +126,7 @@ export class PostsService {
     const like = new Likes();
     Object.assign(like, dto);
 
-    this.em.persist(like);
+    this.likesRepository.create(like);
     await this.incrementLikeCount(post);
     await this.em.flush();
 
