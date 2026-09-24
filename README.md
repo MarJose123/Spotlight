@@ -21,16 +21,7 @@ Spotlight is an internal recognition tool that helps teams celebrate and appreci
 With Docker (API + web + PostgreSQL):
 
 ```bash
-cp api/.env.example api/.env   # then set APP_KEY
 docker compose -f compose.dev.yaml up
-```
-
-Locally:
-
-```bash
-bun install --cwd api && bun install --cwd web
-bun run --cwd api start:dev    # API on :3000
-bun run --cwd web dev          # web on :5173
 ```
 
 - API: http://localhost:3000/api/v1
@@ -43,6 +34,21 @@ api/           NestJS backend (auth, posts, users, health)
 web/           TanStack Start frontend
 collections/   Bruno API requests
 compose.dev.yaml
+```
+
+## Useful Stuff
+
+### DB drop and recreate with seed
+
+```bash
+# seed the database with the default database seeder
+bun mikro-orm schema:fresh --run --seed
+```
+
+### The everyday command is `up --force-recreate`
+
+```bash
+docker compose -f compose.dev.yaml up --force-recreate
 ```
 
 ## License
