@@ -6,6 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { useEffect, useState } from 'react'
+import { Monitor, Moon, Sun } from 'lucide-react';
 
 type ThemeMode = 'light' | 'dark' | 'auto'
 
@@ -82,7 +83,13 @@ export default function ThemeToggle() {
       title={label}
       className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm font-semibold text-[var(--sea-ink)] shadow-[0_8px_22px_rgba(30,90,72,0.08)] transition hover:-translate-y-0.5"
     >
-      {mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Dark' : 'Light'}
+      {mode === 'auto' ? (
+        <Monitor className="h-4 w-4"  aria-hidden={true}/>
+      ): mode === 'dark' ? (
+        <Moon className="h-4 w-4"  aria-hidden={true}/>
+      ) : (
+        <Sun className="h-4 w-4"  aria-hidden={true}/>
+      )}
     </button>
   )
 }

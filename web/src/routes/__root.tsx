@@ -38,10 +38,29 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Spotlight',
+      },
+      {
+        name: 'description',
+        content:
+          'Spotlight is an internal recognition tool that helps teams celebrate and appreciate their coworkers with commendations and shout-outs.',
       },
     ],
     links: [
+      {
+        rel: 'icon',
+        href: '/favicon.ico',
+        sizes: '48x48',
+      },
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: '/favicon.svg',
+      },
+      {
+        rel: 'apple-touch-icon',
+        href: '/apple-touch-icon.png',
+      },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -55,6 +74,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static build-time constant, not user input */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>

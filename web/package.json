@@ -44,6 +44,7 @@
     "dayjs": "^1.11.23",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "lucide-react": "^1.48.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3"
