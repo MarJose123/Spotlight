@@ -72,7 +72,9 @@ export class AuthService {
    */
   async refresh(token: string) {
     const tokenHash = this.tokenService.hashRefreshToken(token);
-    const storedToken = await this.refreshTokenRepository.findOne( { tokenHash });
+    const storedToken = await this.refreshTokenRepository.findOne({
+      tokenHash,
+    });
     if (!storedToken)
       throw new UnauthorizedException({ message: 'Invalid refresh token' });
     if (storedToken.expiresAt.getTime() < Date.now())
@@ -96,7 +98,9 @@ export class AuthService {
    */
   async logout(refreshToken: string) {
     const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
-    const storedToken = await this.refreshTokenRepository.findOne({ tokenHash });
+    const storedToken = await this.refreshTokenRepository.findOne({
+      tokenHash,
+    });
     if (!storedToken) return;
 
     storedToken.revokedAt = new Date();

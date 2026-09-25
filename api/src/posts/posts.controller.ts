@@ -5,7 +5,18 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PostsService } from '@/posts/posts.service';
 import { Auth } from '@/auth/guard/auth.guard';

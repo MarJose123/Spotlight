@@ -5,7 +5,13 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { Entity, Index, ManyToOne, PrimaryKey, Property, } from '@mikro-orm/decorators/legacy';
+import {
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryKey,
+  Property,
+} from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import type { Rel } from '@mikro-orm/core';
 import { Posts } from '@/posts/entities/posts.entity';

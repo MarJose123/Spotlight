@@ -12,7 +12,7 @@ import { faker } from '@faker-js/faker';
 import { User } from '@/users/entities/user.entity';
 
 export class PostsSeeder extends Seeder {
- async run(em: EntityManager, context: Dictionary<User[]>): Promise<void> {
+  async run(em: EntityManager, context: Dictionary<User[]>): Promise<void> {
     new PostsFactory(em).make(10, {
       user: faker.helpers.arrayElement(context.user),
     });
