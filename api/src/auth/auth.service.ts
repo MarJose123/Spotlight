@@ -12,9 +12,14 @@ import { CredentialDto } from '@/auth/dto/credential.dto';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { TokenService } from '@/auth/token.service';
 import { RefreshToken } from '@/auth/entities/refresh-token.entity';
+import { UserStatus } from '@/users/enums/status.enum';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { JwtTokenMapper } from '@/auth/mappers/jwt-token.mapper';
 import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
+
+/** Returned for every failed login, so responses cannot enumerate accounts. */
+export const INVALID_CREDENTIALS_MESSAGE =
+  'These credentials do not match our records.';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +34,10 @@ export class AuthService {
 
   /** Validates the user email and returns true if it exists. */
   async validateUserEmail(email: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({ email });
+    const user = await this.userRepository.findOne({
+      email,
+      status: UserStatus.ACTIVE,
+    });
     if (!user) {
       return null;
     }
@@ -47,7 +55,7 @@ export class AuthService {
       !(user.password && (await bcrypt.compare(cred.password, user.password)))
     ) {
       throw new UnauthorizedException({
-        message: 'These credentials do not match our records.',
+        message: INVALID_CREDENTIALS_MESSAGE,
       });
     }
 
@@ -89,7 +97,10 @@ export class AuthService {
     if (storedToken.revokedAt)
       throw new UnauthorizedException({ message: 'Refresh token revoked' });
 
-    const user = await this.userRepository.findOne({ id: storedToken.userId });
+    const user = await this.userRepository.findOne({
+      id: storedToken.userId,
+      status: UserStatus.ACTIVE,
+    });
     if (!user)
       throw new UnauthorizedException({
         message: 'Invalid authenticated user',
@@ -107,12 +118,14 @@ export class AuthService {
   }
 
   /**
-   * Logs out the user by revoking the refresh token.
+   * Logs out the user by revoking the refresh token. The token must belong to
+   * the authenticated user, so one user cannot revoke another's session.
    */
-  async logout(refreshToken: string) {
+  async logout(refreshToken: string, userId: string) {
     const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
     const storedToken = await this.refreshTokenRepository.findOne({
       tokenHash,
+      userId,
     });
     if (!storedToken) return;
 

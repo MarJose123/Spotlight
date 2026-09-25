@@ -29,7 +29,7 @@ import { RefreshToken } from '@/auth/entities/refresh-token.entity';
         secret: createSecretKey(
           Buffer.from(configService.getOrThrow<string>('app.key')),
         ),
-        signOptions: { expiresIn: '5m' },
+        signOptions: { expiresIn: '5m', algorithm: 'HS256' },
       }),
     }),
     MikroOrmModule.forFeature([User, RefreshToken]),

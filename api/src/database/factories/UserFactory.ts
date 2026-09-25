@@ -19,7 +19,7 @@ export class UserFactory extends Factory<User> {
       username: faker.internet.username(),
       name: faker.person.fullName(),
       email: faker.internet.email(),
-      password: bcrypt.hashSync('admin123', 10),
+      password: bcrypt.hashSync('admin123', 12),
     };
   }
 }

@@ -11,6 +11,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager } from '@mikro-orm/core';
 import { User } from '@/users/entities/user.entity';
+import { UserStatus } from '@/users/enums/status.enum';
 import { AuthenticatedUserMapper } from '@/auth/mappers/authenticated-user.mapper';
 import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
 import type { VerifiedPayloadInterface } from '@/auth/interface/payload.interface';
@@ -24,19 +25,31 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
+      algorithms: ['HS256'],
       secretOrKey: configService.getOrThrow<string>('app.key'),
     });
   }
 
   /**
-   * Resolves the verified token's subject against a live user, so deleted users
-   * lose access immediately. Whatever this returns becomes `request.user`.
+   * Resolves the verified token's subject against a live, active user, so
+   * deleted and deactivated users lose access immediately. Whatever this
+   * returns becomes `request.user`.
    */
   async validate(
     payload: VerifiedPayloadInterface,
   ): Promise<AuthenticatedUserDto> {
+    // A token signed with the app key but missing a lifetime would never expire.
+    if (typeof payload.exp !== 'number' || typeof payload.iat !== 'number') {
+      throw new UnauthorizedException();
+    }
+
+    // Filtering on status makes a deactivated account indistinguishable from a
+    // missing one, and stops its already-issued tokens from working.
     const user = AuthenticatedUserMapper.toResponse(
-      await this.em.findOne(User, { id: payload.sub }),
+      await this.em.findOne(User, {
+        id: payload.sub,
+        status: UserStatus.ACTIVE,
+      }),
       payload,
     );
     if (!user) {
