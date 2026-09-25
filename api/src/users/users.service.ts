@@ -14,6 +14,8 @@ import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import bcrypt from 'bcrypt';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { UserMapper } from '@/users/mappers/user.mapper';
+import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -39,12 +41,12 @@ export class UsersService {
   }
 
   /** Returns a single user by id, or throws 404. */
-  async findById(id: string): Promise<User> {
+  async findById(id: string): Promise<UserResponseDto | null> {
     const user = await this.userRepository.findOne({ id });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+    return UserMapper.toResponse(user);
   }
 
   /** Returns a single user by email or null when it does not exist. */
@@ -64,8 +66,15 @@ export class UsersService {
   }
 
   /** Updates the provided fields of an existing user. */
-  async update(id: string, dto: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<UserResponseDto | null> {
     const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
     // Patch only the keys that were actually provided (class-validator leaves
     // absent optional fields as `undefined`, which MikroORM would reject).
     const patch = Object.fromEntries(
@@ -73,13 +82,17 @@ export class UsersService {
     );
     wrap(user).assign(patch);
     await this.em.flush();
-    return user;
+    return UserMapper.toResponse(user);
   }
 
   /** Deletes a user by id and returns the removed user (or throws 404). */
-  async remove(id: string): Promise<User> {
+  async remove(id: string): Promise<void> {
     const user = await this.findById(id);
-    await this.em.remove(user).flush();
-    return user;
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    await this.userRepository.nativeDelete({ id: user.id });
+    await this.em.flush();
   }
 }

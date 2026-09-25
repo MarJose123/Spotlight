@@ -34,6 +34,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 @Controller({
   path: 'users',
@@ -68,7 +69,7 @@ export class UsersController {
   @Get(':id')
   async findById(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Promise<User> {
+  ): Promise<UserResponseDto | null> {
     return this.usersService.findById(id);
   }
 
@@ -91,7 +92,7 @@ export class UsersController {
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateUserDto,
-  ): Promise<User> {
+  ): Promise<UserResponseDto | null> {
     return this.usersService.update(id, dto);
   }
 
@@ -104,7 +105,7 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Promise<User> {
-    return this.usersService.remove(id);
+  ): Promise<void> {
+    await this.usersService.remove(id);
   }
 }
