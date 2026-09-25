@@ -5,7 +5,14 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { Entity, Enum, Index, OneToMany, PrimaryKey, Property, } from '@mikro-orm/decorators/legacy';
+import {
+  Entity,
+  Enum,
+  Index,
+  OneToMany,
+  PrimaryKey,
+  Property,
+} from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import { IsOptional } from 'class-validator';
 import { UserStatus } from '@/users/enums/status.enum';
