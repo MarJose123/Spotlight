@@ -15,6 +15,9 @@ import { LikePostDto } from '@/posts/dto/like-post.dto';
 import { Likes } from '@/posts/entities/likes.entity';
 import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { PostResponseDto } from '@/posts/dto/post-response.dto';
+import { PostMapper } from '@/posts/mappers/post.mapper';
+import { PostLikeMapper } from '@/posts/mappers/post-like.mapper';
 
 @Injectable()
 export class PostsService {
@@ -29,7 +32,7 @@ export class PostsService {
   /** Returns all posts. */
   async findAll(
     paginationQuery: PaginationQueryDto,
-  ): Promise<PaginationResponseDto<Posts>> {
+  ): Promise<PaginationResponseDto<PostResponseDto | null>> {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
@@ -43,11 +46,13 @@ export class PostsService {
       },
     );
 
-    return new PaginationResponseDto(data, total, page, limit);
+    const dataTransformed = data.map((post) => PostMapper.toResponse(post));
+
+    return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
 
   /** Returns a single user by id, or throws 404. */
-  async findById(id: string): Promise<Posts> {
+  async findById(id: string): Promise<PostResponseDto | null> {
     const post = await this.postRepository.findOne(
       { id },
       { populate: ['likes'] },
@@ -55,7 +60,7 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
-    return post;
+    return PostMapper.toResponse(post);
   }
 
   /** Retrieves posts by user id. */
@@ -65,7 +70,7 @@ export class PostsService {
   }: {
     paginationQuery: PaginationQueryDto;
     userId: string;
-  }): Promise<PaginationResponseDto<Posts>> {
+  }): Promise<PaginationResponseDto<PostResponseDto | null>> {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
@@ -79,38 +84,32 @@ export class PostsService {
       },
     );
 
-    return new PaginationResponseDto(data, total, page, limit);
+    const dataTransformed = data.map((post) => PostMapper.toResponse(post));
+
+    return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
 
   /** Creates and persists a new post from the given DTO. */
-  async create(dto: CreatePostDto): Promise<Posts> {
+  async create(dto: CreatePostDto): Promise<PostResponseDto | null> {
     const post = new Posts();
     Object.assign(post, dto);
     this.postRepository.create(post);
     await this.em.flush();
 
-    return post;
-  }
-
-  private async incrementLikeCount(post: Posts): Promise<void> {
-    post.likesCount += 1;
-  }
-
-  private async decrementLikeCount(post: Posts): Promise<void> {
-    post.likesCount = Math.max(0, post.likesCount - 1);
+    return PostMapper.toResponse(post);
   }
 
   /** Like a post. */
   async likePost(dto: LikePostDto): Promise<PostLikeResponseDto> {
-    const post = await this.findById(dto.post);
+    const post = await this.findById(dto.postId);
 
     if (!post) {
-      throw new NotFoundException(`Post with id ${dto.post} not found`);
+      throw new NotFoundException(`Post with id ${dto.postId} not found`);
     }
 
     const existingLike = await this.likesRepository.findOne({
-      post: dto.post,
-      user: dto.user,
+      post: dto.postId,
+      user: dto.userId,
     });
 
     if (existingLike) {
@@ -119,7 +118,7 @@ export class PostsService {
       await this.decrementLikeCount(post);
       await this.em.flush();
 
-      return new PostLikeResponseDto(false, post);
+      return PostLikeMapper.toResponse(false, post);
     }
 
     // Like
@@ -130,6 +129,24 @@ export class PostsService {
     await this.incrementLikeCount(post);
     await this.em.flush();
 
-    return new PostLikeResponseDto(true, post);
+    return PostLikeMapper.toResponse(true, post);
+  }
+
+  async delete(postId: string): Promise<void> {
+    await this.postRepository.nativeDelete({ id: postId });
+    await this.likesRepository.nativeDelete({ post: postId });
+    await this.em.flush();
+  }
+
+  private async incrementLikeCount(postdto: PostResponseDto): Promise<void> {
+    const post = await this.postRepository.findOneOrFail({ id: postdto.id });
+    post.likesCount += 1;
+    await this.em.flush();
+  }
+
+  private async decrementLikeCount(postdto: PostResponseDto): Promise<void> {
+    const post = await this.postRepository.findOneOrFail({ id: postdto.id });
+    post.likesCount = Math.min(0, post.likesCount - 1);
+    await this.em.flush();
   }
 }

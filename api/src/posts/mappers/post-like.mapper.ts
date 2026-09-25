@@ -5,9 +5,18 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
 
-export class PostLikeResponseDto {
-  like: boolean;
-  post: PostResponseDto;
+import { PostResponseDto } from '@/posts/dto/post-response.dto';
+import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
+
+export class PostLikeMapper {
+  static toResponse(
+    like: boolean,
+    postdto: PostResponseDto,
+  ): PostLikeResponseDto {
+    return {
+      like,
+      post: postdto,
+    };
+  }
 }

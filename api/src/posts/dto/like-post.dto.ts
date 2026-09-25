@@ -12,10 +12,10 @@ export class LikePostDto {
   @ApiProperty({ type: 'string', format: 'uuid', required: true })
   @IsNotEmpty()
   @IsUUID()
-  post: string;
+  postId: string;
 
   @ApiProperty({ type: 'string', format: 'uuid', required: true })
   @IsNotEmpty()
   @IsUUID()
-  user: string;
+  userId: string;
 }
