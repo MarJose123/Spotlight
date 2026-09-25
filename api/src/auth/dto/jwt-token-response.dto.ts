@@ -6,15 +6,12 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-export class UserResponseDto {
-  id: string;
-  avatarUrl?: string;
-  email: string;
-  name: string;
-  username: string | undefined;
-  displayName: string;
-  status: string;
-  role: string;
-  createdAt: Date;
-  updatedAt: Date;
+import { UserResponseDto } from '@/users/dto/user-response.dto';
+
+export class JwtTokenResponse {
+  user: UserResponseDto | null;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
 }

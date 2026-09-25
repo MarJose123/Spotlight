@@ -11,7 +11,15 @@ import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 type UserResponseSource = Pick<
   User,
-  'id' | 'email' | 'name' | 'username' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'email'
+  | 'name'
+  | 'username'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'status'
+  | 'type'
+  | 'avatar'
 >;
 
 export class UserMapper {
@@ -24,10 +32,13 @@ export class UserMapper {
 
     return {
       id: user.id,
+      avatarUrl: user.avatar,
       email: user.email,
       name: user.name,
       username: user.username,
       displayName: user.name,
+      status: user.status,
+      role: user.type,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

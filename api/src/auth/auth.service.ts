@@ -9,11 +9,12 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from '@/users/entities/user.entity';
 import bcrypt from 'bcrypt';
 import { CredentialDto } from '@/auth/dto/credential.dto';
-import { JwtTokenDto } from '@/auth/dto/jwt-token.dto';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { TokenService } from '@/auth/token.service';
 import { RefreshToken } from '@/auth/entities/refresh-token.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { JwtTokenMapper } from '@/auth/mappers/jwt-token.mapper';
+import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +40,7 @@ export class AuthService {
   /**
    * Logs in a user by email and password.
    */
-  async authenticate(cred: CredentialDto): Promise<JwtTokenDto> {
+  async authenticate(cred: CredentialDto): Promise<JwtTokenResponse> {
     const user = await this.userRepository.findOne({ email: cred.email });
     if (
       !user ||
@@ -64,13 +65,19 @@ export class AuthService {
     this.refreshTokenRepository.create(refreshTokenModel);
     await this.em.flush();
 
-    return new JwtTokenDto(user, token, refreshToken, 300);
+    return JwtTokenMapper.toResponse({
+      user,
+      access_token: token,
+      refresh_token: refreshToken,
+      expires_in: 300,
+      token_type: 'Bearer',
+    });
   }
 
   /**
    * Refreshes the access token using the refresh token.
    */
-  async refresh(token: string) {
+  async refresh(token: string): Promise<JwtTokenResponse> {
     const tokenHash = this.tokenService.hashRefreshToken(token);
     const storedToken = await this.refreshTokenRepository.findOne({
       tokenHash,
@@ -90,7 +97,13 @@ export class AuthService {
 
     const newAccessToken = this.tokenService.createAccessToken(user);
 
-    return new JwtTokenDto(user, newAccessToken, token);
+    return JwtTokenMapper.toResponse({
+      user,
+      access_token: newAccessToken,
+      refresh_token: token,
+      expires_in: 300,
+      token_type: 'Bearer',
+    });
   }
 
   /**
