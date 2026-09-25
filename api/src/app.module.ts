@@ -28,8 +28,9 @@ import bucketConfig from '@/config/bucket.config';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: minutes(1),
           limit: 100,
+          ttl: minutes(1),
+          blockDuration: minutes(5),
         },
       ],
       errorMessage: 'Too many requests. Slow down!',
