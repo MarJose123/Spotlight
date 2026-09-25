@@ -28,7 +28,7 @@ export class UsersService {
   /** Returns all users. */
   async findAll(
     paginationQuery: PaginationQueryDto,
-  ): Promise<PaginationResponseDto<User>> {
+  ): Promise<PaginationResponseDto<UserResponseDto | null>> {
     const { page, limit } = paginationQuery;
     const skip = (page - 1) * limit;
 
@@ -37,7 +37,9 @@ export class UsersService {
       { offset: skip, limit, orderBy: { createdAt: 'desc' } },
     );
 
-    return new PaginationResponseDto(data, total, page, limit);
+    const dataTransformed = data.map((user) => UserMapper.toResponse(user));
+
+    return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
 
   /** Returns a single user by id, or throws 404. */
@@ -50,19 +52,20 @@ export class UsersService {
   }
 
   /** Returns a single user by email or null when it does not exist. */
-  async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ email });
+  async findByEmail(email: string): Promise<UserResponseDto | null> {
+    const user = await this.userRepository.findOneOrFail({ email });
+    return UserMapper.toResponse(user);
   }
 
   /** Creates and persists a new user from the given DTO. */
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(dto: CreateUserDto): Promise<UserResponseDto | null> {
     const user = new User();
     Object.assign(user, dto, {
       password: bcrypt.hashSync(dto.password, 12),
     });
     this.userRepository.create(user);
     await this.em.flush();
-    return user;
+    return UserMapper.toResponse(user);
   }
 
   /** Updates the provided fields of an existing user. */
@@ -86,7 +89,7 @@ export class UsersService {
   }
 
   /** Deletes a user by id and returns the removed user (or throws 404). */
-  async remove(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);

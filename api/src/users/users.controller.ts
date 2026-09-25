@@ -57,7 +57,7 @@ export class UsersController {
   findAll(
     @Query()
     pagination: PaginationQueryDto,
-  ): Promise<PaginationResponseDto<User>> {
+  ): Promise<PaginationResponseDto<UserResponseDto | null>> {
     return this.usersService.findAll(pagination);
   }
 
@@ -79,7 +79,7 @@ export class UsersController {
     description: 'Create a new user',
   })
   @Post()
-  async create(@Body() dto: CreateUserDto): Promise<User> {
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto | null> {
     return this.usersService.create(dto);
   }
 
@@ -106,6 +106,6 @@ export class UsersController {
   async remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<void> {
-    await this.usersService.remove(id);
+    await this.usersService.delete(id);
   }
 }
