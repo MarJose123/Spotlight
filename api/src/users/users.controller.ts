@@ -73,8 +73,6 @@ export class UsersController {
     summary: 'Get current user',
     description: 'Profile of the currently authenticated user',
   })
-  // Must stay above `@Get(':id')`, otherwise `/users/me` is captured by the
-  // `:id` route and rejected by its UUID pipe.
   @Get('me')
   async profile(
     @Req() req: AuthenticatedRequest,
