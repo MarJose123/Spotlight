@@ -26,6 +26,7 @@ docker compose -f compose.dev.yaml up
 
 - API: http://localhost:3000/api/v1
 - Docs: http://localhost:3000/docs
+- OpenAPI schema: http://localhost:3000/openapi.json
 
 ## Project Structure
 

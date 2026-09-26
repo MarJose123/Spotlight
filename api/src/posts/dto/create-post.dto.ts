@@ -5,32 +5,33 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { Enum } from '@mikro-orm/decorators/legacy';
+import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from 'class-validator';
 import { AttachmentType } from '@/posts/enums/attachment-type.enum';
 import { PostType } from '@/posts/enums/post-type.enum';
-import { User } from '@/users/entities/user.entity';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePostDto {
-  @ApiProperty({ type: 'string', required: true })
+  @ApiProperty({
+    description: 'Body of the post.',
+    example: 'Thanks for the help shipping the release!',
+  })
   @IsNotEmpty()
   content!: string;
 
   @ApiProperty({
-    type: 'string',
-    format: 'enum',
+    description: 'Kind of media attached to the post.',
     enum: AttachmentType,
-    required: true,
+    enumName: 'AttachmentType',
+    example: AttachmentType.IMAGE,
   })
-  @Enum({ items: () => AttachmentType })
   @IsNotEmpty()
   attachmentType!: AttachmentType;
 
   @ApiProperty({
+    description: 'Attached media URLs (may be an empty list).',
     type: 'array',
     items: { type: 'string', format: 'uri' },
-    required: true,
+    example: ['https://cdn.example.com/spotlight/photo.png'],
   })
   @ArrayNotEmpty()
   @IsArray()
@@ -38,16 +39,19 @@ export class CreatePostDto {
   attachment!: string[];
 
   @ApiProperty({
-    type: 'string',
-    format: 'enum',
+    description: 'Whether the post is authored by the system or a user.',
     enum: PostType,
-    required: true,
+    enumName: 'PostType',
+    default: PostType.USER,
+    example: PostType.USER,
   })
-  @Enum({ items: () => PostType, default: PostType.USER })
   @IsNotEmpty()
   postType: PostType = PostType.USER;
 
-  @ApiProperty({ type: 'string', format: 'uuid', required: true })
+  @ApiProperty({
+    description: 'Id of the user authoring the post.',
+    format: 'uuid',
+  })
   @IsNotEmpty()
-  user!: User;
+  user!: string;
 }

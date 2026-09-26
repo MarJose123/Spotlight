@@ -13,9 +13,15 @@ import {
   HttpHealthIndicator,
 } from '@nestjs/terminus';
 import { DatabaseHealth } from './database.health';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { seconds, Throttle } from '@nestjs/throttler';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -27,9 +33,12 @@ export class HealthController {
 
   @ApiOperation({
     summary: 'Status',
-    description: 'Check the health of the application',
+    description: 'Check the health of the application and its dependencies.',
   })
-  @ApiOkResponse({ summary: 'Health check successful' })
+  @ApiOkResponse({ description: 'Health check successful.' })
+  @ApiServiceUnavailableResponse({
+    description: 'One or more dependencies are unhealthy.',
+  })
   @Get()
   @HealthCheck()
   @Throttle({ default: { limit: 3, ttl: seconds(2) } })

@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-
+import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 /**
@@ -16,12 +16,27 @@ import { UserResponseDto } from '@/users/dto/user-response.dto';
  * without decoding the JWT again.
  */
 export class AuthenticatedUserDto {
-  /** The authenticated user's profile. */
+  @ApiProperty({
+    description: "The authenticated user's profile.",
+    type: UserResponseDto,
+  })
   user: UserResponseDto;
-  /** Token subject: the user id, identical to `user.id`. */
+
+  @ApiProperty({
+    description: 'Token subject: the user id, identical to `user.id`.',
+    format: 'uuid',
+  })
   sub: string;
-  /** Issued-at timestamp, in seconds since the Unix epoch. */
+
+  @ApiProperty({
+    description: 'Issued-at timestamp, in seconds since the Unix epoch.',
+    example: 1735689600,
+  })
   iat: number;
-  /** Expiry timestamp, in seconds since the Unix epoch. */
+
+  @ApiProperty({
+    description: 'Expiry timestamp, in seconds since the Unix epoch.',
+    example: 1735689900,
+  })
   exp: number;
 }

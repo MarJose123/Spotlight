@@ -15,21 +15,25 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CredentialDto {
+  @ApiProperty({
+    description: 'Email of the user.',
+    format: 'email',
+    example: 'jane.doe@example.com',
+  })
   @IsEmail()
   @IsNotEmpty()
-  @ApiProperty({
-    description: 'Email of the user',
-    required: true,
-  })
   email!: string;
 
+  @ApiProperty({
+    description: 'Password of the user.',
+    format: 'password',
+    minLength: 8,
+    maxLength: 72,
+    example: 'correct-horse-battery',
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
   @MaxLength(72)
-  @ApiProperty({
-    description: 'Password of the user',
-    required: true,
-  })
   password!: string;
 }

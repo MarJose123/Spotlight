@@ -6,22 +6,41 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 
 export class GeneratePresignedUrlDto {
-  @ApiProperty({ type: 'string', required: true })
+  @ApiProperty({
+    description: 'Object key the file will be stored under.',
+    example: 'posts/2026/01/photo.png',
+  })
   @IsNotEmpty()
+  @IsString()
   key!: string;
 
-  @ApiProperty({ type: 'string', required: true })
+  @ApiProperty({
+    description: 'Original file name, used to build the default key.',
+    example: 'photo.png',
+  })
   @IsNotEmpty()
+  @IsString()
   filename!: string;
 
-  @ApiProperty({ type: 'string', required: true })
+  @ApiProperty({
+    description: 'MIME type of the file being uploaded.',
+    example: 'image/png',
+  })
   @IsNotEmpty()
+  @IsString()
   contentType!: string;
 
-  @ApiProperty({ type: 'number', required: true })
+  @ApiProperty({
+    description: 'Size of the file in bytes.',
+    example: 204800,
+    minimum: 1,
+    type: 'integer',
+  })
   @IsNotEmpty()
+  @IsNumber()
+  @Min(1)
   fileSize!: number;
 }

@@ -18,13 +18,18 @@ import {
 } from '@nestjs/common';
 import { AuthService, INVALID_CREDENTIALS_MESSAGE } from './auth/auth.service';
 import { CredentialLoginDto } from './auth/dto/credential-login.dto';
+import { RefreshTokenDto } from './auth/dto/refresh-token.dto';
+import { JwtTokenResponse } from './auth/dto/jwt-token-response.dto';
+import { ErrorResponseDto } from './common/dto/error-response.dto';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
 import { Auth } from '@/auth/guard/auth.guard';
@@ -35,11 +40,23 @@ import type { AuthenticatedRequest } from '@/auth/interface/payload.interface';
 export class AppController {
   constructor(private authService: AuthService) {}
 
-  @ApiOkResponse({ description: 'Login successful' })
-  @ApiBody({ type: CredentialLoginDto })
   @ApiOperation({
     summary: 'Login',
-    description: 'Login with email and password',
+    description:
+      'Exchange an email and password for an access/refresh token pair.',
+  })
+  @ApiBody({ type: CredentialLoginDto })
+  @ApiOkResponse({
+    description: 'Login successful.',
+    type: JwtTokenResponse,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'The supplied credentials are invalid.',
+    type: ErrorResponseDto,
+  })
+  @ApiTooManyRequestsResponse({
+    description: 'Too many login attempts.',
+    type: ErrorResponseDto,
   })
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
@@ -57,9 +74,15 @@ export class AppController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout',
-    description: 'Logout the user',
+    description:
+      'Revoke the supplied refresh token for the authenticated user.',
   })
-  @ApiResponse({ status: 204, description: 'Logged out successfully' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiNoContentResponse({ description: 'Logged out successfully.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid access token.',
+    type: ErrorResponseDto,
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('logout')
   @UseGuards(Auth)
@@ -77,9 +100,17 @@ export class AppController {
 
   @ApiOperation({
     summary: 'Refresh token',
-    description: 'Refresh the access token',
+    description: 'Exchange a valid refresh token for a fresh access token.',
   })
-  @ApiResponse({ status: 200, description: 'Access token refreshed' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiOkResponse({
+    description: 'Access token refreshed.',
+    type: JwtTokenResponse,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'The refresh token is missing, expired or revoked.',
+    type: ErrorResponseDto,
+  })
   @Post('refresh')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')

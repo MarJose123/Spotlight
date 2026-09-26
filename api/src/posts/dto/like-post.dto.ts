@@ -9,13 +9,33 @@ import { IsNotEmpty, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LikePostDto {
-  @ApiProperty({ type: 'string', format: 'uuid', required: true })
+  @ApiProperty({
+    description: 'Id of the post to like or unlike.',
+    format: 'uuid',
+  })
   @IsNotEmpty()
   @IsUUID()
   postId: string;
 
-  @ApiProperty({ type: 'string', format: 'uuid', required: true })
+  @ApiProperty({
+    description: 'Id of the user liking the post.',
+    format: 'uuid',
+  })
   @IsNotEmpty()
   @IsUUID()
   userId: string;
+}
+
+/**
+ * Body accepted by `POST /posts/{id}/like`, where the post id comes from the
+ * path rather than the body.
+ */
+export class LikePostByIdDto {
+  @ApiProperty({
+    description: 'Id of the user liking the post.',
+    format: 'uuid',
+  })
+  @IsNotEmpty()
+  @IsUUID()
+  user: string;
 }

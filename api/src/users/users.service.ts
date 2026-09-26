@@ -73,7 +73,9 @@ export class UsersService {
     id: string,
     dto: UpdateUserDto,
   ): Promise<UserResponseDto | null> {
-    const user = await this.findById(id);
+    // Load the managed entity: `findById` returns a plain response DTO, which
+    // cannot be flushed back to the database.
+    const user = await this.userRepository.findOne({ id });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -82,7 +84,10 @@ export class UsersService {
     // absent optional fields as `undefined`, which MikroORM would reject).
     const patch = Object.fromEntries(
       Object.entries(dto).filter(([, value]) => value !== undefined),
-    );
+    ) as Partial<User>;
+    if (typeof patch.password === 'string') {
+      patch.password = bcrypt.hashSync(patch.password, 12);
+    }
     wrap(user).assign(patch);
     await this.em.flush();
     return UserMapper.toResponse(user);

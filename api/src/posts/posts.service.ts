@@ -10,6 +10,7 @@ import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import { Posts } from '@/posts/entities/posts.entity';
+import { User } from '@/users/entities/user.entity';
 import { CreatePostDto } from '@/posts/dto/create-post.dto';
 import { LikePostDto } from '@/posts/dto/like-post.dto';
 import { Likes } from '@/posts/entities/likes.entity';
@@ -116,6 +117,7 @@ export class PostsService {
       // Unlike
       this.em.remove(existingLike);
       await this.decrementLikeCount(post);
+      post.likedBy = (post.likedBy ?? []).filter((id) => id !== dto.userId);
       await this.em.flush();
 
       return PostLikeMapper.toResponse(false, post);
@@ -123,10 +125,12 @@ export class PostsService {
 
     // Like
     const like = new Likes();
-    Object.assign(like, dto);
+    like.post = this.em.getReference(Posts, dto.postId);
+    like.user = this.em.getReference(User, dto.userId);
 
     this.likesRepository.create(like);
     await this.incrementLikeCount(post);
+    post.likedBy = [...(post.likedBy ?? []), dto.userId];
     await this.em.flush();
 
     return PostLikeMapper.toResponse(true, post);
@@ -141,12 +145,14 @@ export class PostsService {
   private async incrementLikeCount(postdto: PostResponseDto): Promise<void> {
     const post = await this.postRepository.findOneOrFail({ id: postdto.id });
     post.likesCount += 1;
+    postdto.likesCount = post.likesCount;
     await this.em.flush();
   }
 
   private async decrementLikeCount(postdto: PostResponseDto): Promise<void> {
     const post = await this.postRepository.findOneOrFail({ id: postdto.id });
-    post.likesCount = Math.min(0, post.likesCount - 1);
+    post.likesCount = Math.max(0, post.likesCount - 1);
+    postdto.likesCount = post.likesCount;
     await this.em.flush();
   }
 }

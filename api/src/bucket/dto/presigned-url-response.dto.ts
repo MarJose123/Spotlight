@@ -6,18 +6,18 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
 
-export class PostLikeResponseDto {
+/** Response of `GET /posts/upload/pre-signed-url`. */
+export class PresignedUrlResponseDto {
   @ApiProperty({
-    description: '`true` when the post was liked, `false` when unliked.',
-    example: true,
+    description: 'Pre-signed URL to `PUT` the file to.',
+    format: 'uri',
   })
-  like: boolean;
+  url: string;
 
   @ApiProperty({
-    description: 'The post with its updated like count.',
-    type: PostResponseDto,
+    description: 'Object key the file will be stored under.',
+    example: 'posts/2026/01/photo.png',
   })
-  post: PostResponseDto;
+  path: string;
 }

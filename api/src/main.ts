@@ -21,6 +21,24 @@ import { MikroORM } from '@mikro-orm/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import helmet from '@fastify/helmet';
+import { ErrorResponseDto } from '@/common/dto/error-response.dto';
+import { PaginationMetaDto } from '@/common/dto/pagination/pagination-meta.dto';
+import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
+import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
+import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
+import { PostResponseDto } from '@/posts/dto/post-response.dto';
+import { CreatePostDto } from '@/posts/dto/create-post.dto';
+import { LikePostByIdDto, LikePostDto } from '@/posts/dto/like-post.dto';
+import { UserResponseDto } from '@/users/dto/user-response.dto';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
+import { CredentialDto } from '@/auth/dto/credential.dto';
+import { CredentialLoginDto } from '@/auth/dto/credential-login.dto';
+import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
+import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
+import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
+import { PresignedUrlResponseDto } from '@/bucket/dto/presigned-url-response.dto';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -78,18 +96,52 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addBearerAuth()
-    .addGlobalResponse({
-      status: 500,
-      description: 'Internal server error',
-    })
+    .addTag('Auth', 'Authentication and token lifecycle.')
+    .addTag('Users', 'User accounts and profiles.')
+    .addTag('Posts', 'Recognition posts, likes and attachments.')
+    .addTag('Health', 'Service and dependency health.')
     .addGlobalResponse({
       status: 400,
-      description: 'Bad request',
+      description: 'Bad request.',
+      type: ErrorResponseDto,
+    })
+    .addGlobalResponse({
+      status: 500,
+      description: 'Internal server error.',
+      type: ErrorResponseDto,
     })
     .build();
 
+  /**
+   * Every DTO referenced by a controller is registered automatically, but the
+   * extra models below are listed explicitly so that the request/response
+   * contracts also appear in the "Models" section of the documentation even
+   * when they are only reachable through a generic or composed schema.
+   */
+  const extraModels = [
+    ErrorResponseDto,
+    PaginationMetaDto,
+    PaginationQueryDto,
+    PaginationResponseDto,
+    PostLikeResponseDto,
+    PostResponseDto,
+    CreatePostDto,
+    LikePostDto,
+    LikePostByIdDto,
+    UserResponseDto,
+    CreateUserDto,
+    UpdateUserDto,
+    AuthenticatedUserDto,
+    CredentialDto,
+    CredentialLoginDto,
+    JwtTokenResponse,
+    RefreshTokenDto,
+    GeneratePresignedUrlDto,
+    PresignedUrlResponseDto,
+  ];
+
   const openApiDocumentFactory = () =>
-    SwaggerModule.createDocument(app, configOpenApi);
+    SwaggerModule.createDocument(app, configOpenApi, { extraModels });
 
   app.use(
     '/docs',
@@ -103,17 +155,24 @@ async function bootstrap() {
       telemetry: false,
       hideClientButton: true,
       documentDownloadType: 'none',
+      persistAuth: true,
+      orderSchemaPropertiesBy: 'preserve',
       setPageTitle: ({ document }) => `${document.title}`,
     }),
   );
 
   /**
+   * Raw OpenAPI document, so code generators and other OpenAPI tooling can
+   * consume the same schema that backs the human-readable reference above.
+   */
+  const fastify = app.getHttpAdapter().getInstance();
+  fastify.get('/openapi.json', (_request, reply) => {
+    void reply.send(openApiDocumentFactory());
+  });
+
+  /**
    * Start the application
    */
-
-  // Bind to all interfaces so the containerised dev stack (compose.dev.yaml)
-  // is reachable through its published ports; Fastify would otherwise default
-  // to `localhost` and only accept connections from inside the container.
   await app.listen(Number(process.env.PORT ?? 3000), '0.0.0.0');
 }
 void bootstrap();
