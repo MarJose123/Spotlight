@@ -17,6 +17,9 @@ import { TokenCron } from './cron/token.cron';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { User } from '@/users/entities/user.entity';
 import { RefreshToken } from '@/auth/entities/refresh-token.entity';
+import { AuthController } from './auth.controller';
+import { OAuthService } from './oauth.service';
+import { ZohoStrategy } from './strategies/zoho.strategy';
 
 @Module({
   imports: [
@@ -34,7 +37,15 @@ import { RefreshToken } from '@/auth/entities/refresh-token.entity';
     }),
     MikroOrmModule.forFeature([User, RefreshToken]),
   ],
-  providers: [AuthService, JwtStrategy, TokenService, TokenCron],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    TokenService,
+    TokenCron,
+    ZohoStrategy,
+    OAuthService,
+  ],
   exports: [AuthService, PassportModule, JwtModule],
+  controllers: [AuthController],
 })
 export class AuthModule {}
