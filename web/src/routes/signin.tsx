@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { LogIn } from 'lucide-react';
 
 export const Route = createFileRoute('/signin')({
@@ -43,6 +43,7 @@ function SignIn() {
         <div className="flex flex-col items-center gap-1 mt-5">
           {PROVIDERS_SIGN_IN.map((provider) => (
             <button
+              type="button"
               key={provider.name}
               className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-4 py-2 text-sm font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
             >
