@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { Heart, LogIn, Megaphone, Newspaper, Users } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 
@@ -49,13 +49,13 @@ function Home() {
         <p className="mx-auto mt-5 mb-0 max-w-xs text-base leading-7 text-[var(--sea-ink-soft)]">
           Recognize great work across your team.
         </p>
-        <button
-          type="button"
+        <Link
+          to='/signin'
           className="mt-8 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-6 py-3 text-sm font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
         >
           <LogIn className="h-4 w-4" aria-hidden={true} />
           Sign in
-        </button>
+        </Link>
       </section>
 
       <section className="mx-auto mt-8 grid w-full max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
