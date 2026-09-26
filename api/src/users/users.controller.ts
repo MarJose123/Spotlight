@@ -10,8 +10,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -20,18 +18,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiConflictResponse,
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
 import { UsersService } from '@/users/users.service';
@@ -41,15 +28,18 @@ import type { AuthenticatedRequest } from '@/auth/interface/payload.interface';
 import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
 import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
-import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
+import { ApiAuthenticated } from '@/common/decorators/api-authenticated.decorator';
+import {
+  ApiCreateUser,
+  ApiCurrentUser,
+  ApiDeleteUser,
+  ApiGetUser,
+  ApiListUsers,
+  ApiUpdateUser,
+} from '@/users/decorators/user-api.decorator';
 
 @ApiTags('Users')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({
-  description: 'Missing or invalid access token.',
-  type: ErrorResponseDto,
-})
+@ApiAuthenticated()
 @Controller({
   path: 'users',
   version: '1',
@@ -58,11 +48,7 @@ import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({
-    summary: 'List users',
-    description: 'Return a paginated list of every user, newest first.',
-  })
-  @ApiPaginatedResponse(UserResponseDto, 'Paginated list of users.')
+  @ApiListUsers()
   @Get()
   findAll(
     @Query()
@@ -71,14 +57,7 @@ export class UsersController {
     return this.usersService.findAll(pagination);
   }
 
-  @ApiOperation({
-    summary: 'Get current user',
-    description: 'Profile of the currently authenticated user.',
-  })
-  @ApiOkResponse({
-    description: 'The authenticated user and their token claims.',
-    type: AuthenticatedUserDto,
-  })
+  @ApiCurrentUser()
   @Get('me')
   async profile(
     @Req() req: AuthenticatedRequest,
@@ -86,19 +65,7 @@ export class UsersController {
     return req.user;
   }
 
-  @ApiOperation({
-    summary: 'Get user by id',
-    description: 'Get a single user based on the supplied id.',
-  })
-  @ApiParam({ name: 'id', description: 'Id of the user.', format: 'uuid' })
-  @ApiOkResponse({
-    description: 'The requested user.',
-    type: UserResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'No user exists with the supplied id.',
-    type: ErrorResponseDto,
-  })
+  @ApiGetUser()
   @Get(':id')
   async findById(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
@@ -106,36 +73,13 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
-  @ApiOperation({
-    summary: 'Create user',
-    description: 'Create a new user.',
-  })
-  @ApiCreatedResponse({
-    description: 'The user has been created.',
-    type: UserResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'A user with the same email or username already exists.',
-    type: ErrorResponseDto,
-  })
+  @ApiCreateUser()
   @Post()
   async create(@Body() dto: CreateUserDto): Promise<UserResponseDto | null> {
     return this.usersService.create(dto);
   }
 
-  @ApiOperation({
-    summary: 'Update user',
-    description: 'Update the record of an existing user.',
-  })
-  @ApiParam({ name: 'id', description: 'Id of the user.', format: 'uuid' })
-  @ApiOkResponse({
-    description: 'The updated user.',
-    type: UserResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'No user exists with the supplied id.',
-    type: ErrorResponseDto,
-  })
+  @ApiUpdateUser()
   @Patch(':id')
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
@@ -144,18 +88,8 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
-  @ApiOperation({
-    summary: 'Delete user',
-    description: 'Delete the record of an existing user.',
-  })
-  @ApiParam({ name: 'id', description: 'Id of the user.', format: 'uuid' })
-  @ApiNoContentResponse({ description: 'The record has been deleted.' })
-  @ApiNotFoundResponse({
-    description: 'No user exists with the supplied id.',
-    type: ErrorResponseDto,
-  })
+  @ApiDeleteUser()
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<void> {
