@@ -21,6 +21,9 @@ import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
 export const INVALID_CREDENTIALS_MESSAGE =
   'These credentials do not match our records.';
 
+/** Must stay in step with `signOptions.expiresIn` in `auth.module.ts`. */
+export const ACCESS_TOKEN_TTL_SECONDS = 300;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -59,14 +62,18 @@ export class AuthService {
       });
     }
 
-    const token = this.tokenService.createAccessToken(user);
+    return this.issueTokensFor(user);
+  }
+
+  /** Shared by password login and social sign-in, so both yield one session. */
+  async issueTokensFor(user: User): Promise<JwtTokenResponse> {
+    const accessToken = this.tokenService.createAccessToken(user);
     const refreshToken = this.tokenService.createRefreshToken();
-    const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
 
     const refreshTokenModel = new RefreshToken();
     Object.assign(refreshTokenModel, {
       userId: user.id,
-      tokenHash,
+      tokenHash: this.tokenService.hashRefreshToken(refreshToken),
       expiresAt: this.getRefreshTokenExpiration(),
     });
 
@@ -75,9 +82,9 @@ export class AuthService {
 
     return JwtTokenMapper.toResponse({
       user,
-      access_token: token,
+      access_token: accessToken,
       refresh_token: refreshToken,
-      expires_in: 300,
+      expires_in: ACCESS_TOKEN_TTL_SECONDS,
       token_type: 'Bearer',
     });
   }
@@ -112,7 +119,7 @@ export class AuthService {
       user,
       access_token: newAccessToken,
       refresh_token: token,
-      expires_in: 300,
+      expires_in: ACCESS_TOKEN_TTL_SECONDS,
       token_type: 'Bearer',
     });
   }
