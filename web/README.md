@@ -1,204 +1,68 @@
-Welcome to your new TanStack Start app!
+# Spotlight Web
 
-# Getting Started
+The frontend for [Spotlight](../README.md), an internal recognition tool for
+celebrating coworkers. Routes render on the server first and then hydrate, so the
+first paint is real HTML and navigation stays client-side after that.
 
-To run this application:
+- **Framework** — React 19 with TanStack Start (SSR) and TanStack Router (file-based routes)
+- **Data** — TanStack Query, wired for SSR through `@tanstack/react-router-ssr-query`
+- **UI** — Mantine 9 components, Tailwind CSS 4 for layout and design tokens
+- **Validation** — Zod 4 schemas applied to forms with `mantine-form-zod-resolver`
+- **Icons** — `lucide-react`, plus inline SVG brand marks for sign-in providers
+- **Tooling** — Vite 8, Biome 2, Bun
+
+## Getting Started
+
+### With Docker (from the repository root)
+
+```bash
+docker compose -f compose.dev.yaml up
+```
+
+- Web: <http://localhost:5173>
+- API: <http://localhost:3000/api/v1>, interactive docs at <http://localhost:3000/docs>
+
+The `spotlight-web` service bind-mounts this directory and keeps `node_modules` in
+a named volume. Its entry point re-runs `bun install` when the workspace manifest,
+lockfile or Bun version changes, so routine `up` calls do not hit the registry.
+
+### On the host
 
 ```bash
 bun install
-bun --bun run dev
+bun run dev
 ```
 
-# Building For Production
+This serves <http://localhost:5173> and expects the API at
+<http://localhost:3000>, the default the dev server proxies `/api` to.
 
-To build this application for production:
+## Environment
 
-```bash
-bun --bun run build
-```
+Both variables have working defaults, so a `.env` file is optional — see
+[`.env.example`](./.env.example).
 
-## Styling
+| Variable | Read by | Default | Purpose |
+| --- | --- | --- | --- |
+| `VITE_API_URL` | the browser | empty | Absolute API origin. Empty means the app calls `/api/v1` on its own origin and lets the dev proxy (or a reverse proxy in production) forward it. Inlined into the client bundle, so it must be set before the server starts or the bundle is built. |
+| `API_INTERNAL_URL` | the server (SSR) and the dev proxy | `http://localhost:3000` | Where the API answers on the server's own network. Compose sets `http://spotlight-api:3000`. No `VITE_` prefix, so it never reaches the browser. |
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+Two origins are needed because the browser cannot resolve a Compose service name
+and a container cannot use the host's `localhost`: server rendering calls the API
+directly, while the browser calls the web origin and [`vite.config.ts`](./vite.config.ts)
+proxies `/api` to the same target.
 
-### Removing Tailwind CSS
+## Scripts
 
-If you prefer not to use Tailwind CSS:
+| Script | Runs |
+| --- | --- |
+| `bun run dev` | Vite dev server on port 5173 |
+| `bun run build` | Production build into `dist/` (client and server bundles) |
+| `bun run preview` | Serves the built output |
+| `bun run generate-routes` | Regenerates `src/routeTree.gen.ts` |
+| `bun run check` | Biome lint and format check |
+| `bun run lint` / `format` | Biome lint only / format only |
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
-
-
-# License
+## License
 
 Copyright (C) 2026 Marjose Darang
 
