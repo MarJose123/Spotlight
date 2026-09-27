@@ -6,6 +6,10 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import {
+  StatusErrorBoundary,
+  StatusNotFound,
+} from './components/status/boundaries'
 import { routeTree } from './routeTree.gen'
 
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
@@ -17,6 +21,10 @@ export function getRouter() {
   const router = createTanStackRouter({
     routeTree,
     context,
+    // TanStack Router resolves these per route and does not inherit them from
+    // the root route, so register the status pages at the router level too.
+    defaultErrorComponent: StatusErrorBoundary,
+    defaultNotFoundComponent: StatusNotFound,
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,

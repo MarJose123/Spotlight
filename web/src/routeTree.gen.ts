@@ -1,3 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Marjose Darang
+ * SPDX-License-Identifier: AGPL-3.0
+ *
+ * Part of Spotlight. Licensed under the GNU Affero General Public License,
+ * version 3 only. See the LICENSE file at the repository root for the full terms.
+ */
+
 /* eslint-disable */
 
 // @ts-nocheck
@@ -10,12 +18,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as R401RouteImport } from './routes/401'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SigninRouteImport } from './routes/signin'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R401Route = R401RouteImport.update({
+  id: '/401',
+  path: '/401',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -31,30 +45,34 @@ const SigninRoute = SigninRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/signin'
+  fullPaths: '/' | '/401' | '/about' | '/signin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/signin'
-  id: '__root__' | '/' | '/about' | '/signin'
+  to: '/' | '/401' | '/about' | '/signin'
+  id: '__root__' | '/' | '/401' | '/about' | '/signin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R401Route: typeof R401Route
   AboutRoute: typeof AboutRoute
   SigninRoute: typeof SigninRoute
 }
@@ -66,6 +84,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/401': {
+      id: '/401'
+      path: '/401'
+      fullPath: '/401'
+      preLoaderRoute: typeof R401RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -87,6 +112,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R401Route: R401Route,
   AboutRoute: AboutRoute,
   SigninRoute: SigninRoute,
 }
