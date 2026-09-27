@@ -13,11 +13,19 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const apiOrigin = process.env.API_INTERNAL_URL ?? 'http://localhost:3000'
+
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
   server: {
     host: true,
+    proxy: {
+      '/api': {
+        target: apiOrigin,
+        changeOrigin: true,
+      },
+    },
   }
 })
 

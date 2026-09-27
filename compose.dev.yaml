@@ -78,9 +78,15 @@ services:
           memory: 256M
     working_dir: /usr/src/spotlight
     command: ["bun", "run", "--cwd", "web", "dev"]
+    env_file:
+      - path: ./web/.env
+        required: false
     environment:
       # Workspace whose node_modules the entry point keeps in sync with bun.lock.
       SPOTLIGHT_WORKSPACE: web
+      # Origin the API answers on inside the compose network. The browser cannot
+      # resolve this service name, so the Vite dev proxy forwards /api here.
+      API_INTERNAL_URL: http://spotlight-api:3000
     volumes:
       - ./web:/usr/src/spotlight/web
       - web-node-modules:/usr/src/spotlight/web/node_modules
