@@ -5,6 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
+import { useMantineColorScheme } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { Monitor, Moon, Sun } from 'lucide-react';
 
@@ -30,6 +31,9 @@ function applyThemeMode(mode: ThemeMode) {
   document.documentElement.classList.remove('light', 'dark')
   document.documentElement.classList.add(resolved)
 
+  // Mantine reads its scheme from this attribute, not the class, so both move.
+  document.documentElement.setAttribute('data-mantine-color-scheme', resolved)
+
   if (mode === 'auto') {
     document.documentElement.removeAttribute('data-theme')
   } else {
@@ -41,6 +45,7 @@ function applyThemeMode(mode: ThemeMode) {
 
 export default function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>('auto')
+  const { setColorScheme } = useMantineColorScheme()
 
   useEffect(() => {
     const initialMode = getInitialMode()
@@ -67,6 +72,8 @@ export default function ThemeToggle() {
       mode === 'light' ? 'dark' : mode === 'dark' ? 'auto' : 'light'
     setMode(nextMode)
     applyThemeMode(nextMode)
+    // Keep Mantine's in-memory scheme in step with the `theme` key below.
+    setColorScheme(nextMode)
     window.localStorage.setItem('theme', nextMode)
   }
 
