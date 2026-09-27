@@ -6,52 +6,127 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { createFileRoute } from '@tanstack/react-router';
-import { LogIn } from 'lucide-react';
+import {
+  Alert,
+  Button,
+  Divider,
+  Group,
+  Paper,
+  PasswordInput,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { useForm } from '@mantine/form'
+import { createFileRoute } from '@tanstack/react-router'
+import { TriangleAlert } from 'lucide-react'
+import { zod4Resolver } from 'mantine-form-zod-resolver'
+import { ProviderButton } from '../components/auth/ProviderButton'
+import { fetchEnabledProviders } from '../lib/api'
+import { type SignInValues, signInSchema } from '../lib/schemas/auth'
 
 export const Route = createFileRoute('/signin')({
+  loader: () => fetchEnabledProviders(),
+  head: () => ({
+    meta: [{ title: 'Sign in · Spotlight' }],
+  }),
   component: SignIn,
 })
 
-const PROVIDERS_SIGN_IN: Array<{ name: string, label: string, }>  = [
-  {
-    name: 'google',
-    label: 'Google'
-  },
-  {
-    name: 'microsoft',
-    label: 'Microsoft'
-  },
-  {
-    name: 'zoho',
-    label: 'Zoho'
-  }
-]
-
 function SignIn() {
+  const { ids, reachable } = Route.useLoaderData()
+  const hasSso = ids.length > 0
+
+  const form = useForm<SignInValues>({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+
+    validate: zod4Resolver(signInSchema),
+  })
+
   return (
     <main className="page-wrap px-4 py-16">
-      <section className="island-shell rise-in mx-auto w-full max-w-md rounded-[2rem] px-8 py-14 text-center">
-        <p className="island-kicker mb-4">Internal recognition</p>
-        <h1 className="display-title m-0 text-5xl font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Spotlight
-        </h1>
-        <p className="mx-auto mt-5 mb-0 max-w-xs text-base leading-4 text-[var(--sea-ink-soft)]">
-          Celebrate great work. Recognize your teammates.
-        </p>
+      <section className="mx-auto w-full max-w-md">
+        <Stack align="center" gap="xs" mb="lg">
+          <Text className="island-kicker">Internal recognition</Text>
+          <Title order={1} fz={{ base: 40, sm: 56 }}>
+            Spotlight
+          </Title>
+          <Text c="dimmed" size="sm" ta="center">
+            Celebrate great work. Recognize your teammates.
+          </Text>
+        </Stack>
 
-        <div className="flex flex-col items-center gap-1 mt-5">
-          {PROVIDERS_SIGN_IN.map((provider) => (
-            <button
-              type="button"
-              key={provider.name}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-4 py-2 text-sm font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-            >
-              <LogIn className="h-4 w-4" aria-hidden={true} />
-              Sign in with {provider.label}
-            </button>
-          ))}
-        </div>
+        <Paper radius="lg" p="lg" withBorder className="rise-in">
+          <Stack gap="lg">
+            <div>
+              <Text size="lg" fw={500} c="bright">
+                {hasSso
+                  ? 'Welcome to Spotlight, sign in with'
+                  : 'Sign in to Spotlight'}
+              </Text>
+
+              {hasSso && (
+                // A row would squeeze long provider names into ellipses.
+                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs" mt="md">
+                  {ids.map((provider) => (
+                    <ProviderButton key={provider} provider={provider} />
+                  ))}
+                </SimpleGrid>
+              )}
+            </div>
+
+            {hasSso && (
+              <Divider label="Or continue with email" labelPosition="center" />
+            )}
+
+            {!reachable && (
+              <Alert
+                color="yellow"
+                variant="light"
+                icon={<TriangleAlert size={16} aria-hidden="true" />}
+              >
+                Single sign-on providers could not be loaded. Refresh the page to
+                try again.
+              </Alert>
+            )}
+
+            <form onSubmit={form.onSubmit(() => {})}>
+              <Stack>
+                <TextInput
+                  withAsterisk
+                  label="Email"
+                  placeholder="you@company.com"
+                  autoComplete="email"
+                  radius="md"
+                  {...form.getInputProps('email')}
+                />
+
+                <PasswordInput
+                  withAsterisk
+                  label="Password"
+                  placeholder="Your password"
+                  autoComplete="current-password"
+                  radius="md"
+                  {...form.getInputProps('password')}
+                />
+              </Stack>
+
+              <Group justify="space-between" align="center" mt="xl" gap="sm">
+                <Text size="xs" c="dimmed">
+                  Accounts are provisioned by an administrator.
+                </Text>
+                <Button type="submit" radius="xl">
+                  Sign in
+                </Button>
+              </Group>
+            </form>
+          </Stack>
+        </Paper>
       </section>
     </main>
   )
