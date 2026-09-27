@@ -13,7 +13,6 @@ import StatusPage, {
 } from './StatusPage'
 
 type UnauthorizedPageProps = {
-  /** Page the visitor was heading to before authentication was required. */
   redirectTo?: string
 }
 

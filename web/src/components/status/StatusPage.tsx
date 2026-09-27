@@ -23,10 +23,6 @@ type StatusPageProps = {
   actions?: ReactNode
 }
 
-/**
- * Shared shell for the HTTP status pages (401, 404, 500) so every failure mode
- * looks like Spotlight instead of a bare browser error.
- */
 export default function StatusPage({
   code,
   kicker,

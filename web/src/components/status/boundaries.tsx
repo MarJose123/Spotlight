@@ -12,7 +12,6 @@ import ServerErrorPage from './ServerErrorPage'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
 /**
- * Rendered when a URL matches no route, or when a loader calls `notFound()`.
  * Registered on the root route and as the router-wide
  * `defaultNotFoundComponent`, because TanStack Router does not inherit
  * not-found components down the route tree.
@@ -26,9 +25,8 @@ export function StatusNotFound() {
 }
 
 /**
- * Rendered when a loader, server function, or route component throws.
- * Registered on the root route and as the router-wide
- * `defaultErrorComponent`, which is what child routes actually fall back to.
+ * Registered on the root route and as the router-wide `defaultErrorComponent`,
+ * which is what child routes actually fall back to.
  *
  * Missing sessions do not belong here: throw `throwUnauthorized()` from a
  * `beforeLoad` guard instead, because an error's HTTP status does not survive

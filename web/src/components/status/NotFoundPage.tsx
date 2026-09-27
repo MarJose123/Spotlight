@@ -10,7 +10,6 @@ import { Compass, Home } from 'lucide-react'
 import StatusPage, { statusPrimaryActionClass } from './StatusPage'
 
 type NotFoundPageProps = {
-  /** Path the visitor tried to open, when known. */
   pathname?: string
 }
 

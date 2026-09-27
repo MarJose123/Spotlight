@@ -17,7 +17,6 @@ type ServerErrorPageProps = {
   reset?: () => void
 }
 
-/** Best-effort human-readable detail for the dev-only technical block. */
 function describeError(error: unknown): string | null {
   if (typeof error === 'string') return error
   if (error instanceof Error) {
