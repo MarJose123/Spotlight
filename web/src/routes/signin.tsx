@@ -7,127 +7,180 @@
  */
 
 import {
-  Alert,
-  Button,
-  Divider,
-  Group,
-  Paper,
-  PasswordInput,
-  SimpleGrid,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from '@mantine/core'
-import { useForm } from '@mantine/form'
-import { createFileRoute } from '@tanstack/react-router'
-import { TriangleAlert } from 'lucide-react'
-import { zod4Resolver } from 'mantine-form-zod-resolver'
-import { ProviderButton } from '../components/auth/ProviderButton'
-import { fetchEnabledProviders } from '../lib/api'
-import { type SignInValues, signInSchema } from '../lib/schemas/auth'
+	Alert,
+	Button,
+	Divider,
+	Group,
+	Paper,
+	PasswordInput,
+	SimpleGrid,
+	Stack,
+	Text,
+	TextInput,
+	Title,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { createFileRoute } from "@tanstack/react-router";
+import { TriangleAlert } from "lucide-react";
+import { zod4Resolver } from "mantine-form-zod-resolver";
+import { useState } from "react";
+import { ProviderButton } from "../components/auth/ProviderButton";
+import { fetchEnabledProviders } from "../lib/api";
+import {
+	errorMessage,
+	postSignInTarget,
+	signInWithPassword,
+} from "../lib/auth";
+import { type SignInValues, signInSchema } from "../lib/schemas/auth";
 
-export const Route = createFileRoute('/signin')({
-  loader: () => fetchEnabledProviders(),
-  head: () => ({
-    meta: [{ title: 'Sign in · Spotlight' }],
-  }),
-  component: SignIn,
-})
+type SignInSearch = {
+	redirect?: string;
+};
+
+export const Route = createFileRoute("/signin")({
+	validateSearch: (search: Record<string, unknown>): SignInSearch => ({
+		redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+	}),
+	loader: () => fetchEnabledProviders(),
+	head: () => ({
+		meta: [{ title: "Sign in · Spotlight" }],
+	}),
+	component: SignIn,
+});
 
 function SignIn() {
-  const { ids, reachable } = Route.useLoaderData()
-  const hasSso = ids.length > 0
+	const { ids, reachable } = Route.useLoaderData();
+	const { redirect } = Route.useSearch();
+	const hasSso = ids.length > 0;
+	const [failure, setFailure] = useState<string | null>(null);
+	const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm<SignInValues>({
-    initialValues: {
-      email: '',
-      password: '',
-    },
+	const form = useForm<SignInValues>({
+		initialValues: {
+			email: "",
+			password: "",
+		},
 
-    validate: zod4Resolver(signInSchema),
-  })
+		validate: zod4Resolver(signInSchema),
+	});
 
-  return (
-    <main className="page-wrap px-4 py-16">
-      <section className="mx-auto w-full max-w-md">
-        <Stack align="center" gap="xs" mb="lg">
-          <Text className="island-kicker">Internal recognition</Text>
-          <Title order={1} fz={{ base: 40, sm: 56 }}>
-            Spotlight
-          </Title>
-          <Text c="dimmed" size="sm" ta="center">
-            Celebrate great work. Recognize your teammates.
-          </Text>
-        </Stack>
+	const submit = async (values: SignInValues) => {
+		setFailure(null);
+		setSubmitting(true);
 
-        <Paper radius="lg" p="lg" withBorder className="rise-in">
-          <Stack gap="lg">
-            <div>
-              <Text size="lg" fw={500} c="bright">
-                {hasSso
-                  ? 'Welcome to Spotlight, sign in with'
-                  : 'Sign in to Spotlight'}
-              </Text>
+		try {
+			await signInWithPassword(values);
+			// A full load, so the first render after sign-in already sees the session.
+			window.location.assign(postSignInTarget(redirect));
+		} catch (error) {
+			setSubmitting(false);
+			setFailure(errorMessage(error, "Sign-in failed. Try again."));
+		}
+	};
 
-              {hasSso && (
-                // A row would squeeze long provider names into ellipses.
-                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs" mt="md">
-                  {ids.map((provider) => (
-                    <ProviderButton key={provider} provider={provider} />
-                  ))}
-                </SimpleGrid>
-              )}
-            </div>
+	return (
+		<main className="page-wrap px-4 py-16">
+			<section className="mx-auto w-full max-w-md">
+				<Stack align="center" gap="xs" mb="lg">
+					<Text className="island-kicker">Internal recognition</Text>
+					<Title order={1} fz={{ base: 40, sm: 56 }}>
+						Spotlight
+					</Title>
+					<Text c="dimmed" size="sm" ta="center">
+						Celebrate great work. Recognize your teammates.
+					</Text>
+				</Stack>
 
-            {hasSso && (
-              <Divider label="Or continue with email" labelPosition="center" />
-            )}
+				<Paper radius="lg" p="lg" withBorder className="rise-in">
+					<Stack gap="lg">
+						<div>
+							<Text size="lg" fw={500} c="bright">
+								{hasSso
+									? "Welcome to Spotlight, sign in with"
+									: "Sign in to Spotlight"}
+							</Text>
 
-            {!reachable && (
-              <Alert
-                color="yellow"
-                variant="light"
-                icon={<TriangleAlert size={16} aria-hidden="true" />}
-              >
-                Single sign-on providers could not be loaded. Refresh the page to
-                try again.
-              </Alert>
-            )}
+							{hasSso && (
+								// A row would squeeze long provider names into ellipses.
+								<SimpleGrid
+									cols={ids.length === 1 ? 1 : { base: 1, xs: 2 }}
+									spacing="xs"
+									mt="md"
+								>
+									{ids.map((provider) => (
+										<ProviderButton
+											key={provider}
+											provider={provider}
+											redirectTo={redirect}
+											onError={setFailure}
+										/>
+									))}
+								</SimpleGrid>
+							)}
+						</div>
 
-            <form onSubmit={form.onSubmit(() => {})}>
-              <Stack>
-                <TextInput
-                  withAsterisk
-                  label="Email"
-                  placeholder="you@company.com"
-                  autoComplete="email"
-                  radius="md"
-                  {...form.getInputProps('email')}
-                />
+						{hasSso && (
+							<Divider label="Or continue with email" labelPosition="center" />
+						)}
 
-                <PasswordInput
-                  withAsterisk
-                  label="Password"
-                  placeholder="Your password"
-                  autoComplete="current-password"
-                  radius="md"
-                  {...form.getInputProps('password')}
-                />
-              </Stack>
+						{failure && (
+							<Alert
+								color="red"
+								variant="light"
+								icon={<TriangleAlert size={16} aria-hidden="true" />}
+							>
+								{failure}
+							</Alert>
+						)}
 
-              <Group justify="space-between" align="center" mt="xl" gap="sm">
-                <Text size="xs" c="dimmed">
-                  Accounts are provisioned by an administrator.
-                </Text>
-                <Button type="submit" radius="xl">
-                  Sign in
-                </Button>
-              </Group>
-            </form>
-          </Stack>
-        </Paper>
-      </section>
-    </main>
-  )
+						{!reachable && (
+							<Alert
+								color="yellow"
+								variant="light"
+								icon={<TriangleAlert size={16} aria-hidden="true" />}
+							>
+								Single sign-on providers could not be loaded. Refresh the page
+								to try again.
+							</Alert>
+						)}
+
+						<form
+							onSubmit={form.onSubmit((values) => {
+								void submit(values);
+							})}
+						>
+							<Stack>
+								<TextInput
+									withAsterisk
+									label="Email"
+									placeholder="you@company.com"
+									autoComplete="email"
+									radius="md"
+									{...form.getInputProps("email")}
+								/>
+
+								<PasswordInput
+									withAsterisk
+									label="Password"
+									placeholder="Your password"
+									autoComplete="current-password"
+									radius="md"
+									{...form.getInputProps("password")}
+								/>
+							</Stack>
+
+							<Group justify="space-between" align="center" mt="xl" gap="sm">
+								<Text size="xs" c="dimmed">
+									Accounts are provisioned by an administrator.
+								</Text>
+								<Button type="submit" radius="xl" loading={submitting}>
+									Sign in
+								</Button>
+							</Group>
+						</form>
+					</Stack>
+				</Paper>
+			</section>
+		</main>
+	);
 }
