@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { redirect } from '@tanstack/react-router'
+import { redirect } from "@tanstack/react-router";
 
 /**
  * Sends a visitor without a session to the 401 page, remembering where they
@@ -24,8 +24,8 @@ import { redirect } from '@tanstack/react-router'
  * client-side navigation after hydration.
  */
 export function throwUnauthorized(redirectTo?: string): never {
-  throw redirect({
-    to: '/401',
-    search: { redirect: redirectTo },
-  })
+	throw redirect({
+		to: "/401",
+		search: { redirect: redirectTo },
+	});
 }

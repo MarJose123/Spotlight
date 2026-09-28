@@ -5,11 +5,11 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { useRouter, useRouterState } from '@tanstack/react-router'
-import NotFoundPage from './NotFoundPage'
-import ServerErrorPage from './ServerErrorPage'
 
-import type { ErrorComponentProps } from '@tanstack/react-router'
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
+import NotFoundPage from "./NotFoundPage";
+import ServerErrorPage from "./ServerErrorPage";
 
 /**
  * Registered on the root route and as the router-wide
@@ -17,11 +17,11 @@ import type { ErrorComponentProps } from '@tanstack/react-router'
  * not-found components down the route tree.
  */
 export function StatusNotFound() {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
 
-  return <NotFoundPage pathname={pathname} />
+	return <NotFoundPage pathname={pathname} />;
 }
 
 /**
@@ -33,13 +33,13 @@ export function StatusNotFound() {
  * the server-to-client payload and would hydrate into the wrong page.
  */
 export function StatusErrorBoundary({ error, reset }: ErrorComponentProps) {
-  const router = useRouter()
+	const router = useRouter();
 
-  // Clear the boundary and re-run whatever failed before showing this page.
-  const retry = () => {
-    reset?.()
-    void router.invalidate()
-  }
+	// Clear the boundary and re-run whatever failed before showing this page.
+	const retry = () => {
+		reset?.();
+		void router.invalidate();
+	};
 
-  return <ServerErrorPage error={error} reset={retry} />
+	return <ServerErrorPage error={error} reset={retry} />;
 }

@@ -5,13 +5,13 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
 export function getContext() {
-  const queryClient = new QueryClient()
+	const queryClient = new QueryClient();
 
-  return {
-    queryClient,
-  }
+	return {
+		queryClient,
+	};
 }
 export default function TanstackQueryProvider() {}

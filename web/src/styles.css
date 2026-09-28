@@ -474,3 +474,62 @@ a {
   }
 }
 
+/*
+ * Feed (`/feed`). The feed keeps its own layout tokens so the hand-off's
+ * proportions survive, but every colour follows the scheme the theme toggle and
+ * the init script resolve — light, dark and auto all render the feed.
+ */
+.spotlight-feed {
+  --feed-panel: #f3f6f9;
+  --feed-card: #ffffff;
+  --feed-card-hover: #f1f5f8;
+  --feed-inset: #eef2f6;
+  --feed-line: #e0e7ee;
+  --feed-line-soft: #eaf0f4;
+  --feed-ink: #14313a;
+  --feed-ink-soft: #4c6874;
+  --feed-ink-dim: #7a8e99;
+  --feed-accent: #0b7ec4;
+  --feed-chip: #14313a;
+  --feed-chip-ink: #ffffff;
+  --feed-hover: rgba(20, 49, 58, 0.05);
+  --feed-avatar-ring: rgba(20, 49, 58, 0.1);
+  color: var(--feed-ink);
+  background-color: var(--feed-panel);
+  /* The shell owns the viewport; the columns scroll inside it. `dvh` keeps the
+     bottom row visible while mobile browser chrome collapses. */
+  height: 100vh;
+  height: 100dvh;
+}
+
+:root[data-mantine-color-scheme='dark'] .spotlight-feed {
+  --feed-panel: #0b0f15;
+  --feed-card: #111720;
+  --feed-card-hover: #151d27;
+  --feed-inset: #19212b;
+  --feed-line: #222b37;
+  --feed-line-soft: #1a222c;
+  --feed-ink: #e9eef4;
+  --feed-ink-soft: #9aa6b4;
+  --feed-ink-dim: #6d7886;
+  --feed-accent: #1d9bf0;
+  --feed-chip: #eef2f6;
+  --feed-chip-ink: #0b0f15;
+  --feed-hover: rgba(255, 255, 255, 0.06);
+  --feed-avatar-ring: rgba(255, 255, 255, 0.12);
+}
+
+/* `auto` on every column: a rail only shows a scrollbar on a viewport too short
+   for it, so in practice the recognition column is the one that scrolls. The bar
+   itself is hidden — the post cut off at the column edge is the scroll cue — and
+   neither engine family needs layout space for it. */
+.spotlight-feed-column {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.spotlight-feed-column::-webkit-scrollbar {
+  display: none;
+}
+
+

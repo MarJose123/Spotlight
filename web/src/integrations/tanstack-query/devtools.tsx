@@ -5,9 +5,9 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
+import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 
 export default {
-  name: 'Tanstack Query',
-  render: <ReactQueryDevtoolsPanel />,
-}
+	name: "Tanstack Query",
+	render: <ReactQueryDevtoolsPanel />,
+};

@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { z } from 'zod'
+import { z } from "zod";
 
 /**
  * Mirrors the API's `CredentialLoginDto`: login needs a valid email and a
@@ -14,8 +14,8 @@ import { z } from 'zod'
  * credential issued under older rules.
  */
 export const signInSchema = z.object({
-  email: z.email('Enter a valid email address'),
-  password: z.string().min(1, 'Enter your password'),
-})
+	email: z.email("Enter a valid email address"),
+	password: z.string().min(1, "Enter your password"),
+});
 
-export type SignInValues = z.infer<typeof signInSchema>
+export type SignInValues = z.infer<typeof signInSchema>;
