@@ -32,6 +32,7 @@ export class AuthController {
 
   @ApiSsoAuthorizeUrl()
   @Get(':provider/authorize-url')
+  @Throttle({ default: { limit: 3, blockDuration: minutes(5) } })
   getAuthorizeUrl(
     @Param('provider') provider: string,
     @Query() query: OAuthAuthorizeQueryDto,
