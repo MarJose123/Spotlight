@@ -52,11 +52,13 @@ services:
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 12s
+      start_period: 10s
     depends_on:
       spotlight-db:
         condition: service_healthy
       spotlight-bucket:
+        condition: service_healthy
+      spotlight-mailpit:
         condition: service_healthy
     networks:
       - spotlight
