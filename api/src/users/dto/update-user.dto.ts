@@ -7,10 +7,30 @@
  */
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { UserStatus } from '@/users/enums/status.enum';
 
+
 export class UpdateUserDto extends PartialType(CreateUserDto) {
+  @ApiPropertyOptional({
+    description: "URL of the user's avatar image.",
+    format: 'uri',
+    nullable: true,
+    example: 'https://cdn.example.com/avatars/jane.png',
+  })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @ApiPropertyOptional({
+    description: 'Unique handle for the user.',
+    nullable: true,
+    example: 'jane.doe',
+  })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
   @ApiPropertyOptional({
     description: 'Account status of the user.',
     enum: UserStatus,

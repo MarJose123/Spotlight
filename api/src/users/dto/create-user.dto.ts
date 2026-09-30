@@ -6,6 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -15,26 +16,8 @@ import {
   MinLength,
 } from 'class-validator';
 
+
 export class CreateUserDto {
-  @ApiPropertyOptional({
-    description: "URL of the user's avatar image.",
-    format: 'uri',
-    nullable: true,
-    example: 'https://cdn.example.com/avatars/jane.png',
-  })
-  @IsOptional()
-  @IsString()
-  avatar: string | undefined;
-
-  @ApiPropertyOptional({
-    description: 'Unique handle for the user.',
-    nullable: true,
-    example: 'jane.doe',
-  })
-  @IsOptional()
-  @IsString()
-  username: string | undefined;
-
   @ApiProperty({
     description: 'Display name of the user.',
     maxLength: 100,
@@ -46,23 +29,27 @@ export class CreateUserDto {
   name!: string;
 
   @ApiProperty({
-    description: 'Email address used to sign in.',
+    description: 'Email address used to sign in using credentials or SSO',
     format: 'email',
     example: 'jane.doe@example.com',
   })
+
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({
-    description: 'Plain-text password (hashed before storage).',
+  @ApiPropertyOptional({
     format: 'password',
     minLength: 8,
     maxLength: 72,
     example: 'correct-horse-battery',
   })
+  @IsOptional()
   @IsString()
   @MinLength(8)
   @MaxLength(72)
-  password!: string;
+  password?: string;
 }
