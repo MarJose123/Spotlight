@@ -49,7 +49,7 @@ export class AppController {
     @Body('refresh_token') refreshToken: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    const userId = req.user?.sub;
+    const userId = req.auth?.sub;
     if (!userId) {
       throw new UnauthorizedException();
     }
