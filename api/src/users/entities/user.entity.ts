@@ -6,6 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import {
+  BeforeCreate,
+  BeforeUpdate,
   Entity,
   Enum,
   Index,
@@ -67,4 +69,12 @@ export class User {
 
   @Property({ onUpdate: () => new Date() })
   updatedAt: Date = new Date();
+
+  @BeforeCreate()
+  @BeforeUpdate()
+  private normalizeEmail(): void {
+    if (typeof this.email === 'string') {
+      this.email = this.email.trim().toLowerCase();
+    }
+  }
 }
