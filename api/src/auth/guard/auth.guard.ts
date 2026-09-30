@@ -11,7 +11,8 @@ import { AuthGuard } from '@nestjs/passport';
 /**
  * Authenticates a request with the `jwt` Passport strategy. The inherited
  * `canActivate` runs `JwtStrategy.validate` and assigns its return value to
- * `request.user`, so no custom token handling is needed here.
+ * `request.auth` (see `PassportModule.register` in `AuthModule`), so no custom
+ * token handling is needed here.
  */
 @Injectable()
 export class Auth extends AuthGuard('jwt') {}

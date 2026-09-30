@@ -33,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   /**
    * Resolves the verified token's subject against a live, active user, so
    * deleted and deactivated users lose access immediately. Whatever this
-   * returns becomes `request.user`.
+   * returns becomes `request.auth`.
    */
   async validate(
     payload: VerifiedPayloadInterface,

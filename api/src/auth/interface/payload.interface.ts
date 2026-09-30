@@ -23,6 +23,11 @@ export interface VerifiedPayloadInterface extends PayloadInterface {
 }
 
 export interface AuthenticatedRequest extends FastifyRequest {
-  /** The authenticated profile and token claims, attached by the `Auth` guard. */
-  user: AuthenticatedUserDto | null;
+  /**
+   * The authenticated profile and token claims, attached by the `Auth` guard.
+   *
+   * The property name comes from `PassportModule.register({ property: 'auth' })`
+   * in `AuthModule`, not Passport's default of `user`.
+   */
+  auth: AuthenticatedUserDto | null;
 }

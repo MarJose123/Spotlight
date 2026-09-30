@@ -24,7 +24,7 @@ import { ZohoStrategy } from './strategies/zoho.strategy';
 @Module({
   imports: [
     ConfigModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({ defaultStrategy: 'jwt', property: 'auth' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

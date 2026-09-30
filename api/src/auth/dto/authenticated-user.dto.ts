@@ -9,7 +9,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 /**
- * The authenticated principal attached to `request.user`.
+ * The authenticated principal attached to `request.auth`.
  *
  * The access token's claims sit at the top level and the user's profile is
  * nested under `user`, so handlers (and clients) can read the token lifetime
