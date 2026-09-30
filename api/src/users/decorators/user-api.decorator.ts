@@ -9,6 +9,7 @@ import { HttpCode, HttpStatus, applyDecorators } from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -68,14 +69,20 @@ export const ApiCreateUser = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Create user',
-      description: 'Create a new user.',
+      description:
+        "Provision a user from a name and email address. **Requires an administrator account**: the authenticated user's type must be `ADMIN`, otherwise the request is rejected with 403. The password is optional, so an SSO-only account can be created. `username` and `avatar` are not accepted here; the identity provider claims them on first sign-in.",
     }),
     ApiCreatedResponse({
       description: 'The user has been created.',
       type: UserResponseDto,
     }),
+    ApiForbiddenResponse({
+      description:
+        'The authenticated user is not an administrator and may not create accounts.',
+      type: ErrorResponseDto,
+    }),
     ApiConflictResponse({
-      description: 'A user with the same email or username already exists.',
+      description: 'A user with the same email address already exists.',
       type: ErrorResponseDto,
     }),
   );
@@ -90,6 +97,10 @@ export const ApiUpdateUser = () =>
     ApiOkResponse({
       description: 'The updated user.',
       type: UserResponseDto,
+    }),
+    ApiConflictResponse({
+      description: 'A user with the same email or username already exists.',
+      type: ErrorResponseDto,
     }),
     userNotFound(),
   );
