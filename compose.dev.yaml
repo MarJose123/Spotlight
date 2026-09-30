@@ -45,6 +45,10 @@ services:
       BUCKET_REGION: us-east-1
       BUCKET_ACCESS_KEY_ID: dev
       BUCKET_SECRET_ACCESS_KEY: dev-password
+      # Mail is captured by Mailpit; its web UI is published on host port 8025.
+      MAIL_MAILER: smtp
+      MAIL_HOST: spotlight-mailpit
+      MAIL_PORT: 1025
     ports:
       - "${API_PORT:-3000}:3000"
     healthcheck:
@@ -171,7 +175,7 @@ services:
 
   spotlight-mailpit:
     container_name: spotlight-mailpit
-    image: mailpit/mailpit:v1.31.3
+    image: axllent/mailpit:v1.31.3
     restart: unless-stopped
     deploy:
       resources:
@@ -180,6 +184,9 @@ services:
           cpus: 1
         reservations:
           memory: 256M
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
     ports:
       - "8025:8025" # Web UI
       - "1025:1025" # SMTP
