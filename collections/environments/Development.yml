@@ -2,16 +2,11 @@ name: Development
 variables:
   - name: domain
     value: http://localhost
-    description: ""
   - name: port
     value: "3000"
-    description: ""
   - name: version
     value: v1
-    description: ""
   - secret: true
     name: access_token
-    description: ""
   - secret: true
     name: refresh_token
-    description: ""

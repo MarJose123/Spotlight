@@ -1,0 +1,23 @@
+info:
+  name: Create User
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{domain}}:{{port}}/api/{{version}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "admin@mail.com",
+        "name": "Admin Admin"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
