@@ -18,7 +18,7 @@ export class UserFactory extends Factory<User> {
       avatar: faker.image.avatar(),
       username: faker.internet.username(),
       name: faker.person.fullName(),
-      email: faker.internet.email(),
+      email: faker.internet.email().toLowerCase(),
       password: bcrypt.hashSync('admin123', 12),
     };
   }
