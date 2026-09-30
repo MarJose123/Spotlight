@@ -11,9 +11,10 @@ import { User } from '@/users/entities/user.entity';
 import { UsersController } from '@/users/users.controller';
 import { UsersService } from '@/users/users.service';
 import { AuthModule } from '@/auth/auth.module';
+import { MailerModule } from '@/mailer/mailer.module';
 
 @Module({
-  imports: [AuthModule, MikroOrmModule.forFeature([User])],
+  imports: [AuthModule, MailerModule, MikroOrmModule.forFeature([User])],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

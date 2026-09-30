@@ -5,8 +5,19 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { EntityManager, EntityRepository, wrap } from '@mikro-orm/core';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  EntityManager,
+  EntityRepository,
+  UniqueConstraintViolationException,
+  wrap,
+} from '@mikro-orm/core';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/users/dto/update-user.dto';
 import { User } from '@/users/entities/user.entity';
@@ -16,13 +27,19 @@ import bcrypt from 'bcrypt';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { UserMapper } from '@/users/mappers/user.mapper';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
+import { MailerService } from '@/mailer/mailer.service';
+import WelcomeEmail, { WelcomeEmailProps } from '@/mailer/emails/welcome-email';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: EntityRepository<User>,
     private readonly em: EntityManager,
+    private readonly mailer: MailerService,
+    private readonly config: ConfigService,
   ) {}
 
   /** Returns all users. */
@@ -57,14 +74,24 @@ export class UsersService {
     return UserMapper.toResponse(user);
   }
 
-  /** Creates and persists a new user from the given DTO. */
-  async create(dto: CreateUserDto): Promise<UserResponseDto | null> {
+  /** Creates and persists a new user, then welcomes them by email. */
+  async create(
+    dto: CreateUserDto,
+    invitedBy?: string,
+  ): Promise<UserResponseDto | null> {
+    await this.assertUnique({ email: dto.email });
+
+    const { password, ...profile } = dto;
     const user = new User();
-    Object.assign(user, dto, {
-      password: bcrypt.hashSync(dto.password, 12),
+    Object.assign(user, profile, {
+      password: password ? bcrypt.hashSync(password, 12) : undefined,
     });
+
     this.userRepository.create(user);
-    await this.em.flush();
+    await this.flushOrConflict();
+
+    await this.sendWelcomeEmail(user, invitedBy);
+
     return UserMapper.toResponse(user);
   }
 
@@ -73,15 +100,18 @@ export class UsersService {
     id: string,
     dto: UpdateUserDto,
   ): Promise<UserResponseDto | null> {
-    // Load the managed entity: `findById` returns a plain response DTO, which
-    // cannot be flushed back to the database.
     const user = await this.userRepository.findOne({ id });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    // Patch only the keys that were actually provided (class-validator leaves
-    // absent optional fields as `undefined`, which MikroORM would reject).
+
+    await this.assertUnique({
+      email: dto.email,
+      username: dto.username,
+      excludeId: id,
+    });
+
     const patch = Object.fromEntries(
       Object.entries(dto).filter(([, value]) => value !== undefined),
     ) as Partial<User>;
@@ -89,7 +119,7 @@ export class UsersService {
       patch.password = bcrypt.hashSync(patch.password, 12);
     }
     wrap(user).assign(patch);
-    await this.em.flush();
+    await this.flushOrConflict();
     return UserMapper.toResponse(user);
   }
 
@@ -102,5 +132,69 @@ export class UsersService {
 
     await this.userRepository.nativeDelete({ id: user.id });
     await this.em.flush();
+  }
+
+  /**
+   * Throws a 409 when the supplied email or username is already taken.
+   */
+  private async assertUnique({
+    email,
+    username,
+    excludeId,
+  }: {
+    email?: string;
+    username?: string;
+    excludeId?: string;
+  }): Promise<void> {
+    const isTaken = async (where: { email?: string; username?: string }) =>
+      Boolean(
+        await this.userRepository.findOne(
+          excludeId ? { ...where, id: { $ne: excludeId } } : where,
+        ),
+      );
+
+    if (email && (await isTaken({ email }))) {
+      throw new ConflictException('A user with this email already exists.');
+    }
+    if (username && (await isTaken({ username }))) {
+      throw new ConflictException('A user with this username already exists.');
+    }
+  }
+
+  private async flushOrConflict(): Promise<void> {
+    try {
+      await this.em.flush();
+    } catch (error) {
+      if (error instanceof UniqueConstraintViolationException) {
+        throw new ConflictException(
+          'A user with the same email or username already exists.',
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Sends the welcome email for a freshly created account.
+   */
+  private async sendWelcomeEmail(
+    user: User,
+    invitedBy?: string,
+  ): Promise<void> {
+    try {
+      const signInUrl = `${this.config.getOrThrow<string>('app.url')}/signin`;
+
+      await this.mailer.send<WelcomeEmailProps>({
+        template: WelcomeEmail,
+        props: { name: user.name, signInUrl, invitedBy },
+        to: user.email,
+        subject: `Welcome to ${this.config.getOrThrow<string>('app.name')}`,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Welcome email for user ${user.id} could not be delivered to ${user.email}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }
