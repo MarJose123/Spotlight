@@ -10,9 +10,12 @@ import { registerAs } from '@nestjs/config';
 export interface AppConfig {
   name: string;
   key: string;
+  /** Base URL of the web client, used to build links embedded in emails. */
+  url: string;
 }
 
 export default registerAs<AppConfig>('app', () => ({
   name: process.env.APP_NAME || 'Spotlight',
   key: process.env.APP_KEY || 'spotlight',
+  url: (process.env.WEB_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 }));
