@@ -5,82 +5,22 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { useMantineColorScheme } from "@mantine/core";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useThemeMode } from "../lib/theme-mode";
 
-type ThemeMode = "light" | "dark" | "auto";
+const MODE_ICON = {
+	auto: Monitor,
+	dark: Moon,
+	light: Sun,
+} as const;
 
-function getInitialMode(): ThemeMode {
-	if (typeof window === "undefined") {
-		return "auto";
-	}
-
-	const stored = window.localStorage.getItem("theme");
-	if (stored === "light" || stored === "dark" || stored === "auto") {
-		return stored;
-	}
-
-	return "auto";
-}
-
-function applyThemeMode(mode: ThemeMode) {
-	const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-	const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode;
-
-	document.documentElement.classList.remove("light", "dark");
-	document.documentElement.classList.add(resolved);
-
-	// Mantine reads its scheme from this attribute, not the class, so both move.
-	document.documentElement.setAttribute("data-mantine-color-scheme", resolved);
-
-	if (mode === "auto") {
-		document.documentElement.removeAttribute("data-theme");
-	} else {
-		document.documentElement.setAttribute("data-theme", mode);
-	}
-
-	document.documentElement.style.colorScheme = resolved;
-}
-
+/**
+ * Guest-facing toggle, styled for the site header. The signed-in feed top bar
+ * has its own `FeedThemeToggle` so it can match the `TopBarAction` shell.
+ */
 export default function ThemeToggle() {
-	const [mode, setMode] = useState<ThemeMode>("auto");
-	const { setColorScheme } = useMantineColorScheme();
-
-	useEffect(() => {
-		const initialMode = getInitialMode();
-		setMode(initialMode);
-		applyThemeMode(initialMode);
-	}, []);
-
-	useEffect(() => {
-		if (mode !== "auto") {
-			return;
-		}
-
-		const media = window.matchMedia("(prefers-color-scheme: dark)");
-		const onChange = () => applyThemeMode("auto");
-
-		media.addEventListener("change", onChange);
-		return () => {
-			media.removeEventListener("change", onChange);
-		};
-	}, [mode]);
-
-	function toggleMode() {
-		const nextMode: ThemeMode =
-			mode === "light" ? "dark" : mode === "dark" ? "auto" : "light";
-		setMode(nextMode);
-		applyThemeMode(nextMode);
-		// Keep Mantine's in-memory scheme in step with the `theme` key below.
-		setColorScheme(nextMode);
-		window.localStorage.setItem("theme", nextMode);
-	}
-
-	const label =
-		mode === "auto"
-			? "Theme mode: auto (system). Click to switch to light mode."
-			: `Theme mode: ${mode}. Click to switch mode.`;
+	const { mode, toggleMode, label } = useThemeMode();
+	const Icon = MODE_ICON[mode];
 
 	return (
 		<button
@@ -90,13 +30,7 @@ export default function ThemeToggle() {
 			title={label}
 			className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm font-semibold text-[var(--sea-ink)] shadow-[0_8px_22px_rgba(30,90,72,0.08)] transition hover:-translate-y-0.5"
 		>
-			{mode === "auto" ? (
-				<Monitor className="h-4 w-4" aria-hidden={true} />
-			) : mode === "dark" ? (
-				<Moon className="h-4 w-4" aria-hidden={true} />
-			) : (
-				<Sun className="h-4 w-4" aria-hidden={true} />
-			)}
+			<Icon className="h-4 w-4" aria-hidden={true} />
 		</button>
 	);
 }

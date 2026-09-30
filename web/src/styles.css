@@ -492,6 +492,8 @@ a {
   --feed-accent: #0b7ec4;
   --feed-chip: #14313a;
   --feed-chip-ink: #ffffff;
+  --feed-warn: #b45309;
+  --feed-danger: #dc2626;
   --feed-hover: rgba(20, 49, 58, 0.05);
   --feed-avatar-ring: rgba(20, 49, 58, 0.1);
   color: var(--feed-ink);
@@ -515,6 +517,8 @@ a {
   --feed-accent: #1d9bf0;
   --feed-chip: #eef2f6;
   --feed-chip-ink: #0b0f15;
+  --feed-warn: #fbbf24;
+  --feed-danger: #f87171;
   --feed-hover: rgba(255, 255, 255, 0.06);
   --feed-avatar-ring: rgba(255, 255, 255, 0.12);
 }

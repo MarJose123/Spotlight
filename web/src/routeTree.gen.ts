@@ -20,7 +20,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as R401RouteImport } from './routes/401'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SigninCallbackRouteImport } from './routes/signin_.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,9 +39,19 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninCallbackRoute = SigninCallbackRouteImport.update({
+  id: '/signin_/callback',
+  path: '/signin/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -47,34 +59,49 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/401': typeof R401Route
   '/about': typeof AboutRoute
+  '/feed': typeof FeedRoute
   '/signin': typeof SigninRoute
+  '/signin/callback': typeof SigninCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/401': typeof R401Route
   '/about': typeof AboutRoute
+  '/feed': typeof FeedRoute
   '/signin': typeof SigninRoute
+  '/signin/callback': typeof SigninCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/401': typeof R401Route
   '/about': typeof AboutRoute
+  '/feed': typeof FeedRoute
   '/signin': typeof SigninRoute
+  '/signin_/callback': typeof SigninCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/401' | '/about' | '/signin'
+  fullPaths: '/' | '/401' | '/about' | '/feed' | '/signin' | '/signin/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/401' | '/about' | '/signin'
-  id: '__root__' | '/' | '/401' | '/about' | '/signin'
+  to: '/' | '/401' | '/about' | '/feed' | '/signin' | '/signin/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/401'
+    | '/about'
+    | '/feed'
+    | '/signin'
+    | '/signin_/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R401Route: typeof R401Route
   AboutRoute: typeof AboutRoute
+  FeedRoute: typeof FeedRoute
   SigninRoute: typeof SigninRoute
+  SigninCallbackRoute: typeof SigninCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -100,11 +127,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin_/callback': {
+      id: '/signin_/callback'
+      path: '/signin/callback'
+      fullPath: '/signin/callback'
+      preLoaderRoute: typeof SigninCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -114,7 +155,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R401Route: R401Route,
   AboutRoute: AboutRoute,
+  FeedRoute: FeedRoute,
   SigninRoute: SigninRoute,
+  SigninCallbackRoute: SigninCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
