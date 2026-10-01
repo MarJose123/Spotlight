@@ -32,6 +32,7 @@ import { MailerService } from '@/mailer/mailer.service';
 import WelcomeEmail, { WelcomeEmailProps } from '@/mailer/emails/welcome-email';
 import { UserStatus } from '@/users/enums/status.enum';
 import { UpdateUserRoleDto } from '@/users/dto/update-user-role.dto';
+import { RefreshToken } from '@/auth/entities/refresh-token.entity';
 
 @Injectable()
 export class UsersService {
@@ -126,7 +127,32 @@ export class UsersService {
     return UserMapper.toResponse(user);
   }
 
-  async deactivate(
+  async deactivateUser(
+    id: string,
+    authenticatedUser: UserResponseDto,
+  ): Promise<UserResponseDto | null> {
+    if (authenticatedUser.id === id) {
+      throw new ForbiddenException(
+        'You cannot deactivate yourself. Goto your profile to deactivate.',
+      );
+    }
+
+    const user = await this.userRepository.findOneOrFail(id);
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    user.status = UserStatus.INACTIVE;
+
+    // remove any refresh tokens
+    await this.em.nativeDelete(RefreshToken, { userId: user.id });
+
+    await this.em.flush();
+
+    return UserMapper.toResponse(user);
+  }
+
+  async activateUser(
     id: string,
     authenticatedUser: UserResponseDto,
   ): Promise<UserResponseDto | null> {

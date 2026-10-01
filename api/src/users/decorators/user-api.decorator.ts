@@ -114,7 +114,7 @@ export const ApiDeleteUser = () =>
     idParam(),
     ApiNoContentResponse({ description: 'The record has been deleted.' }),
     userNotFound(),
-    HttpCode(HttpStatus.NO_CONTENT),
+    HttpCode(HttpStatus.OK),
   );
 
 export const ApiDeactivateUser = () =>
@@ -130,6 +130,23 @@ export const ApiDeactivateUser = () =>
     ApiForbiddenResponse({
       description:
         'You cannot deactivate yourself. Goto your profile to deactivate.',
+      type: ErrorResponseDto,
+    }),
+    HttpCode(HttpStatus.OK),
+  );
+
+export const ApiActivateUser = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Activate user',
+      description:
+        "Activate the record of an existing user. **Requires an administrator account**: the authenticated user's type must be `ADMIN`, otherwise the request is rejected with 403.",
+    }),
+    idParam(),
+    ApiNoContentResponse({ description: 'The record has been deactivated.' }),
+    userNotFound(),
+    ApiForbiddenResponse({
+      description: 'You cannot Activate yourself.',
       type: ErrorResponseDto,
     }),
     HttpCode(HttpStatus.NO_CONTENT),

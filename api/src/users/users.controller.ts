@@ -100,12 +100,22 @@ export class UsersController {
 
   @ApiDeactivateUser()
   @Roles(UserRole.ADMIN)
-  @Post('/:id/deactivate')
+  @Patch('/:id/deactivate')
   async deactivateUser(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<UserResponseDto | null> {
-    return await this.usersService.deactivate(id, req.auth.user);
+    return await this.usersService.deactivateUser(id, req.auth.user);
+  }
+
+  @ApiDeactivateUser()
+  @Roles(UserRole.ADMIN)
+  @Patch('/:id/activate')
+  async activateUser(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<UserResponseDto | null> {
+    return await this.usersService.activateUser(id, req.auth.user);
   }
 
   @ApiUpdateUserRole()
