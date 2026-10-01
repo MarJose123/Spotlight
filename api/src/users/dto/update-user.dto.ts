@@ -7,9 +7,7 @@
  */
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { UserStatus } from '@/users/enums/status.enum';
-
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({
@@ -30,14 +28,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsString()
   username?: string;
-
-  @ApiPropertyOptional({
-    description: 'Account status of the user.',
-    enum: UserStatus,
-    enumName: 'UserStatus',
-    example: UserStatus.ACTIVE,
-  })
-  @IsOptional()
-  @IsEnum(UserStatus)
-  status: UserStatus | undefined;
 }

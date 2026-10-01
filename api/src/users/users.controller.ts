@@ -35,11 +35,14 @@ import { ApiAuthenticated } from '@/common/decorators/api-authenticated.decorato
 import {
   ApiCreateUser,
   ApiCurrentUser,
+  ApiDeactivateUser,
   ApiDeleteUser,
   ApiGetUser,
   ApiListUsers,
   ApiUpdateUser,
+  ApiUpdateUserRole,
 } from '@/users/decorators/user-api.decorator';
+import { UpdateUserRoleDto } from '@/users/dto/update-user-role.dto';
 
 @ApiTags('Users')
 @ApiAuthenticated()
@@ -47,7 +50,6 @@ import {
   path: 'users',
   version: '1',
 })
-
 @UseGuards(Auth, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -96,7 +98,29 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
+  @ApiDeactivateUser()
+  @Roles(UserRole.ADMIN)
+  @Post('/:id/deactivate')
+  async deactivateUser(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<UserResponseDto | null> {
+    return await this.usersService.deactivate(id, req.auth.user);
+  }
+
+  @ApiUpdateUserRole()
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/role')
+  async updateRole(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: UpdateUserRoleDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<UserResponseDto | null> {
+    return await this.usersService.updateUserRole(id, dto, req.auth.user);
+  }
+
   @ApiDeleteUser()
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   async remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

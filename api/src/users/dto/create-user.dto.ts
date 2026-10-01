@@ -16,7 +16,6 @@ import {
   MinLength,
 } from 'class-validator';
 
-
 export class CreateUserDto {
   @ApiProperty({
     description: 'Display name of the user.',
@@ -33,7 +32,6 @@ export class CreateUserDto {
     format: 'email',
     example: 'jane.doe@example.com',
   })
-
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )

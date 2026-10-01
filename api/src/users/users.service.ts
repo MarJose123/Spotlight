@@ -13,6 +13,7 @@ import {
 } from '@mikro-orm/core';
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -29,6 +30,8 @@ import { UserMapper } from '@/users/mappers/user.mapper';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 import { MailerService } from '@/mailer/mailer.service';
 import WelcomeEmail, { WelcomeEmailProps } from '@/mailer/emails/welcome-email';
+import { UserStatus } from '@/users/enums/status.enum';
+import { UpdateUserRoleDto } from '@/users/dto/update-user-role.dto';
 
 @Injectable()
 export class UsersService {
@@ -120,6 +123,47 @@ export class UsersService {
     }
     wrap(user).assign(patch);
     await this.flushOrConflict();
+    return UserMapper.toResponse(user);
+  }
+
+  async deactivate(
+    id: string,
+    authenticatedUser: UserResponseDto,
+  ): Promise<UserResponseDto | null> {
+    if (authenticatedUser.id === id) {
+      throw new ForbiddenException(
+        'You cannot deactivate yourself. Goto your profile to deactivate.',
+      );
+    }
+
+    const user = await this.userRepository.findOneOrFail(id);
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    user.status = UserStatus.INACTIVE;
+    await this.em.flush();
+
+    return UserMapper.toResponse(user);
+  }
+
+  async updateUserRole(
+    id: string,
+    dto: UpdateUserRoleDto,
+    authenticatedUser: UserResponseDto,
+  ) {
+    if (authenticatedUser.id === id) {
+      throw new ForbiddenException('You cannot update your own role.');
+    }
+
+    const user = await this.userRepository.findOneOrFail(id);
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    user.type = dto.role;
+    await this.em.flush();
+
     return UserMapper.toResponse(user);
   }
 

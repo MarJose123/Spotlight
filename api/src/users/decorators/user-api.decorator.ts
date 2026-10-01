@@ -116,3 +116,40 @@ export const ApiDeleteUser = () =>
     userNotFound(),
     HttpCode(HttpStatus.NO_CONTENT),
   );
+
+export const ApiDeactivateUser = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Deactivate user',
+      description:
+        "Deactivate the record of an existing user. **Requires an administrator account**: the authenticated user's type must be `ADMIN`, otherwise the request is rejected with 403.",
+    }),
+    idParam(),
+    ApiNoContentResponse({ description: 'The record has been deactivated.' }),
+    userNotFound(),
+    ApiForbiddenResponse({
+      description:
+        'You cannot deactivate yourself. Goto your profile to deactivate.',
+      type: ErrorResponseDto,
+    }),
+    HttpCode(HttpStatus.NO_CONTENT),
+  );
+
+export const ApiUpdateUserRole = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Update user role',
+      description:
+        "Update the role of an existing user. **Requires an administrator account**: the authenticated user's type must be `ADMIN`, otherwise the request is rejected with 403.",
+    }),
+    idParam(),
+    ApiOkResponse({
+      description: 'The updated user.',
+      type: UserResponseDto,
+    }),
+    userNotFound(),
+    ApiForbiddenResponse({
+      description: 'You cannot update your own role.',
+      type: ErrorResponseDto,
+    }),
+  );

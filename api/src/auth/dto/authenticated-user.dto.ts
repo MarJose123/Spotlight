@@ -8,7 +8,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 
-
 export class AuthenticatedUserDto {
   @ApiProperty({
     description: "The authenticated user's profile.",
