@@ -167,7 +167,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    user.status = UserStatus.INACTIVE;
+    user.status = UserStatus.ACTIVE;
     await this.em.flush();
 
     return UserMapper.toResponse(user);
