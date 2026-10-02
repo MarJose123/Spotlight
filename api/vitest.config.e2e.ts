@@ -6,13 +6,12 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { defineConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: { tsconfigPaths: true },
   test: {
     globals: true,
     root: './',
-    include: ['**/*.e2e-spec.ts'],
+    include: ['src/**/__tests__/*.e2e-spec.ts'],
   },
 });
