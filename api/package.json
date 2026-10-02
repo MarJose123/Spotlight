@@ -4,6 +4,7 @@
   "description": "Spotlight is an internal recognition tool that helps teams celebrate and appreciate their coworkers. Employees can easily post commendations, give shout-outs, and recognize great work, helping foster a positive culture of appreciation and making achievements visible across the organization.",
   "author": "Marjose Darang",
   "private": true,
+  "type": "module",
   "license": "AGPL-3.0",
   "scripts": {
     "build": "nest build && tsc-alias -p tsconfig.build.json",
@@ -90,7 +91,6 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.11"
   }
 }
