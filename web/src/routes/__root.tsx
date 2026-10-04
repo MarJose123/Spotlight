@@ -16,17 +16,15 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect, useState } from "react";
 import Footer from "#/components/Footer";
 import Header from "#/components/Header";
-import LoadingScreen from "#/components/LoadingScreen";
 import {
 	StatusErrorBoundary,
 	StatusNotFound,
 } from "#/components/status/boundaries";
 import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
-import appCss from "../styles.css?url";
 import { colorSchemeManager, theme } from "#/theme";
+import appCss from "../styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -87,13 +85,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		select: (state) => state.location.pathname,
 	});
 	const fullBleed = FULL_BLEED_ROUTES.has(pathname);
-	const [isLoaded, setIsLoaded] = useState(false);
-
-	useEffect(() => {
-		// Delay long enough for the spotlight sweep animation to play through
-		const timer = setTimeout(() => setIsLoaded(true), 2800);
-		return () => clearTimeout(timer);
-	}, []);
 
 	return (
 		<html lang="en" suppressHydrationWarning>
@@ -111,7 +102,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					{!fullBleed && <Header />}
 					{children}
 					{!fullBleed && <Footer />}
-					{!isLoaded && <LoadingScreen />}
 				</MantineProvider>
 				<TanStackDevtools
 					config={{

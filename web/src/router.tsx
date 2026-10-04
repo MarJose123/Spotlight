@@ -7,6 +7,7 @@
  */
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import LoadingScreen from "./components/LoadingScreen";
 import {
 	StatusErrorBoundary,
 	StatusNotFound,
@@ -24,6 +25,11 @@ export function getRouter() {
 		// the root route, so register the status pages at the router level too.
 		defaultErrorComponent: StatusErrorBoundary,
 		defaultNotFoundComponent: StatusNotFound,
+		// Rendered wherever the router has no match to show yet: it is the SPA
+		// shell's only content before hydration, and it covers slow navigations.
+		defaultPendingComponent: LoadingScreen,
+		defaultPendingMs: 0,
+		defaultPendingMinMs: 700,
 		scrollRestoration: true,
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,

@@ -18,7 +18,16 @@ const apiOrigin = process.env.API_INTERNAL_URL ?? "http://localhost:3000";
 
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
-	plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+	plugins: [
+		devtools(),
+		tailwindcss(),
+		tanstackStart({
+			spa: {
+				enabled: true,
+			},
+		}),
+		viteReact(),
+	],
 	server: {
 		host: true,
 		proxy: {
