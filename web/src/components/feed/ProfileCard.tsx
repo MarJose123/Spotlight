@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import type { FeedViewer } from '#/lib/feed-data.ts';
+import type { FeedViewer } from "#/lib/feed-data.ts";
 import { Avatar, CoverArt } from "./media";
 
 export function ProfileCard({ viewer }: { viewer: FeedViewer }) {

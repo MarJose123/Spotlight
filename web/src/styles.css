@@ -536,4 +536,286 @@ a {
   display: none;
 }
 
+/*
+ * Loading screen — two spotlight icons shine beams from each end of
+ * "SPOTLIGHT" toward the center, revealing letters as they meet.
+ * Reuses the lagoon / palm palette and existing `rise-in` curve.
+ */
+.spotlight-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, var(--hero-a), transparent),
+    linear-gradient(180deg, var(--sand) 0%, var(--foam) 100%);
+  animation: loading-fade-in 300ms ease both;
+}
+
+/* Wrapper that holds both lamps and the word so lamps can be placed relative to the word */
+.spotlight-loading__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+}
+
+:root[data-theme="dark"] .spotlight-loading {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, var(--hero-a), transparent),
+    linear-gradient(180deg, #0f1a1e 0%, #0a1418 100%);
+}
+
+/* Shared lamp styles — the whole lamp (icon + beam) rotates together */
+.spotlight-loading__lamp {
+  position: absolute;
+  top: -48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 18px 18px;
+}
+
+/* Left lamp — above "S", crosses the word then scissors down and outward */
+.spotlight-loading__lamp--left {
+  left: 0;
+  animation: lamp-sweep-left 3.6s ease-in-out infinite;
+}
+
+/* Right lamp — above "T", the same motion mirrored */
+.spotlight-loading__lamp--right {
+  right: 0;
+  animation: lamp-sweep-right 3.6s ease-in-out infinite;
+}
+
+/* The spotlight icon — light projects from the lower-right corner of the lamp housing */
+.spotlight-loading__icon {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  color: var(--lagoon);
+  filter: drop-shadow(0 0 8px var(--lagoon));
+}
+
+/* The Lucide `spotlight` rays fan out ~30deg below the housing, so the icon
+   carries that tilt to keep its lens level with the beam's horizontal cone. */
+.spotlight-loading__lamp--left .spotlight-loading__icon {
+  rotate: -30deg;
+}
+
+/* Mirrored so the right lens faces inward, matching the left lamp. */
+.spotlight-loading__lamp--right .spotlight-loading__icon {
+  scale: -1 1;
+  rotate: 30deg;
+}
+
+/* The beam — a cone of light flowing from the icon's light opening. Its narrow
+   end sits at (21.2px, 18.9px) of the 36px icon box, the point the icon's three
+   rays converge on once tilted, so both beams stay mirror images of each other.
+   Long enough that the two overlap over the middle of the word, and the fade is
+   stretched out so the far half is still readable where they cross. */
+.spotlight-loading__beam {
+  position: absolute;
+  top: 0.9px;
+  width: 190px;
+  height: 36px;
+  pointer-events: none;
+}
+
+/* Left lamp beam — narrow end on the icon's lens, spreading right */
+.spotlight-loading__lamp--left .spotlight-loading__beam {
+  left: 21.2px;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    rgba(79, 184, 178, 0.38) 0%,
+    rgba(79, 184, 178, 0.2) 55%,
+    rgba(79, 184, 178, 0.06) 88%,
+    transparent 100%
+  );
+  clip-path: polygon(0% 40%, 0% 60%, 100% 100%, 100% 0%);
+  animation: beam-length-left 3.6s ease-in-out infinite;
+}
+
+/* Right lamp beam — mirrored, narrow end on the icon's lens, spreading left */
+.spotlight-loading__lamp--right .spotlight-loading__beam {
+  right: 21.2px;
+  transform-origin: right center;
+  background: linear-gradient(
+    270deg,
+    rgba(79, 184, 178, 0.38) 0%,
+    rgba(79, 184, 178, 0.2) 55%,
+    rgba(79, 184, 178, 0.06) 88%,
+    transparent 100%
+  );
+  clip-path: polygon(100% 40%, 100% 60%, 0% 100%, 0% 0%);
+  animation: beam-length-right 3.6s ease-in-out infinite;
+}
+
+:root[data-theme="dark"] .spotlight-loading__lamp--left .spotlight-loading__beam {
+  background: linear-gradient(
+    90deg,
+    rgba(96, 215, 207, 0.3) 0%,
+    rgba(96, 215, 207, 0.16) 55%,
+    rgba(96, 215, 207, 0.05) 88%,
+    transparent 100%
+  );
+}
+
+:root[data-theme="dark"] .spotlight-loading__lamp--right .spotlight-loading__beam {
+  background: linear-gradient(
+    270deg,
+    rgba(96, 215, 207, 0.3) 0%,
+    rgba(96, 215, 207, 0.16) 55%,
+    rgba(96, 215, 207, 0.05) 88%,
+    transparent 100%
+  );
+}
+
+/* The word — letters are revealed as the beam passes */
+.spotlight-loading__word {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  display: flex;
+  gap: 0.02em;
+}
+
+/* Each letter — stays dim until the spotlight reaches it */
+.spotlight-loading__letter {
+  display: inline-block;
+  color: var(--sea-ink);
+  opacity: 0.15;
+  animation: letter-reveal 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--index) * 60ms);
+}
+
+:root[data-theme="dark"] .spotlight-loading__letter {
+  color: #d7ece8;
+}
+
+/* Subtle "Loading" text beneath the word */
+.spotlight-loading__sub {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sea-ink-soft);
+  opacity: 0;
+  animation: rise-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 1800ms;
+}
+
+/* --- Keyframes --- */
+
+@keyframes loading-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Left lamp crosses the word at 20deg, then scissors down and outward to 130deg */
+@keyframes lamp-sweep-left {
+  0% {
+    transform: rotate(20deg);
+  }
+  45% {
+    transform: rotate(130deg);
+  }
+  55% {
+    transform: rotate(130deg);
+  }
+  100% {
+    transform: rotate(20deg);
+  }
+}
+
+/* Right lamp — the mirror, so the two beams cross over the word's centre */
+@keyframes lamp-sweep-right {
+  0% {
+    transform: rotate(-20deg);
+  }
+  45% {
+    transform: rotate(-130deg);
+  }
+  55% {
+    transform: rotate(-130deg);
+  }
+  100% {
+    transform: rotate(-20deg);
+  }
+}
+
+/* Both beams are longest at the crossing (20deg) — that reach is what lets them
+   overlap — and shorten as they scissor apart */
+@keyframes beam-length-left {
+  0% {
+    transform: scaleX(1.4);
+  }
+  45% {
+    transform: scaleX(1);
+  }
+  55% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(1.4);
+  }
+}
+
+@keyframes beam-length-right {
+  0% {
+    transform: scaleX(1.4);
+  }
+  45% {
+    transform: scaleX(1);
+  }
+  55% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(1.4);
+  }
+}
+
+/* Letters reveal from center outward as beams cross then sweep away */
+/* Middle letters (L, I) light up first when beams cross; outer letters (S, T) last */
+@keyframes letter-reveal {
+  0% {
+    opacity: 0.15;
+    text-shadow: none;
+  }
+  calc(4 - abs(var(--index) - 4)) * -10% + 12% {
+    opacity: 0.15;
+    text-shadow: none;
+  }
+  calc(4 - abs(var(--index) - 4)) * -10% + 16% {
+    opacity: 1;
+    text-shadow: 0 0 16px var(--lagoon), 0 0 6px var(--palm);
+    color: var(--lagoon);
+  }
+  calc(4 - abs(var(--index) - 4)) * -10% + 20% {
+    opacity: 1;
+    text-shadow: none;
+    color: inherit;
+  }
+  100% {
+    opacity: 1;
+    text-shadow: none;
+    color: inherit;
+  }
+}
+
 
