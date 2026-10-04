@@ -21,9 +21,11 @@ import { minutes, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { BucketModule } from './bucket/bucket.module.js';
 import { MailerModule } from './mailer/mailer.module.js';
+import { GifModule } from './gif/gif.module.js';
 import bucketConfig from '#/config/bucket.config.js';
 import servicesConfig from '#/config/services.config.js';
 import mailConfig from '#/config/mail.config.js';
+import giphyConfig from '#/config/giphy.config.js';
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import mailConfig from '#/config/mail.config.js';
         bucketConfig,
         servicesConfig,
         mailConfig,
+        giphyConfig,
       ],
     }),
     MikroOrmModule.forRootAsync({
@@ -59,6 +62,7 @@ import mailConfig from '#/config/mail.config.js';
     PostsModule,
     BucketModule,
     MailerModule,
+    GifModule,
   ],
   controllers: [AppController],
   providers: [
