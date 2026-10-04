@@ -1,0 +1,23 @@
+info:
+  name: Trending GIFs
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{domain}}:{{port}}/api/{{version}}/gifs/trending?page=1&limit=10"
+  params:
+    - name: page
+      value: "1"
+      type: query
+    - name: limit
+      value: "10"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
