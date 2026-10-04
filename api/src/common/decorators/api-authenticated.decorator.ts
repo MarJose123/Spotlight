@@ -7,7 +7,7 @@
  */
 import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 
 /**
  * Documents a controller or route as requiring a bearer token.

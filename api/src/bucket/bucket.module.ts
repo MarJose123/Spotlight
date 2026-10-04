@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Module } from '@nestjs/common';
-import { BucketService } from './bucket.service';
+import { BucketService } from './bucket.service.js';
 
 @Module({
   providers: [BucketService],

@@ -7,9 +7,9 @@
  */
 import { Factory } from '@mikro-orm/seeder';
 import { faker } from '@faker-js/faker';
-import { Posts } from '@/posts/entities/posts.entity';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
-import { PostType } from '@/posts/enums/post-type.enum';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 export class PostsFactory extends Factory<Posts> {
   model = Posts;

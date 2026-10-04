@@ -15,16 +15,16 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { ZohoStrategy } from '@/auth/strategies/zoho.strategy';
-import { AuthService } from '@/auth/auth.service';
-import { User } from '@/users/entities/user.entity';
-import { UserStatus } from '@/users/enums/status.enum';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
+import { ZohoStrategy } from '#/auth/strategies/zoho.strategy.js';
+import { AuthService } from '#/auth/auth.service.js';
+import { User } from '#/users/entities/user.entity.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
 import type {
   OAuthAuthorizeParams,
   OAuthProfile,
   OAuthStrategy,
-} from '@/auth/interface/oauth.interface';
+} from '#/auth/interface/oauth.interface.js';
 
 /** One message for every rejection, so responses cannot enumerate accounts. */
 export const UNPROVISIONED_MESSAGE =

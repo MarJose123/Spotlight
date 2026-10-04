@@ -7,17 +7,21 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
-import { AuthService, INVALID_CREDENTIALS_MESSAGE, ACCESS_TOKEN_TTL_SECONDS } from '@/auth/auth.service';
-import { TokenService } from '@/auth/token.service';
-import { User } from '@/users/entities/user.entity';
-import { RefreshToken } from '@/auth/entities/refresh-token.entity';
-import { UserStatus } from '@/users/enums/status.enum';
+import {
+  AuthService,
+  INVALID_CREDENTIALS_MESSAGE,
+  ACCESS_TOKEN_TTL_SECONDS,
+} from '#/auth/auth.service.js';
+import { TokenService } from '#/auth/token.service.js';
+import { User } from '#/users/entities/user.entity.js';
+import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
 import { EntityManager } from '@mikro-orm/core';
 
 // Mock bcrypt so authenticate can succeed without a real hash
 vi.mock('bcrypt', () => ({
   default: {
-    compare: vi.fn(),
+    compare: vi.fn().mockResolvedValue(true),
   },
 }));
 
@@ -68,12 +72,17 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(bcrypt.compare).mockResolvedValue(true);
+    (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
     tokenService = mockTokenService() as unknown as TokenService;
     userRepository = mockUserRepo();
     refreshTokenRepository = mockRefreshTokenRepo();
     em = mockEm() as unknown as EntityManager;
-    service = new AuthService(tokenService, userRepository, refreshTokenRepository, em);
+    service = new AuthService(
+      tokenService,
+      userRepository,
+      refreshTokenRepository,
+      em,
+    );
   });
 
   describe('validateUserEmail', () => {
@@ -124,14 +133,17 @@ describe('AuthService', () => {
       userRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.authenticate({ email: 'nope@example.com', password: 'anything' }),
+        service.authenticate({
+          email: 'nope@example.com',
+          password: 'anything',
+        }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for wrong password', async () => {
       const user = makeUser();
       userRepository.findOne.mockResolvedValue(user);
-      vi.mocked(bcrypt.compare).mockResolvedValueOnce(false);
+      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
 
       await expect(
         service.authenticate({ email: 'test@example.com', password: 'wrong' }),

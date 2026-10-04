@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Factory } from '@mikro-orm/seeder';
-import { User } from '@/users/entities/user.entity';
+import { User } from '#/users/entities/user.entity.js';
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 

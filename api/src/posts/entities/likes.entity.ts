@@ -14,8 +14,8 @@ import {
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import type { Rel } from '@mikro-orm/core';
-import { Posts } from '@/posts/entities/posts.entity';
-import { User } from '@/users/entities/user.entity';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { User } from '#/users/entities/user.entity.js';
 
 @Entity({ tableName: 'likes' })
 export class Likes {

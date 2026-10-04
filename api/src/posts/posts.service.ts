@@ -7,18 +7,18 @@
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
-import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
-import { Posts } from '@/posts/entities/posts.entity';
-import { User } from '@/users/entities/user.entity';
-import { CreatePostDto } from '@/posts/dto/create-post.dto';
-import { LikePostDto } from '@/posts/dto/like-post.dto';
-import { Likes } from '@/posts/entities/likes.entity';
-import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
+import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { User } from '#/users/entities/user.entity.js';
+import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
+import { LikePostDto } from '#/posts/dto/like-post.dto.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
+import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
-import { PostMapper } from '@/posts/mappers/post.mapper';
-import { PostLikeMapper } from '@/posts/mappers/post-like.mapper';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { PostMapper } from '#/posts/mappers/post.mapper.js';
+import { PostLikeMapper } from '#/posts/mappers/post-like.mapper.js';
 
 @Injectable()
 export class PostsService {
@@ -53,7 +53,7 @@ export class PostsService {
   }
 
   /** Returns a single user by id, or throws 404. */
-  async findById(id: string): Promise<PostResponseDto | null> {
+  async findById(id: string): Promise<PostResponseDto> {
     const post = await this.postRepository.findOne(
       { id },
       { populate: ['likes'] },
@@ -104,10 +104,6 @@ export class PostsService {
   async likePost(dto: LikePostDto): Promise<PostLikeResponseDto> {
     const post = await this.findById(dto.postId);
 
-    if (!post) {
-      throw new NotFoundException(`Post with id ${dto.postId} not found`);
-    }
-
     const existingLike = await this.likesRepository.findOne({
       post: dto.postId,
       user: dto.userId,
@@ -117,7 +113,9 @@ export class PostsService {
       // Unlike
       this.em.remove(existingLike);
       await this.decrementLikeCount(post);
-      post.likedBy = (post.likedBy ?? []).filter((id) => id !== dto.userId);
+      post.likedBy = (post.likedBy ?? []).filter(
+        (id: string) => id !== dto.userId,
+      );
       await this.em.flush();
 
       return PostLikeMapper.toResponse(false, post);
@@ -142,17 +140,17 @@ export class PostsService {
     await this.em.flush();
   }
 
-  private async incrementLikeCount(postdto: PostResponseDto): Promise<void> {
-    const post = await this.postRepository.findOneOrFail({ id: postdto.id });
+  private async incrementLikeCount(postDto: PostResponseDto): Promise<void> {
+    const post = await this.postRepository.findOneOrFail({ id: postDto.id });
     post.likesCount += 1;
-    postdto.likesCount = post.likesCount;
+    postDto.likesCount = post.likesCount;
     await this.em.flush();
   }
 
-  private async decrementLikeCount(postdto: PostResponseDto): Promise<void> {
-    const post = await this.postRepository.findOneOrFail({ id: postdto.id });
+  private async decrementLikeCount(postDto: PostResponseDto): Promise<void> {
+    const post = await this.postRepository.findOneOrFail({ id: postDto.id });
     post.likesCount = Math.max(0, post.likesCount - 1);
-    postdto.likesCount = post.likesCount;
+    postDto.likesCount = post.likesCount;
     await this.em.flush();
   }
 }

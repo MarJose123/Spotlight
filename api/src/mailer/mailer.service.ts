@@ -10,14 +10,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createElement } from 'react';
 import { render } from 'react-email';
-import { MailConfig, MailTransportName } from '@/config/mail.config';
+import { MailConfig, MailTransportName } from '#/config/mail.config.js';
 import {
   MailDeliveryResult,
   MailRecipient,
-} from '@/mailer/interface/mail-transport.interface';
-import { SendMailOptions } from '@/mailer/interface/send-mail-options.interface';
-import { MailAddressMapper } from '@/mailer/mappers/mail-address.mapper';
-import { MailTransportRegistry } from '@/mailer/transports/transport.registry';
+} from '#/mailer/interface/mail-transport.interface.js';
+import { SendMailOptions } from '#/mailer/interface/send-mail-options.interface.js';
+import { MailAddressMapper } from '#/mailer/mappers/mail-address.mapper.js';
+import { MailTransportRegistry } from '#/mailer/transports/transport.registry.js';
 
 @Injectable()
 export class MailerService {

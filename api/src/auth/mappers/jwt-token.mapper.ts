@@ -6,9 +6,9 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { UserMapper } from '@/users/mappers/user.mapper';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
-import { JwtTokenDto } from '@/auth/dto/jwt-token.dto';
+import { UserMapper } from '#/users/mappers/user.mapper.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
+import { JwtTokenDto } from '#/auth/dto/jwt-token.dto.js';
 
 export class JwtTokenMapper {
   static toResponse(token: JwtTokenDto): JwtTokenResponse {

@@ -6,14 +6,14 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { PaginationMetaDto } from './pagination-meta.dto';
+import { PaginationMetaDto } from './pagination-meta.dto.js';
 
 /**
  * Envelope returned by every list endpoint.
  *
  * The `data` array is intentionally left undocumented here: OpenAPI cannot
  * express the generic `T`, so `ApiPaginatedResponse` pins it to the concrete
- * item DTO per endpoint (see `@/common/decorators`).
+ * item DTO per endpoint (see `#/common/decorators`).
  */
 export class PaginationResponseDto<T> {
   data?: T[];

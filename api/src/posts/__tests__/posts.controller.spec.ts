@@ -7,14 +7,31 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
-import { PostsController } from '@/posts/posts.controller';
-import { PostsService } from '@/posts/posts.service';
-import { BucketService } from '@/bucket/bucket.service';
+import { PostsController } from '#/posts/posts.controller.js';
+import { PostsService } from '#/posts/posts.service.js';
+import { BucketService } from '#/bucket/bucket.service.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 describe('PostsController', () => {
   let controller: PostsController;
   let postsService: PostsService;
   let bucketService: BucketService;
+
+  const makePostResponse = (overrides = {}): PostResponseDto => ({
+    id: 'post-123',
+    userId: 'user-123',
+    content: 'Great work!',
+    attachmentType: AttachmentType.IMAGE,
+    attachment: ['https://example.com/img.png'],
+    postType: PostType.USER,
+    likedBy: undefined,
+    likesCount: 0,
+    createdAt: new Date(),
+    ...overrides,
+  });
 
   const mockPostsService = () => ({
     findAll: vi.fn(),
@@ -36,10 +53,12 @@ describe('PostsController', () => {
 
   describe('getPosts', () => {
     it('should return paginated posts', async () => {
-      const paginationResult = {
-        data: [{ id: 'a' }, { id: 'b' }],
-        meta: { total: 2, currentPage: 1, perPage: 10, totalPages: 1 },
-      };
+      const paginationResult = new PaginationResponseDto(
+        [makePostResponse({ id: 'a' }), makePostResponse({ id: 'b' })],
+        2,
+        1,
+        10,
+      );
       vi.mocked(postsService.findAll).mockResolvedValue(paginationResult);
 
       const result = await controller.getPosts({ page: 1, limit: 10 });
@@ -51,13 +70,18 @@ describe('PostsController', () => {
 
   describe('getPostsByUser', () => {
     it('should return posts filtered by user id', async () => {
-      const paginationResult = {
-        data: [{ id: 'a' }],
-        meta: { total: 1, currentPage: 1, perPage: 10, totalPages: 1 },
-      };
+      const paginationResult = new PaginationResponseDto(
+        [makePostResponse({ id: 'a' })],
+        1,
+        1,
+        10,
+      );
       vi.mocked(postsService.findByUserId).mockResolvedValue(paginationResult);
 
-      const result = await controller.getPostsByUser({ page: 1, limit: 10 }, 'user-123');
+      const result = await controller.getPostsByUser(
+        { page: 1, limit: 10 },
+        'user-123',
+      );
 
       expect(result).toBe(paginationResult);
       expect(postsService.findByUserId).toHaveBeenCalledWith({
@@ -71,12 +95,12 @@ describe('PostsController', () => {
     it('should create a post', async () => {
       const dto = {
         content: 'Thanks!',
-        attachmentType: 'IMAGE',
+        attachmentType: AttachmentType.IMAGE,
         attachment: ['https://example.com/img.png'],
-        postType: 'USER',
+        postType: PostType.USER,
         user: 'user-123',
       };
-      const created = { id: 'new-post', content: 'Thanks!' };
+      const created = makePostResponse({ id: 'new-post', content: 'Thanks!' });
       vi.mocked(postsService.create).mockResolvedValue(created);
 
       const result = await controller.createPost(dto);
@@ -89,7 +113,7 @@ describe('PostsController', () => {
   describe('likePost', () => {
     it('should toggle like via PUT /like', async () => {
       const dto = { postId: 'post-123', userId: 'user-456' };
-      const result = { like: true, likesCount: 1 };
+      const result = { like: true, post: makePostResponse({ likesCount: 1 }) };
       vi.mocked(postsService.likePost).mockResolvedValue(result);
 
       const response = await controller.likePost(dto);
@@ -101,34 +125,51 @@ describe('PostsController', () => {
 
   describe('likePostById', () => {
     it('should toggle like via POST /:id/like', async () => {
-      const result = { like: false, likesCount: 0 };
+      const result = { like: false, post: makePostResponse() };
       vi.mocked(postsService.likePost).mockResolvedValue(result);
 
       const response = await controller.likePostById('post-123', 'user-456');
 
       expect(response).toBe(result);
-      expect(postsService.likePost).toHaveBeenCalledWith({ postId: 'post-123', userId: 'user-456' });
+      expect(postsService.likePost).toHaveBeenCalledWith({
+        postId: 'post-123',
+        userId: 'user-456',
+      });
     });
 
     it('should propagate NotFoundException when liking unknown post', async () => {
-      vi.mocked(postsService.likePost).mockRejectedValue(new NotFoundException());
-
-      await expect(controller.likePostById('missing', 'user-123')).rejects.toThrow(
-        NotFoundException,
+      vi.mocked(postsService.likePost).mockRejectedValue(
+        new NotFoundException(),
       );
+
+      await expect(
+        controller.likePostById('missing', 'user-123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('uploadPhotos', () => {
     it('should return a presigned upload URL', async () => {
-      const dto = { key: 'uploads/img.png', contentType: 'image/png', fileSize: 1024, filename: 'img.png' };
-      const presigned = { url: 'https://s3.example.com/upload', path: 'uploads/img.png' };
-      vi.mocked(bucketService.generatePresignedUploadUrl).mockResolvedValue(presigned);
+      const dto = {
+        key: 'uploads/img.png',
+        contentType: 'image/png',
+        fileSize: 1024,
+        filename: 'img.png',
+      };
+      const presigned = {
+        url: 'https://s3.example.com/upload',
+        path: 'uploads/img.png',
+      };
+      vi.mocked(bucketService.generatePresignedUploadUrl).mockResolvedValue(
+        presigned,
+      );
 
       const result = await controller.uploadPhotos(dto);
 
       expect(result).toBe(presigned);
-      expect(bucketService.generatePresignedUploadUrl).toHaveBeenCalledWith(dto);
+      expect(bucketService.generatePresignedUploadUrl).toHaveBeenCalledWith(
+        dto,
+      );
     });
   });
 });

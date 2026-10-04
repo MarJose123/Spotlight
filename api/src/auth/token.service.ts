@@ -7,8 +7,8 @@
  */
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@/users/entities/user.entity';
-import { PayloadInterface } from '@/auth/interface/payload.interface';
+import { User } from '#/users/entities/user.entity.js';
+import { PayloadInterface } from '#/auth/interface/payload.interface.js';
 import { createHash, randomBytes } from 'node:crypto';
 
 @Injectable()

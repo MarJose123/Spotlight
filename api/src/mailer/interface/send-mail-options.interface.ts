@@ -7,11 +7,11 @@
  */
 
 import { ComponentType } from 'react';
-import { MailTransportName } from '@/config/mail.config';
+import { MailTransportName } from '#/config/mail.config.js';
 import {
   MailAttachment,
   MailRecipient,
-} from '@/mailer/interface/mail-transport.interface';
+} from '#/mailer/interface/mail-transport.interface.js';
 
 export interface SendMailOptions<
   TProps extends object = Record<string, never>,

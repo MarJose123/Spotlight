@@ -14,7 +14,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
+import { GeneratePresignedUrlDto } from '#/bucket/dto/generate-presigned-url.dto.js';
 
 @Injectable()
 export class BucketService {

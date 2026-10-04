@@ -7,9 +7,9 @@
  */
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { HealthController } from './health.controller';
+import { HealthController } from './health.controller.js';
 import { HttpModule } from '@nestjs/axios';
-import { DatabaseHealth } from './database.health';
+import { DatabaseHealth } from './database.health.js';
 
 @Module({
   imports: [TerminusModule, HttpModule],

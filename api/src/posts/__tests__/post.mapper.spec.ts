@@ -6,12 +6,12 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { describe, it, expect } from 'vitest';
-import { PostMapper } from '@/posts/mappers/post.mapper';
-import { Posts } from '@/posts/entities/posts.entity';
-import { User } from '@/users/entities/user.entity';
-import { Likes } from '@/posts/entities/likes.entity';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
-import { PostType } from '@/posts/enums/post-type.enum';
+import { PostMapper } from '#/posts/mappers/post.mapper.js';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { User } from '#/users/entities/user.entity.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 describe('PostMapper', () => {
   const makeUser = (id = 'user-123') => {

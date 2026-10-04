@@ -8,16 +8,16 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
-import { OAuthService } from '@/auth/oauth.service';
-import { OAuthAuthorizeQueryDto } from '@/auth/dto/oauth-authorize-query.dto';
-import { OAuthAuthorizeUrlResponseDto } from '@/auth/dto/oauth-authorize-url-response.dto';
-import { OAuthExchangeDto } from '@/auth/dto/oauth-exchange.dto';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
+import { OAuthService } from '#/auth/oauth.service.js';
+import { OAuthAuthorizeQueryDto } from '#/auth/dto/oauth-authorize-query.dto.js';
+import { OAuthAuthorizeUrlResponseDto } from '#/auth/dto/oauth-authorize-url-response.dto.js';
+import { OAuthExchangeDto } from '#/auth/dto/oauth-exchange.dto.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
 import {
   ApiSsoAuthorizeUrl,
   ApiSsoExchange,
   ApiSsoProviders,
-} from '@/auth/decorators/sso-api.decorator';
+} from '#/auth/decorators/sso-api.decorator.js';
 
 @ApiTags('Auth')
 @Controller('auth')

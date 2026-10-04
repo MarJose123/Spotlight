@@ -10,11 +10,11 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager } from '@mikro-orm/core';
-import { User } from '@/users/entities/user.entity';
-import { UserStatus } from '@/users/enums/status.enum';
-import { AuthenticatedUserMapper } from '@/auth/mappers/authenticated-user.mapper';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import type { VerifiedPayloadInterface } from '@/auth/interface/payload.interface';
+import { User } from '#/users/entities/user.entity.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
+import { AuthenticatedUserMapper } from '#/auth/mappers/authenticated-user.mapper.js';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import type { VerifiedPayloadInterface } from '#/auth/interface/payload.interface.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

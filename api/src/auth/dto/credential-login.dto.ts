@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { CredentialDto } from './credential.dto';
+import { CredentialDto } from './credential.dto.js';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
@@ -16,9 +16,10 @@ import { IsNotEmpty, IsString } from 'class-validator';
  * login only needs a non-empty value so that already-issued credentials keep
  * working even if the password rules change later.
  */
-export class CredentialLoginDto extends OmitType(CredentialDto, [
-  'password',
-] as const) {
+export class CredentialLoginDto extends OmitType<CredentialDto, 'password'>(
+  CredentialDto,
+  ['password'],
+) {
   @ApiProperty({
     description: 'Password of the user.',
     format: 'password',

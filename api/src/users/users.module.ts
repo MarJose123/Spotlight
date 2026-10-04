@@ -7,11 +7,11 @@
  */
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { User } from '@/users/entities/user.entity';
-import { UsersController } from '@/users/users.controller';
-import { UsersService } from '@/users/users.service';
-import { AuthModule } from '@/auth/auth.module';
-import { MailerModule } from '@/mailer/mailer.module';
+import { User } from '#/users/entities/user.entity.js';
+import { UsersController } from '#/users/users.controller.js';
+import { UsersService } from '#/users/users.service.js';
+import { AuthModule } from '#/auth/auth.module.js';
+import { MailerModule } from '#/mailer/mailer.module.js';
 
 @Module({
   imports: [AuthModule, MailerModule, MikroOrmModule.forFeature([User])],

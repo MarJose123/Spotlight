@@ -6,16 +6,16 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from '@/users/entities/user.entity';
+import { User } from '#/users/entities/user.entity.js';
 import bcrypt from 'bcrypt';
-import { CredentialDto } from '@/auth/dto/credential.dto';
+import { CredentialDto } from '#/auth/dto/credential.dto.js';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
-import { TokenService } from '@/auth/token.service';
-import { RefreshToken } from '@/auth/entities/refresh-token.entity';
-import { UserStatus } from '@/users/enums/status.enum';
+import { TokenService } from '#/auth/token.service.js';
+import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { JwtTokenMapper } from '@/auth/mappers/jwt-token.mapper';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
+import { JwtTokenMapper } from '#/auth/mappers/jwt-token.mapper.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
 
 /** Returned for every failed login, so responses cannot enumerate accounts. */
 export const INVALID_CREDENTIALS_MESSAGE =

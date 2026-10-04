@@ -7,8 +7,8 @@
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from 'class-validator';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
-import { PostType } from '@/posts/enums/post-type.enum';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 export class CreatePostDto {
   @ApiProperty({

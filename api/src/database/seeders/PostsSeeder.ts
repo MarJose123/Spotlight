@@ -7,9 +7,9 @@
  */
 import type { Dictionary, EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
-import { PostsFactory } from '@/database/factories/PostsFactory';
+import { PostsFactory } from '#/database/factories/PostsFactory.js';
 import { faker } from '@faker-js/faker';
-import { User } from '@/users/entities/user.entity';
+import { User } from '#/users/entities/user.entity.js';
 
 export class PostsSeeder extends Seeder {
   async run(em: EntityManager, context: Dictionary<User[]>): Promise<void> {

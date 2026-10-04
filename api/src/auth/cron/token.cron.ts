@@ -8,7 +8,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EntityManager } from '@mikro-orm/core';
-import { RefreshToken } from '@/auth/entities/refresh-token.entity';
+import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
 
 @Injectable()
 export class TokenCron {

@@ -8,7 +8,7 @@
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import type { Options } from '@mikro-orm/core';
-import type { DatabaseConfig } from './database.config';
+import type { DatabaseConfig } from './database.config.js';
 import { SeedManager } from '@mikro-orm/seeder';
 import { Migrator } from '@mikro-orm/migrations';
 import { MySqlDriver } from '@mikro-orm/mysql';

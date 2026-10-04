@@ -17,14 +17,14 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { minutes, seconds, Throttle } from '@nestjs/throttler';
-import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
-import { PostsService } from '@/posts/posts.service';
-import { Auth } from '@/auth/guard/auth.guard';
-import { CreatePostDto } from '@/posts/dto/create-post.dto';
-import { LikePostDto } from '@/posts/dto/like-post.dto';
-import { BucketService } from '@/bucket/bucket.service';
-import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
-import { ApiAuthenticated } from '@/common/decorators/api-authenticated.decorator';
+import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
+import { PostsService } from '#/posts/posts.service.js';
+import { Auth } from '#/auth/guard/auth.guard.js';
+import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
+import { LikePostDto } from '#/posts/dto/like-post.dto.js';
+import { BucketService } from '#/bucket/bucket.service.js';
+import { GeneratePresignedUrlDto } from '#/bucket/dto/generate-presigned-url.dto.js';
+import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
 import {
   ApiCreatePost,
   ApiLikePost,
@@ -32,7 +32,7 @@ import {
   ApiListPosts,
   ApiListUserPosts,
   ApiPresignedUpload,
-} from '@/posts/decorators/post-api.decorator';
+} from '#/posts/decorators/post-api.decorator.js';
 
 @ApiTags('Posts')
 @ApiAuthenticated()

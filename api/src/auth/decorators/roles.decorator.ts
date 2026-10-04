@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { SetMetadata } from '@nestjs/common';
-import { UserRole } from '@/users/enums/role.enum';
+import { UserRole } from '#/users/enums/role.enum.js';
 
 export const ROLES_KEY = 'roles';
 

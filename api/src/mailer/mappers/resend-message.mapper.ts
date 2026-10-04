@@ -7,7 +7,7 @@
  */
 
 import type { Attachment } from 'resend';
-import { MailAttachment } from '@/mailer/interface/mail-transport.interface';
+import { MailAttachment } from '#/mailer/interface/mail-transport.interface.js';
 
 export const ResendMessageMapper = {
   /**

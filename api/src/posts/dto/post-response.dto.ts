@@ -6,8 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
-import { PostType } from '@/posts/enums/post-type.enum';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 /** A post as returned by the API, decoupled from the persistence entity. */
 export class PostResponseDto {

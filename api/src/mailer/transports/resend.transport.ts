@@ -13,8 +13,8 @@ import {
   MailDeliveryResult,
   MailMessage,
   MailTransport,
-} from '@/mailer/interface/mail-transport.interface';
-import { ResendMessageMapper } from '@/mailer/mappers/resend-message.mapper';
+} from '#/mailer/interface/mail-transport.interface.js';
+import { ResendMessageMapper } from '#/mailer/mappers/resend-message.mapper.js';
 
 @Injectable()
 export class ResendTransport implements MailTransport {

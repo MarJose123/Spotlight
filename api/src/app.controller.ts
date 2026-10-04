@@ -15,15 +15,18 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
-import { AuthService, INVALID_CREDENTIALS_MESSAGE } from './auth/auth.service';
-import { CredentialLoginDto } from './auth/dto/credential-login.dto';
-import { Auth } from '@/auth/guard/auth.guard';
-import type { AuthenticatedRequest } from '@/auth/interface/payload.interface';
+import {
+  AuthService,
+  INVALID_CREDENTIALS_MESSAGE,
+} from './auth/auth.service.js';
+import { CredentialLoginDto } from '#/auth/dto/credential-login.dto.js';
+import { Auth } from '#/auth/guard/auth.guard.js';
+import type { AuthenticatedRequest } from '#/auth/interface/payload.interface.js';
 import {
   ApiLogin,
   ApiLogout,
   ApiRefresh,
-} from '@/auth/decorators/token-api.decorator';
+} from '#/auth/decorators/token-api.decorator.js';
 
 @ApiTags('Auth')
 @Controller('auth')

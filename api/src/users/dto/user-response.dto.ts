@@ -6,8 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole } from '@/users/enums/role.enum';
-import { UserStatus } from '@/users/enums/status.enum';
+import { UserRole } from '#/users/enums/role.enum.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
 
 /** A user as returned by the API (never exposes the password hash). */
 export class UserResponseDto {

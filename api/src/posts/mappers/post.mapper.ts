@@ -6,8 +6,9 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Posts } from '@/posts/entities/posts.entity';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
 
 type PostResponseSource = Pick<
   Posts,
@@ -23,6 +24,10 @@ type PostResponseSource = Pick<
 >;
 
 export class PostMapper {
+  static toResponse(post: PostResponseSource): PostResponseDto;
+  static toResponse(
+    post: PostResponseSource | undefined,
+  ): PostResponseDto | null;
   static toResponse(
     post: PostResponseSource | undefined,
   ): PostResponseDto | null {
@@ -35,7 +40,7 @@ export class PostMapper {
       attachment: post.attachment,
       attachmentType: post.attachmentType,
       postType: post.postType,
-      likedBy: post.likes?.map((like) => like.user.id),
+      likedBy: post.likes?.map((like: Likes) => like.user.id),
       likesCount: post.likesCount,
       createdAt: post.createdAt,
     };

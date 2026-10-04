@@ -7,13 +7,12 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
-import { PostsService } from '@/posts/posts.service';
-import { Posts } from '@/posts/entities/posts.entity';
-import { Likes } from '@/posts/entities/likes.entity';
-import { User } from '@/users/entities/user.entity';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
-import { PostType } from '@/posts/enums/post-type.enum';
-import { EntityManager } from '@mikro-orm/core';
+import { PostsService } from '#/posts/posts.service.js';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
+import { User } from '#/users/entities/user.entity.js';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 describe('PostsService', () => {
   let service: PostsService;

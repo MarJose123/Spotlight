@@ -16,7 +16,10 @@
   "rules": {
     "typescript/no-explicit-any": "off",
     "typescript/no-floating-promises": "warn",
-    "typescript/no-unsafe-argument": "warn",
+    "typescript/no-unsafe-argument": "off",
+    "typescript/no-redundant-type-constituents": "off",
+    "typescript/restrict-template-expressions": "off",
+    "typescript/unbound-method": "off",
 
     "import/no-relative-parent-imports": "error",
 

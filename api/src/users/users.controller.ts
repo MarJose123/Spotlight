@@ -19,19 +19,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
-import { UsersService } from '@/users/users.service';
-import { Auth } from '@/auth/guard/auth.guard';
-import { RolesGuard } from '@/auth/guard/roles.guard';
-import { Roles } from '@/auth/decorators/roles.decorator';
-import { UserRole } from '@/users/enums/role.enum';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import type { AuthenticatedRequest } from '@/auth/interface/payload.interface';
-import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { ApiAuthenticated } from '@/common/decorators/api-authenticated.decorator';
+import { CreateUserDto } from '#/users/dto/create-user.dto.js';
+import { UpdateUserDto } from '#/users/dto/update-user.dto.js';
+import { UsersService } from '#/users/users.service.js';
+import { Auth } from '#/auth/guard/auth.guard.js';
+import { RolesGuard } from '#/auth/guard/roles.guard.js';
+import { Roles } from '#/auth/decorators/roles.decorator.js';
+import { UserRole } from '#/users/enums/role.enum.js';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import type { AuthenticatedRequest } from '#/auth/interface/payload.interface.js';
+import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
+import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
 import {
   ApiCreateUser,
   ApiCurrentUser,
@@ -41,8 +41,8 @@ import {
   ApiListUsers,
   ApiUpdateUser,
   ApiUpdateUserRole,
-} from '@/users/decorators/user-api.decorator';
-import { UpdateUserRoleDto } from '@/users/dto/update-user-role.dto';
+} from '#/users/decorators/user-api.decorator.js';
+import { UpdateUserRoleDto } from '#/users/dto/update-user-role.dto.js';
 
 @ApiTags('Users')
 @ApiAuthenticated()

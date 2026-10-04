@@ -11,12 +11,12 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { UsersService } from '@/users/users.service';
-import { User } from '@/users/entities/user.entity';
-import { UserStatus } from '@/users/enums/status.enum';
-import { UserRole } from '@/users/enums/role.enum';
-import { EntityManager } from '@mikro-orm/core';
-import { MailerService } from '@/mailer/mailer.service';
+import { UsersService } from '#/users/users.service.js';
+import { User } from '#/users/entities/user.entity.js';
+import type { UserResponseDto } from '#/users/dto/user-response.dto.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
+import { UserRole } from '#/users/enums/role.enum.js';
+import { MailerService } from '#/mailer/mailer.service.js';
 import { ConfigService } from '@nestjs/config';
 
 // Mock MikroORM wrap() so wrap(entity).assign(patch) works in tests
@@ -54,6 +54,19 @@ describe('UsersService', () => {
     });
     return user;
   };
+
+  const makeActor = (overrides = {}): UserResponseDto => ({
+    id: 'admin-1',
+    email: 'admin@example.com',
+    name: 'Admin',
+    displayName: 'Admin',
+    username: 'admin',
+    status: UserStatus.ACTIVE,
+    role: UserRole.ADMIN,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
 
   const mockUserRepo = () => ({
     findOne: vi.fn(),
@@ -193,7 +206,7 @@ describe('UsersService', () => {
       const user = makeUser();
       userRepository.findOne.mockResolvedValue(user);
 
-      const result = await service.update('user-123', {
+      await service.update('user-123', {
         name: 'Updated Name',
       });
 
@@ -203,16 +216,18 @@ describe('UsersService', () => {
     it('should throw NotFoundException for unknown id', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update('missing', { name: 'Nope' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing', { name: 'Nope' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ConflictException for duplicate email', async () => {
       const user = makeUser();
       userRepository.findOne
         .mockResolvedValueOnce(user)
-        .mockResolvedValueOnce(makeUser({ id: 'other', email: 'new@example.com' }));
+        .mockResolvedValueOnce(
+          makeUser({ id: 'other', email: 'new@example.com' }),
+        );
 
       await expect(
         service.update('user-123', { email: 'new@example.com' }),
@@ -225,15 +240,7 @@ describe('UsersService', () => {
       const user = makeUser();
       userRepository.findOneOrFail.mockResolvedValue(user);
 
-      const result = await service.deactivateUser('user-123', {
-        id: 'admin-1',
-        email: 'admin@example.com',
-        name: 'Admin',
-        status: UserStatus.ACTIVE,
-        role: UserRole.ADMIN,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      const result = await service.deactivateUser('user-123', makeActor());
 
       expect(user.status).toBe(UserStatus.INACTIVE);
       expect(em.nativeDelete).toHaveBeenCalled();
@@ -244,15 +251,15 @@ describe('UsersService', () => {
       userRepository.findOneOrFail.mockResolvedValue(makeUser());
 
       await expect(
-        service.deactivateUser('user-123', {
-          id: 'user-123',
-          email: 'test@example.com',
-          name: 'Test',
-          status: UserStatus.ACTIVE,
-          role: UserRole.USER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+        service.deactivateUser(
+          'user-123',
+          makeActor({
+            id: 'user-123',
+            email: 'test@example.com',
+            name: 'Test',
+            role: UserRole.USER,
+          }),
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -262,15 +269,7 @@ describe('UsersService', () => {
       const user = makeUser({ status: UserStatus.INACTIVE });
       userRepository.findOneOrFail.mockResolvedValue(user);
 
-      const result = await service.activateUser('user-123', {
-        id: 'admin-1',
-        email: 'admin@example.com',
-        name: 'Admin',
-        status: UserStatus.ACTIVE,
-        role: UserRole.ADMIN,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      const result = await service.activateUser('user-123', makeActor());
 
       expect(user.status).toBe(UserStatus.ACTIVE);
       expect(result!.status).toBe(UserStatus.ACTIVE);
@@ -280,15 +279,15 @@ describe('UsersService', () => {
       userRepository.findOneOrFail.mockResolvedValue(makeUser());
 
       await expect(
-        service.activateUser('user-123', {
-          id: 'user-123',
-          email: 'test@example.com',
-          name: 'Test',
-          status: UserStatus.ACTIVE,
-          role: UserRole.USER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+        service.activateUser(
+          'user-123',
+          makeActor({
+            id: 'user-123',
+            email: 'test@example.com',
+            name: 'Test',
+            role: UserRole.USER,
+          }),
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -301,15 +300,7 @@ describe('UsersService', () => {
       const result = await service.updateUserRole(
         'user-123',
         { role: UserRole.ADMIN },
-        {
-          id: 'admin-1',
-          email: 'admin@example.com',
-          name: 'Admin',
-          status: UserStatus.ACTIVE,
-          role: UserRole.ADMIN,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        makeActor(),
       );
 
       expect(user.type).toBe(UserRole.ADMIN);
@@ -323,15 +314,12 @@ describe('UsersService', () => {
         service.updateUserRole(
           'user-123',
           { role: UserRole.ADMIN },
-          {
+          makeActor({
             id: 'user-123',
             email: 'test@example.com',
             name: 'Test',
-            status: UserStatus.ACTIVE,
             role: UserRole.USER,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+          }),
         ),
       ).rejects.toThrow(ForbiddenException);
     });

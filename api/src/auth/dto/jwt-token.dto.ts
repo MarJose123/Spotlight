@@ -5,12 +5,12 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { User } from '@/users/entities/user.entity';
+import { User } from '#/users/entities/user.entity.js';
 
 export class JwtTokenDto {
-  user: User;
+  user: User | undefined;
   access_token!: string;
   refresh_token!: string;
   expires_in: number;
-  token_type: string = 'Bearer';
+  token_type?: string;
 }

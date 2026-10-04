@@ -7,8 +7,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
-import { AuthController } from '@/auth/auth.controller';
-import { OAuthService } from '@/auth/oauth.service';
+import { AuthController } from '#/auth/auth.controller.js';
+import { OAuthService } from '#/auth/oauth.service.js';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -47,7 +47,8 @@ describe('AuthController', () => {
 
   describe('getAuthorizeUrl', () => {
     it('should return the authorize URL for a valid provider', () => {
-      const expectedUrl = 'https://accounts.zoho.com/oauth/v2/auth?challenge=abc';
+      const expectedUrl =
+        'https://accounts.zoho.com/oauth/v2/auth?challenge=abc';
       vi.mocked(oauthService.authorizeUrl).mockReturnValue(expectedUrl);
 
       const result = controller.getAuthorizeUrl('zoho', {
@@ -79,6 +80,7 @@ describe('AuthController', () => {
   describe('exchange', () => {
     it('should return tokens for a valid code exchange', async () => {
       const tokens = {
+        user: null,
         access_token: 'access',
         refresh_token: 'refresh',
         expires_in: 300,
@@ -92,7 +94,11 @@ describe('AuthController', () => {
       });
 
       expect(result).toBe(tokens);
-      expect(oauthService.login).toHaveBeenCalledWith('zoho', 'auth-code', 'verifier');
+      expect(oauthService.login).toHaveBeenCalledWith(
+        'zoho',
+        'auth-code',
+        'verifier',
+      );
     });
 
     it('should throw NotFoundException for an unknown provider', async () => {

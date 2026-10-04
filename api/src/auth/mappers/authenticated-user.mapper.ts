@@ -6,10 +6,10 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { UserMapper } from '@/users/mappers/user.mapper';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import type { User } from '@/users/entities/user.entity';
-import type { VerifiedPayloadInterface } from '@/auth/interface/payload.interface';
+import { UserMapper } from '#/users/mappers/user.mapper.js';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import type { User } from '#/users/entities/user.entity.js';
+import type { VerifiedPayloadInterface } from '#/auth/interface/payload.interface.js';
 
 export class AuthenticatedUserMapper {
   /**

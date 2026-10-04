@@ -6,10 +6,10 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { describe, it, expect } from 'vitest';
-import { JwtTokenMapper } from '@/auth/mappers/jwt-token.mapper';
-import { User } from '@/users/entities/user.entity';
-import { UserStatus } from '@/users/enums/status.enum';
-import { UserRole } from '@/users/enums/role.enum';
+import { JwtTokenMapper } from '#/auth/mappers/jwt-token.mapper.js';
+import { User } from '#/users/entities/user.entity.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
+import { UserRole } from '#/users/enums/role.enum.js';
 
 describe('JwtTokenMapper', () => {
   const makeUser = () => {

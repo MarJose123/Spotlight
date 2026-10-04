@@ -6,9 +6,9 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DatabaseHealth } from '@/health/database.health';
+import { DatabaseHealth } from '#/health/database.health.js';
 import { HealthIndicatorService } from '@nestjs/terminus';
-import { MikroORM, EntityManager } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 
 describe('DatabaseHealth', () => {
   let service: DatabaseHealth;
@@ -37,8 +37,9 @@ describe('DatabaseHealth', () => {
       up: vi.fn((result) => result),
       down: vi.fn((result) => result),
     };
+    const checkMock = vi.fn(() => indicator);
     return {
-      check: vi.fn(() => indicator),
+      check: checkMock,
     } as unknown as HealthIndicatorService;
   };
 
@@ -53,11 +54,13 @@ describe('DatabaseHealth', () => {
     it('should return up when database is reachable', async () => {
       connection.execute.mockResolvedValue(undefined);
 
-      const result = await service.isHealthy('db');
+      await service.isHealthy('db');
 
       expect(connection.execute).toHaveBeenCalledWith('SELECT 1');
       expect(healthIndicatorService.check).toHaveBeenCalledWith('db');
-      const indicator = healthIndicatorService.check.mock.results[0].value;
+      const indicator = (
+        healthIndicatorService.check as ReturnType<typeof vi.fn>
+      ).mock.results[0].value;
       expect(indicator.up).toHaveBeenCalledWith({
         type: 'database',
         message: 'Database connection is healthy',
@@ -67,9 +70,11 @@ describe('DatabaseHealth', () => {
     it('should return down when database throws', async () => {
       connection.execute.mockRejectedValue(new Error('Connection refused'));
 
-      const result = await service.isHealthy('db');
+      await service.isHealthy('db');
 
-      const indicator = healthIndicatorService.check.mock.results[0].value;
+      const indicator = (
+        healthIndicatorService.check as ReturnType<typeof vi.fn>
+      ).mock.results[0].value;
       expect(indicator.down).toHaveBeenCalledWith({
         type: 'database',
         message: 'Connection refused',
@@ -81,7 +86,9 @@ describe('DatabaseHealth', () => {
 
       await service.isHealthy('db');
 
-      const indicator = healthIndicatorService.check.mock.results[0].value;
+      const indicator = (
+        healthIndicatorService.check as ReturnType<typeof vi.fn>
+      ).mock.results[0].value;
       expect(indicator.down).toHaveBeenCalledWith({
         type: 'database',
         message: 'Database unavailable',

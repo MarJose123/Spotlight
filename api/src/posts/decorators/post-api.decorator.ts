@@ -15,12 +15,12 @@ import {
   ApiParam,
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
-import { LikePostByIdDto } from '@/posts/dto/like-post.dto';
-import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
-import { PresignedUrlResponseDto } from '@/bucket/dto/presigned-url-response.dto';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
-import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { LikePostByIdDto } from '#/posts/dto/like-post.dto.js';
+import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
+import { PresignedUrlResponseDto } from '#/bucket/dto/presigned-url-response.dto.js';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
+import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
 
 /** Shared by both like endpoints, which respond identically. */
 const likeResponse = () =>

@@ -10,13 +10,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport } from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import { SendmailMailerConfig } from '@/config/mail.config';
+import { SendmailMailerConfig } from '#/config/mail.config.js';
 import {
   MailDeliveryResult,
   MailMessage,
   MailTransport,
-} from '@/mailer/interface/mail-transport.interface';
-import { NodemailerMessageMapper } from '@/mailer/mappers/nodemailer-message.mapper';
+} from '#/mailer/interface/mail-transport.interface.js';
+import { NodemailerMessageMapper } from '#/mailer/mappers/nodemailer-message.mapper.js';
 
 @Injectable()
 export class SendmailTransport implements MailTransport {

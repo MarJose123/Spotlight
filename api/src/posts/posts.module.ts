@@ -7,12 +7,12 @@
  */
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { PostsController } from '@/posts/posts.controller';
-import { PostsService } from '@/posts/posts.service';
-import { AuthModule } from '@/auth/auth.module';
-import { BucketModule } from '@/bucket/bucket.module';
-import { Posts } from '@/posts/entities/posts.entity';
-import { Likes } from '@/posts/entities/likes.entity';
+import { PostsController } from '#/posts/posts.controller.js';
+import { PostsService } from '#/posts/posts.service.js';
+import { AuthModule } from '#/auth/auth.module.js';
+import { BucketModule } from '#/bucket/bucket.module.js';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
 
 @Module({
   imports: [

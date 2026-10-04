@@ -6,20 +6,20 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService } from './auth.service.js';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createSecretKey } from 'node:crypto';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { TokenService } from './token.service';
-import { TokenCron } from './cron/token.cron';
+import { JwtStrategy } from './strategies/jwt.strategy.js';
+import { TokenService } from './token.service.js';
+import { TokenCron } from './cron/token.cron.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { User } from '@/users/entities/user.entity';
-import { RefreshToken } from '@/auth/entities/refresh-token.entity';
-import { AuthController } from './auth.controller';
-import { OAuthService } from './oauth.service';
-import { ZohoStrategy } from './strategies/zoho.strategy';
+import { User } from '#/users/entities/user.entity.js';
+import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
+import { AuthController } from './auth.controller.js';
+import { OAuthService } from './oauth.service.js';
+import { ZohoStrategy } from './strategies/zoho.strategy.js';
 
 @Module({
   imports: [

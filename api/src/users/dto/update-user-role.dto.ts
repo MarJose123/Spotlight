@@ -7,7 +7,7 @@
  */
 
 import { IsEnum } from 'class-validator';
-import { UserRole } from '@/users/enums/role.enum';
+import { UserRole } from '#/users/enums/role.enum.js';
 
 export class UpdateUserRoleDto {
   @IsEnum(UserRole)

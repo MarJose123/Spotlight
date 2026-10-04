@@ -7,8 +7,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JwtService } from '@nestjs/jwt';
-import { TokenService } from '@/auth/token.service';
-import { User } from '@/users/entities/user.entity';
+import { TokenService } from '#/auth/token.service.js';
+import { User } from '#/users/entities/user.entity.js';
 
 describe('TokenService', () => {
   let service: TokenService;
@@ -24,7 +24,6 @@ describe('TokenService', () => {
 
   describe('createAccessToken', () => {
     it('should sign a token with the user sub and email', () => {
-      const payload = { sub: 'user-123', email: 'test@example.com' };
       const expectedToken = 'jwt-token-123';
       vi.mocked(jwtService.sign).mockReturnValue(expectedToken);
 

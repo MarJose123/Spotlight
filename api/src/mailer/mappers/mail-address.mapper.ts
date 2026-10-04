@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { MailRecipient } from '@/mailer/interface/mail-transport.interface';
+import { MailRecipient } from '#/mailer/interface/mail-transport.interface.js';
 
 const UNSAFE_DISPLAY_NAME = /[^A-Za-z0-9 ]/;
 

@@ -7,11 +7,11 @@
  */
 
 import type { SendMailOptions } from 'nodemailer';
-import { MailTransportName } from '@/config/mail.config';
+import { MailTransportName } from '#/config/mail.config.js';
 import {
   MailDeliveryResult,
   MailMessage,
-} from '@/mailer/interface/mail-transport.interface';
+} from '#/mailer/interface/mail-transport.interface.js';
 
 /**
  * Structural stand-in for the `SentMessageInfo` of nodemailer's SMTP and

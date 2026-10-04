@@ -7,7 +7,7 @@
  */
 import type { Dictionary, EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
-import { UserFactory } from '@/database/factories/UserFactory';
+import { UserFactory } from '#/database/factories/UserFactory.js';
 
 export class UserSeeder extends Seeder {
   async run(em: EntityManager, context: Dictionary): Promise<void> {

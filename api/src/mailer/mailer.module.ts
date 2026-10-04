@@ -7,11 +7,11 @@
  */
 
 import { Module } from '@nestjs/common';
-import { MailerService } from './mailer.service';
-import { ResendTransport } from './transports/resend.transport';
-import { SendmailTransport } from './transports/sendmail.transport';
-import { SmtpTransport } from './transports/smtp.transport';
-import { MailTransportRegistry } from './transports/transport.registry';
+import { MailerService } from './mailer.service.js';
+import { ResendTransport } from './transports/resend.transport.js';
+import { SendmailTransport } from './transports/sendmail.transport.js';
+import { SmtpTransport } from './transports/smtp.transport.js';
+import { MailTransportRegistry } from './transports/transport.registry.js';
 
 @Module({
   providers: [

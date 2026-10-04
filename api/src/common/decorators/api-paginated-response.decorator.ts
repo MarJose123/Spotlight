@@ -7,8 +7,8 @@
  */
 import { Type, applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { PaginationMetaDto } from '@/common/dto/pagination/pagination-meta.dto';
-import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
+import { PaginationMetaDto } from '#/common/dto/pagination/pagination-meta.dto.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 
 /**
  * Documents a paginated endpoint whose payload is a `PaginationResponseDto<T>`.

@@ -6,9 +6,13 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { HealthController } from '@/health/health.controller';
-import { HealthCheckService, HttpHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
-import { DatabaseHealth } from '@/health/database.health';
+import { HealthController } from '#/health/health.controller.js';
+import {
+  HealthCheckService,
+  HttpHealthIndicator,
+  DiskHealthIndicator,
+} from '@nestjs/terminus';
+import { DatabaseHealth } from '#/health/database.health.js';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -41,14 +45,21 @@ describe('HealthController', () => {
   });
 
   describe('check', () => {
-    it('should call health.check with db and disk checks', () => {
-      const dbResult = { database: { status: 'up' } };
-      const diskResult = { storage: { status: 'up' } };
-      vi.mocked(db.isHealthy).mockReturnValue(Promise.resolve(dbResult) as never);
-      vi.mocked(disk.checkStorage).mockReturnValue(Promise.resolve(diskResult) as never);
-      vi.mocked(health.check).mockResolvedValue({ ...dbResult, ...diskResult });
+    it('should call health.check with db and disk checks', async () => {
+      const dbResult = { database: { status: 'up' as const } };
+      const diskResult = { storage: { status: 'up' as const } };
+      vi.mocked(db.isHealthy).mockReturnValue(
+        Promise.resolve(dbResult) as never,
+      );
+      vi.mocked(disk.checkStorage).mockReturnValue(
+        Promise.resolve(diskResult) as never,
+      );
+      vi.mocked(health.check).mockResolvedValue({
+        status: 'ok',
+        details: { ...dbResult, ...diskResult },
+      });
 
-      controller.check();
+      await controller.check();
 
       expect(health.check).toHaveBeenCalled();
       const checkFn = vi.mocked(health.check).mock.calls[0][0];
@@ -57,31 +68,46 @@ describe('HealthController', () => {
     });
 
     it('should propagate health check results', async () => {
-      const dbResult = { database: { status: 'up' } };
-      const diskResult = { storage: { status: 'up' } };
-      vi.mocked(db.isHealthy).mockReturnValue(Promise.resolve(dbResult) as never);
-      vi.mocked(disk.checkStorage).mockReturnValue(Promise.resolve(diskResult) as never);
-      const expected = { database: { status: 'up' }, storage: { status: 'up' } };
-      vi.mocked(health.check).mockResolvedValue(expected);
+      const dbResult = { database: { status: 'up' as const } };
+      const diskResult = { storage: { status: 'up' as const } };
+      vi.mocked(db.isHealthy).mockReturnValue(
+        Promise.resolve(dbResult) as never,
+      );
+      vi.mocked(disk.checkStorage).mockReturnValue(
+        Promise.resolve(diskResult) as never,
+      );
+      const expected = {
+        database: { status: 'up' as const },
+        storage: { status: 'up' as const },
+      };
+      vi.mocked(health.check).mockResolvedValue({
+        status: 'ok',
+        details: expected,
+      });
 
       const result = await controller.check();
 
-      expect(result).toBe(expected);
+      expect(result.details).toEqual(expected);
     });
 
-    it('should pass disk threshold to checkStorage', () => {
+    it('should pass disk threshold to checkStorage', async () => {
       vi.mocked(db.isHealthy).mockReturnValue(Promise.resolve({}) as never);
-      vi.mocked(disk.checkStorage).mockReturnValue(Promise.resolve({}) as never);
-      vi.mocked(health.check).mockResolvedValue({});
+      vi.mocked(disk.checkStorage).mockReturnValue(
+        Promise.resolve({}) as never,
+      );
+      vi.mocked(health.check).mockResolvedValue({
+        status: 'ok',
+        details: {},
+      });
 
-      controller.check();
+      await controller.check();
 
       // The controller passes functions to health.check, not calling disk directly
       const checkFn = vi.mocked(health.check).mock.calls[0][0];
       expect(Array.isArray(checkFn)).toBe(true);
       expect(checkFn.length).toBe(2);
       // Invoke the second function to verify disk.checkStorage is called
-      checkFn[1]();
+      await checkFn[1]();
       expect(disk.checkStorage).toHaveBeenCalledWith('storage', {
         path: '/',
         threshold: 250 * 1024 * 1024 * 1024,
@@ -89,16 +115,26 @@ describe('HealthController', () => {
     });
 
     it('should propagate health check failure when database is down', async () => {
-      const dbResult = { database: { status: 'down' } };
-      const diskResult = { storage: { status: 'up' } };
-      vi.mocked(db.isHealthy).mockReturnValue(Promise.resolve(dbResult) as never);
-      vi.mocked(disk.checkStorage).mockReturnValue(Promise.resolve(diskResult) as never);
-      const failed = { database: { status: 'down' }, storage: { status: 'up' } };
-      vi.mocked(health.check).mockResolvedValue(failed);
+      const dbResult = { database: { status: 'down' as const } };
+      const diskResult = { storage: { status: 'up' as const } };
+      vi.mocked(db.isHealthy).mockReturnValue(
+        Promise.resolve(dbResult) as never,
+      );
+      vi.mocked(disk.checkStorage).mockReturnValue(
+        Promise.resolve(diskResult) as never,
+      );
+      const failed = {
+        database: { status: 'down' as const },
+        storage: { status: 'up' as const },
+      };
+      vi.mocked(health.check).mockResolvedValue({
+        status: 'error',
+        details: failed,
+      });
 
       const result = await controller.check();
 
-      expect(result.database.status).toBe('down');
+      expect(result.details.database.status).toBe('down');
     });
   });
 });

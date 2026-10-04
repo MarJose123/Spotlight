@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
 
 export class JwtTokenResponse {
   @ApiPropertyOptional({

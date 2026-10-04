@@ -13,9 +13,9 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { OAuthAuthorizeUrlResponseDto } from '@/auth/dto/oauth-authorize-url-response.dto';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
+import { OAuthAuthorizeUrlResponseDto } from '#/auth/dto/oauth-authorize-url-response.dto.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 
 /**
  * OpenAPI documentation for the social sign-in endpoints, composed so the

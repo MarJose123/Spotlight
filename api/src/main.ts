@@ -10,7 +10,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import {
   BadRequestException,
   ValidationError,
@@ -21,24 +21,24 @@ import { MikroORM } from '@mikro-orm/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import helmet from '@fastify/helmet';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
-import { PaginationMetaDto } from '@/common/dto/pagination/pagination-meta.dto';
-import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
-import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
-import { CreatePostDto } from '@/posts/dto/create-post.dto';
-import { LikePostByIdDto, LikePostDto } from '@/posts/dto/like-post.dto';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import { CredentialDto } from '@/auth/dto/credential.dto';
-import { CredentialLoginDto } from '@/auth/dto/credential-login.dto';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
-import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
-import { GeneratePresignedUrlDto } from '@/bucket/dto/generate-presigned-url.dto';
-import { PresignedUrlResponseDto } from '@/bucket/dto/presigned-url-response.dto';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
+import { PaginationMetaDto } from '#/common/dto/pagination/pagination-meta.dto.js';
+import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
+import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
+import { LikePostByIdDto, LikePostDto } from '#/posts/dto/like-post.dto.js';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
+import { CreateUserDto } from '#/users/dto/create-user.dto.js';
+import { UpdateUserDto } from '#/users/dto/update-user.dto.js';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import { CredentialDto } from '#/auth/dto/credential.dto.js';
+import { CredentialLoginDto } from '#/auth/dto/credential-login.dto.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
+import { RefreshTokenDto } from '#/auth/dto/refresh-token.dto.js';
+import { GeneratePresignedUrlDto } from '#/bucket/dto/generate-presigned-url.dto.js';
+import { PresignedUrlResponseDto } from '#/bucket/dto/presigned-url-response.dto.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(

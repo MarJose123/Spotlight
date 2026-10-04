@@ -12,7 +12,7 @@ import {
   HealthCheckService,
   HttpHealthIndicator,
 } from '@nestjs/terminus';
-import { DatabaseHealth } from './database.health';
+import { DatabaseHealth } from './database.health.js';
 import {
   ApiOkResponse,
   ApiOperation,

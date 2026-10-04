@@ -6,8 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
-import { PostLikeResponseDto } from '@/common/dto/post-like-response.dto';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 
 export class PostLikeMapper {
   static toResponse(

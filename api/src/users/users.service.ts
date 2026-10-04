@@ -19,20 +19,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
-import { User } from '@/users/entities/user.entity';
-import { PaginationQueryDto } from '@/common/dto/pagination/pagination-query.dto';
-import { PaginationResponseDto } from '@/common/dto/pagination/pagination-response.dto';
+import { CreateUserDto } from '#/users/dto/create-user.dto.js';
+import { UpdateUserDto } from '#/users/dto/update-user.dto.js';
+import { User } from '#/users/entities/user.entity.js';
+import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
+import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 import bcrypt from 'bcrypt';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { UserMapper } from '@/users/mappers/user.mapper';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { MailerService } from '@/mailer/mailer.service';
-import WelcomeEmail, { WelcomeEmailProps } from '@/mailer/emails/welcome-email';
-import { UserStatus } from '@/users/enums/status.enum';
-import { UpdateUserRoleDto } from '@/users/dto/update-user-role.dto';
-import { RefreshToken } from '@/auth/entities/refresh-token.entity';
+import { UserMapper } from '#/users/mappers/user.mapper.js';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
+import { MailerService } from '#/mailer/mailer.service.js';
+import WelcomeEmail, {
+  WelcomeEmailProps,
+} from '#/mailer/emails/welcome-email.js';
+import { UserStatus } from '#/users/enums/status.enum.js';
+import { UpdateUserRoleDto } from '#/users/dto/update-user-role.dto.js';
+import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
 
 @Injectable()
 export class UsersService {
@@ -158,7 +160,7 @@ export class UsersService {
   ): Promise<UserResponseDto | null> {
     if (authenticatedUser.id === id) {
       throw new ForbiddenException(
-        'You cannot deactivate yourself. Goto your profile to deactivate.',
+        'You cannot activate yourself. Contact an administrator.',
       );
     }
 

@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { FastifyRequest } from 'fastify';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
 
 export interface PayloadInterface {
   email: string;

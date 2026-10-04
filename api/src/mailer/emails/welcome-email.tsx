@@ -20,7 +20,7 @@ import {
   Tailwind,
   Text,
 } from 'react-email';
-import { emailTailwindConfig } from './email-tailwind.config';
+import { emailTailwindConfig } from './email-tailwind.config.js';
 
 const APP_NAME = 'Spotlight';
 

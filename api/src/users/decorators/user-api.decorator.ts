@@ -16,10 +16,10 @@ import {
   ApiOperation,
   ApiParam,
 } from '@nestjs/swagger';
-import { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
-import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
+import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
+import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
 
 const idParam = () =>
   ApiParam({ name: 'id', description: 'Id of the user.', format: 'uuid' });

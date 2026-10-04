@@ -8,10 +8,10 @@
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MailTransport } from '@/mailer/interface/mail-transport.interface';
-import { ResendTransport } from '@/mailer/transports/resend.transport';
-import { SendmailTransport } from '@/mailer/transports/sendmail.transport';
-import { SmtpTransport } from '@/mailer/transports/smtp.transport';
+import { MailTransport } from '#/mailer/interface/mail-transport.interface.js';
+import { ResendTransport } from '#/mailer/transports/resend.transport.js';
+import { SendmailTransport } from '#/mailer/transports/sendmail.transport.js';
+import { SmtpTransport } from '#/mailer/transports/smtp.transport.js';
 
 /**
  * Keeps every registered transport available, so the mailer can send through

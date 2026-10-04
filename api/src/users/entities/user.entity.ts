@@ -17,12 +17,12 @@ import {
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import { IsOptional } from 'class-validator';
-import { UserStatus } from '@/users/enums/status.enum';
+import { UserStatus } from '#/users/enums/status.enum.js';
 import { Exclude } from 'class-transformer';
 import { Collection } from '@mikro-orm/core';
-import { Posts } from '@/posts/entities/posts.entity';
-import { Likes } from '@/posts/entities/likes.entity';
-import { UserRole } from '@/users/enums/role.enum';
+import { Posts } from '#/posts/entities/posts.entity.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
+import { UserRole } from '#/users/enums/role.enum.js';
 
 @Entity({ tableName: 'users' })
 export class User {
@@ -58,10 +58,10 @@ export class User {
   @Enum({ items: () => UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus = UserStatus.ACTIVE;
 
-  @OneToMany(() => Posts, (posts) => posts.user)
+  @OneToMany(() => Posts, (post: Posts) => post.user)
   posts? = new Collection<Posts>(this);
 
-  @OneToMany(() => Likes, (likes) => likes.user)
+  @OneToMany(() => Likes, (like: Likes) => like.user)
   likes? = new Collection<Likes>(this);
 
   @Property()

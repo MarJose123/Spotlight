@@ -6,8 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { User } from '@/users/entities/user.entity';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
+import { User } from '#/users/entities/user.entity.js';
+import { UserResponseDto } from '#/users/dto/user-response.dto.js';
 
 type UserResponseSource = Pick<
   User,

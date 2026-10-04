@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { MailTransportName } from '@/config/mail.config';
+import { MailTransportName } from '#/config/mail.config.js';
 
 export interface MailAddress {
   address: string;

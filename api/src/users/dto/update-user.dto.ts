@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { CreateUserDto } from '#/users/dto/create-user.dto.js';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 

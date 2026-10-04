@@ -8,22 +8,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import databaseConfig, { DatabaseConfig } from './config/database.config';
-import { buildMikroOrmOptions } from './config/mikro-orm.config';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
-import AppConfig from './config/app.config';
-import { AppController } from './app.controller';
-import { HealthModule } from './health/health.module';
-import { PostsModule } from './posts/posts.module';
+import databaseConfig, { DatabaseConfig } from './config/database.config.js';
+import { buildMikroOrmOptions } from './config/mikro-orm.config.js';
+import { UsersModule } from './users/users.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import AppConfig from './config/app.config.js';
+import { AppController } from './app.controller.js';
+import { HealthModule } from './health/health.module.js';
+import { PostsModule } from './posts/posts.module.js';
 import { ScheduleModule } from '@nestjs/schedule';
 import { minutes, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-import { BucketModule } from './bucket/bucket.module';
-import { MailerModule } from './mailer/mailer.module';
-import bucketConfig from '@/config/bucket.config';
-import servicesConfig from '@/config/services.config';
-import mailConfig from '@/config/mail.config';
+import { BucketModule } from './bucket/bucket.module.js';
+import { MailerModule } from './mailer/mailer.module.js';
+import bucketConfig from '#/config/bucket.config.js';
+import servicesConfig from '#/config/services.config.js';
+import mailConfig from '#/config/mail.config.js';
 
 @Module({
   imports: [

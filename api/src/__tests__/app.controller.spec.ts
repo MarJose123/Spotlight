@@ -7,10 +7,13 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
-import { AppController } from '@/app.controller';
-import { AuthService, INVALID_CREDENTIALS_MESSAGE } from '@/auth/auth.service';
-import type { AuthenticatedUserDto } from '@/auth/dto/authenticated-user.dto';
-import type { UserResponseDto } from '@/users/dto/user-response.dto';
+import { AppController } from '#/app.controller.js';
+import {
+  AuthService,
+  INVALID_CREDENTIALS_MESSAGE,
+} from '#/auth/auth.service.js';
+import type { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
+import type { UserResponseDto } from '#/users/dto/user-response.dto.js';
 
 describe('AppController', () => {
   let controller: AppController;
@@ -54,14 +57,26 @@ describe('AppController', () => {
   describe('login', () => {
     it('should return tokens for valid credentials', async () => {
       const user = { id: 'user-123', email: 'test@example.com' };
-      const tokens = { access_token: 'access', refresh_token: 'refresh', expires_in: 300, token_type: 'Bearer' };
+      const tokens = {
+        user: null,
+        access_token: 'access',
+        refresh_token: 'refresh',
+        expires_in: 300,
+        token_type: 'Bearer',
+      };
       vi.mocked(authService.validateUserEmail).mockResolvedValue(user as never);
       vi.mocked(authService.authenticate).mockResolvedValue(tokens);
 
-      const result = await controller.login({ email: 'test@example.com', password: 'secret' });
+      const result = await controller.login({
+        email: 'test@example.com',
+        password: 'secret',
+      });
 
       expect(result).toBe(tokens);
-      expect(authService.authenticate).toHaveBeenCalledWith({ email: 'test@example.com', password: 'secret' });
+      expect(authService.authenticate).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'secret',
+      });
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {
@@ -91,22 +106,31 @@ describe('AppController', () => {
 
       await controller.logout('refresh-123', req as never);
 
-      expect(authService.logout).toHaveBeenCalledWith('refresh-123', 'user-123');
+      expect(authService.logout).toHaveBeenCalledWith(
+        'refresh-123',
+        'user-123',
+      );
     });
 
     it('should throw UnauthorizedException when auth.sub is missing', async () => {
       const auth = makeAuth({ sub: undefined });
       const req = makeReq(auth);
 
-      await expect(controller.logout('refresh-123', req as never)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.logout('refresh-123', req as never),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('refresh', () => {
     it('should return new tokens for a valid refresh token', async () => {
-      const tokens = { access_token: 'new-access', refresh_token: 'same-refresh', expires_in: 300, token_type: 'Bearer' };
+      const tokens = {
+        user: null,
+        access_token: 'new-access',
+        refresh_token: 'same-refresh',
+        expires_in: 300,
+        token_type: 'Bearer',
+      };
       vi.mocked(authService.refresh).mockResolvedValue(tokens);
 
       const result = await controller.refresh('refresh-123');
@@ -116,21 +140,32 @@ describe('AppController', () => {
     });
 
     it('should propagate the error when refresh token is invalid', async () => {
-      vi.mocked(authService.refresh).mockRejectedValue(new Error('Invalid refresh token'));
+      vi.mocked(authService.refresh).mockRejectedValue(
+        new Error('Invalid refresh token'),
+      );
 
-      await expect(controller.refresh('bad-token')).rejects.toThrow('Invalid refresh token');
+      await expect(controller.refresh('bad-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
 
     it('should propagate TypeError when refresh token is undefined', async () => {
-      vi.mocked(authService.refresh).mockRejectedValue(new TypeError('The first argument must be of type string'));
+      vi.mocked(authService.refresh).mockRejectedValue(
+        new TypeError('The first argument must be of type string'),
+      );
 
-      await expect(controller.refresh(undefined as never)).rejects.toThrow(TypeError);
+      await expect(controller.refresh(undefined as never)).rejects.toThrow(
+        TypeError,
+      );
     });
   });
 
   describe('login', () => {
     it('should propagate UnauthorizedException when password is wrong', async () => {
-      vi.mocked(authService.validateUserEmail).mockResolvedValue({ id: 'user-123', email: 'test@example.com' } as never);
+      vi.mocked(authService.validateUserEmail).mockResolvedValue({
+        id: 'user-123',
+        email: 'test@example.com',
+      } as never);
       vi.mocked(authService.authenticate).mockRejectedValue(
         new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE),
       );

@@ -15,11 +15,11 @@ import {
   Property,
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
-import { AttachmentType } from '@/posts/enums/attachment-type.enum';
+import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
 import { IsNotEmpty } from 'class-validator';
-import { PostType } from '@/posts/enums/post-type.enum';
-import { User } from '@/users/entities/user.entity';
-import { Likes } from '@/posts/entities/likes.entity';
+import { PostType } from '#/posts/enums/post-type.enum.js';
+import { User } from '#/users/entities/user.entity.js';
+import { Likes } from '#/posts/entities/likes.entity.js';
 import { Collection, type Rel } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -61,7 +61,7 @@ export class Posts {
   user!: Rel<User>;
 
   @ApiProperty({ type: Object, format: 'uuid', isArray: true })
-  @OneToMany(() => Likes, (likes) => likes.post)
+  @OneToMany(() => Likes, (like: Likes) => like.post)
   likes? = new Collection<Likes>(this);
 
   @Property({ type: 'number', default: 0 })

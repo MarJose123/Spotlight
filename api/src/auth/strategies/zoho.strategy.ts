@@ -17,8 +17,8 @@ import type {
   OAuthAuthorizeParams,
   OAuthProfile,
   OAuthStrategy,
-} from '@/auth/interface/oauth.interface';
-import type { ZohoServiceConfig } from '@/config/services.config';
+} from '#/auth/interface/oauth.interface.js';
+import type { ZohoServiceConfig } from '#/config/services.config.js';
 
 interface ZohoTokenResponse {
   access_token?: string;
@@ -198,7 +198,7 @@ export class ZohoStrategy implements OAuthStrategy {
     const value = this.zoho[key];
     if (typeof value !== 'string' || value.length === 0) {
       throw new InternalServerErrorException(
-        `Missing configuration: services.zoho.${key}`,
+        `Missing configuration: services.zoho.${String(key)}`,
       );
     }
     return value;

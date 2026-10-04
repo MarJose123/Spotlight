@@ -14,11 +14,11 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CredentialLoginDto } from '@/auth/dto/credential-login.dto';
-import { JwtTokenResponse } from '@/auth/dto/jwt-token-response.dto';
-import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
-import { ErrorResponseDto } from '@/common/dto/error-response.dto';
-import { ApiAuthenticated } from '@/common/decorators/api-authenticated.decorator';
+import { CredentialLoginDto } from '#/auth/dto/credential-login.dto.js';
+import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
+import { RefreshTokenDto } from '#/auth/dto/refresh-token.dto.js';
+import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
+import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
 
 /**
  * OpenAPI documentation for the token lifecycle endpoints. These also set the

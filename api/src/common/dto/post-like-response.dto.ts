@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { PostResponseDto } from '@/posts/dto/post-response.dto';
+import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
 
 export class PostLikeResponseDto {
   @ApiProperty({
