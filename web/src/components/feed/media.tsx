@@ -159,6 +159,120 @@ const BOXES: Array<{
 	{ x: 490, y: 184, w: 84, h: 56, fill: "#e2e8f0" },
 ];
 
+/**
+ * Thumbnail preview for a photo attached to the composer. Each tile carries a
+ * remove button so the writer can drop an attachment before posting. Clicking
+ * the image opens a full-size preview dialog.
+ */
+export function ComposerPhotoPreview({
+	src,
+	onRemove,
+	onView,
+}: {
+	src: string;
+	onRemove: () => void;
+	onView: () => void;
+}) {
+	return (
+		<div className="relative shrink-0">
+			<button
+				type="button"
+				onClick={onView}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						onView();
+					}
+				}}
+				aria-label="View full size"
+				className="-ml-1 p-1"
+			>
+				<img
+					src={src}
+					alt="Selected attachment"
+					className="h-20 w-20 rounded-xl border border-[var(--feed-line)] object-cover"
+				/>
+			</button>
+			<button
+				type="button"
+				onClick={onRemove}
+				aria-label="Remove photo"
+				className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[var(--feed-card)] text-[var(--feed-ink-soft)] shadow ring-2 ring-[var(--feed-card)] transition hover:text-[var(--feed-ink)]"
+			>
+				<svg
+					width="10"
+					height="10"
+					viewBox="0 0 10 10"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					fill="none"
+					aria-hidden="true"
+				>
+					<path d="M2 2l6 6M8 2l-6 6" />
+				</svg>
+			</button>
+		</div>
+	);
+}
+
+/**
+ * Thumbnail preview for a video attached to the composer. Each tile carries a
+ * remove button so the writer can drop an attachment before posting. Clicking
+ * the video opens a full-size player.
+ */
+export function ComposerVideoPreview({
+	src,
+	onRemove,
+	onView,
+}: {
+	src: string;
+	onRemove: () => void;
+	onView: () => void;
+}) {
+	return (
+		<div className="relative shrink-0">
+			<button
+				type="button"
+				onClick={onView}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						onView();
+					}
+				}}
+				aria-label="View video"
+				className="-ml-1 p-1"
+			>
+				<video
+					src={src}
+					muted
+					className="h-20 w-20 rounded-xl border border-[var(--feed-line)] object-cover"
+				/>
+			</button>
+			<button
+				type="button"
+				onClick={onRemove}
+				aria-label="Remove video"
+				className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[var(--feed-card)] text-[var(--feed-ink-soft)] shadow ring-2 ring-[var(--feed-card)] transition hover:text-[var(--feed-ink)]"
+			>
+				<svg
+					width="10"
+					height="10"
+					viewBox="0 0 10 10"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					fill="none"
+					aria-hidden="true"
+				>
+					<path d="M2 2l6 6M8 2l-6 6" />
+				</svg>
+			</button>
+		</div>
+	);
+}
+
 export function PostMedia({
 	media,
 }: {
