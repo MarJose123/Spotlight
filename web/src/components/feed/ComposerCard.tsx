@@ -49,7 +49,7 @@ const ACTION_ICONS = {
 } as const;
 
 /** Maximum number of photos a single post accepts. */
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 5;
 
 /** Maximum number of videos a single post accepts. */
 const MAX_VIDEOS = 1;
