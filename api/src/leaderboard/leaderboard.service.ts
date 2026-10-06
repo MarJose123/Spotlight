@@ -10,9 +10,12 @@ import { Cron } from '@nestjs/schedule';
 import { EntityManager } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import type { EntityRepository } from '@mikro-orm/core';
+import dayjs from 'dayjs';
 import { LeaderboardScore } from '#/leaderboard/entities/leaderboard-score.entity.js';
+import { LeaderboardEntryDto } from '#/leaderboard/dto/leaderboard-entry.dto.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { User } from '#/users/entities/user.entity.js';
+import { UserMapper } from '#/users/mappers/user.mapper.js';
 
 @Injectable()
 export class LeaderboardService {
@@ -24,13 +27,11 @@ export class LeaderboardService {
     @InjectRepository(Posts)
     private readonly postsRepository: EntityRepository<Posts>,
     private readonly em: EntityManager,
+    private readonly userMapper: UserMapper,
   ) {}
 
   private currentMonth(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
+    return dayjs().format('YYYY-MM');
   }
 
   /**
@@ -46,20 +47,8 @@ export class LeaderboardService {
 
     // Aggregate likes per post author for the current month
     // A like counts if the post was created in the current month
-    const startOfMonth = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      1,
-    );
-    const endOfMonth = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
+    const startOfMonth = dayjs().startOf('month').toDate();
+    const endOfMonth = dayjs().endOf('month').toDate();
 
     // Find all posts created this month with their like counts
     const posts = await this.postsRepository.find(
@@ -97,27 +86,52 @@ export class LeaderboardService {
   }
 
   /**
-   * Get the current month's leaderboard ranked by likes descending.
+   * Compute the current month's leaderboard on the fly from posts and their
+   * like counts, ranked by accumulated likes descending.
    */
-  async getLeaderboard(): Promise<
-    Array<{ rank: number; user: any; likesCount: number }>
-  > {
-    const month = this.currentMonth();
+  async getLeaderboard(): Promise<LeaderboardEntryDto[]> {
+    const startOfMonth = dayjs().startOf('month').toDate();
+    const endOfMonth = dayjs().endOf('month').toDate();
 
-    const scores = await this.scoreRepository.find(
-      { month },
-      {
-        orderBy: { likesCount: 'desc' },
-        populate: ['user'],
-        limit: 10,
-      },
+    const posts = await this.postsRepository.find(
+      { createdAt: { $gte: startOfMonth, $lte: endOfMonth } },
+      { populate: ['user'] },
     );
 
-    return scores.map((score, index) => ({
-      rank: index + 1,
-      user: score.user,
-      likesCount: score.likesCount,
-    }));
+    const userLikesMap = new Map<
+      string,
+      { userId: string; likesCount: number }
+    >();
+    for (const post of posts) {
+      const userId = post.user.id;
+      const entry = userLikesMap.get(userId);
+      if (entry) {
+        entry.likesCount += post.likesCount;
+      } else {
+        userLikesMap.set(userId, { userId, likesCount: post.likesCount });
+      }
+    }
+
+    const ranked = [...userLikesMap.values()]
+      .filter((e) => e.likesCount > 0)
+      .sort((a, b) => b.likesCount - a.likesCount)
+      .slice(0, 10);
+
+    const users = await this.em.find(User, {
+      id: { $in: ranked.map((e) => e.userId) },
+    });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const mapped = await Promise.all(
+      ranked.map(async (entry, index) => ({
+        rank: index + 1,
+        user: await this.userMapper.toResponse(userMap.get(entry.userId)),
+        likesCount: entry.likesCount,
+      })),
+    );
+    return mapped.filter(
+      (entry): entry is LeaderboardEntryDto => entry.user !== null,
+    );
   }
 
   /**

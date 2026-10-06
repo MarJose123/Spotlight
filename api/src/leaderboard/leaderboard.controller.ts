@@ -12,8 +12,6 @@ import {
   ApiGetLeaderboard,
   ApiLeaderboardController,
 } from '#/leaderboard/decorators/leaderboard-api.decorator.js';
-import { UserMapper } from '#/users/mappers/user.mapper.js';
-import { LeaderboardEntryDto } from '#/leaderboard/dto/leaderboard-entry.dto.js';
 
 @ApiLeaderboardController()
 @Controller('leaderboard')
@@ -23,12 +21,7 @@ export class LeaderboardController {
 
   @Get()
   @ApiGetLeaderboard()
-  async getLeaderboard(): Promise<LeaderboardEntryDto[]> {
-    const entries = await this.leaderboardService.getLeaderboard();
-    return entries.map((entry) => ({
-      rank: entry.rank,
-      user: UserMapper.toResponse(entry.user)!,
-      likesCount: entry.likesCount,
-    }));
+  getLeaderboard() {
+    return this.leaderboardService.getLeaderboard();
   }
 }

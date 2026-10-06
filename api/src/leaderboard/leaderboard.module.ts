@@ -10,16 +10,19 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LeaderboardController } from '#/leaderboard/leaderboard.controller.js';
 import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 import { AuthModule } from '#/auth/auth.module.js';
+import { BucketModule } from '#/bucket/bucket.module.js';
 import { LeaderboardScore } from '#/leaderboard/entities/leaderboard-score.entity.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { User } from '#/users/entities/user.entity.js';
+import { UserMapper } from '#/users/mappers/user.mapper.js';
 
 @Module({
   imports: [
     AuthModule,
+    BucketModule,
     MikroOrmModule.forFeature([LeaderboardScore, Posts, User]),
   ],
   controllers: [LeaderboardController],
-  providers: [LeaderboardService],
+  providers: [LeaderboardService, UserMapper],
 })
 export class LeaderboardModule {}
