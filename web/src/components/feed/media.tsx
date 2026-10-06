@@ -6,8 +6,15 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { useId } from "react";
-import type { AvatarTone, FeedPost } from "../../lib/feed-data";
+import { useCallback, useId, useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import type { AvatarTone, FeedMediaItem } from "../../lib/feed-data";
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+import { useAttachmentUrl } from "./AuthenticatedMedia";
 
 /**
  * Tone palettes used for both avatar backgrounds (ui-avatars.com) and reaction
@@ -259,39 +266,36 @@ export function ComposerVideoPreview({
 	);
 }
 
-export function PostMedia({
-	media,
-}: {
-	media: NonNullable<FeedPost["media"]>;
-}) {
+export function PostMedia({ media }: { media: FeedMediaItem }) {
 	// Paint server ids must stay unique once several posts render together.
 	const uid = useId().replace(/:/g, "");
 	const room = `feed-room-${uid}`;
 	const scrim = `feed-scrim-${uid}`;
 
 	const hasUrl = media.url && media.url.length > 0;
+	const resolvedUrl = useAttachmentUrl(media.url ?? "");
 
 	return (
-		<div className="relative mt-3 overflow-hidden rounded-2xl border border-[var(--feed-line)]">
-			{hasUrl && media.type === "image" && (
+		<div className="relative overflow-hidden rounded-2xl border border-[var(--feed-line)]">
+			{hasUrl && resolvedUrl && media.type === "image" && (
 				<img
-					src={media.url}
+					src={resolvedUrl}
 					alt={media.alt}
 					className="block w-full object-cover"
 				/>
 			)}
-			{hasUrl && media.type === "video" && (
+			{hasUrl && resolvedUrl && media.type === "video" && (
 				/* biome-ignore lint/a11y/useMediaCaption: user-uploaded videos have no caption track */
 				<video
-					src={media.url}
+					src={resolvedUrl}
 					controls
 					aria-label={media.alt}
 					className="block w-full"
 				/>
 			)}
-			{hasUrl && media.type === "gif" && (
+			{hasUrl && resolvedUrl && media.type === "gif" && (
 				<img
-					src={media.url}
+					src={resolvedUrl}
 					alt={media.alt}
 					className="block w-full object-cover"
 				/>
@@ -381,5 +385,145 @@ export function PostMedia({
 				</>
 			)}
 		</div>
+	);
+}
+
+/**
+ * Facebook-style grid gallery for images, with full-width rendering for videos
+ * and GIFs. Layout adapts to image count: 1 item fills the grid, 2 items sit
+ * side by side, 3 items show one large with two smaller ones, and 4+ items use
+ * one large half with the rest in a grid. Clicking an image opens a full-screen
+ * lightbox. Videos and GIFs stack vertically at full width below the grid.
+ */
+export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
+	const [openIndex, setOpenIndex] = useState(-1);
+	const onClose = useCallback(() => setOpenIndex(-1), []);
+
+	if (items.length === 0) return null;
+
+	const images = items.filter((item) => item.type === "image");
+	const nonImages = items.filter((item) => item.type !== "image");
+	const slides = images.map((item) => ({
+		src: item.url,
+		alt: item.alt,
+		width: 1200,
+		height: 800,
+	}));
+
+	const renderMedia = (item: FeedMediaItem, index: number) => (
+		<button
+			key={`${item.url}-${item.type}-${index}`}
+			type="button"
+			className="cursor-pointer outline-none transition-opacity hover:opacity-90"
+			onClick={() => {
+				const imgIndex = images.findIndex((img) => img.url === item.url);
+				setOpenIndex(imgIndex);
+			}}
+			aria-label={`View image ${index + 1} of ${images.length}`}
+		>
+			<PostMedia media={item} />
+		</button>
+	);
+
+	// Render videos and GIFs at full width
+	const renderNonImages = () => {
+		if (nonImages.length === 0) return null;
+		return (
+			<div className="mt-3 flex flex-col gap-3">
+				{nonImages.map((item) => (
+					<div
+						key={`${item.url}-${item.type}`}
+						className="overflow-hidden rounded-xl border border-[var(--feed-line)]"
+					>
+						<PostMedia media={item} />
+					</div>
+				))}
+			</div>
+		);
+	};
+
+	// Only images: render Facebook-style grid
+	if (images.length === 0) {
+		return <>{renderNonImages()}</>;
+	}
+
+	// 1 image: single full-width
+	if (images.length === 1) {
+		return (
+			<>
+				<div className="mt-3 overflow-hidden rounded-2xl">
+					{renderMedia(images[0], 0)}
+				</div>
+				{renderNonImages()}
+				<Lightbox
+					open={openIndex >= 0}
+					slides={slides}
+					index={openIndex}
+					close={onClose}
+					onClose={onClose}
+					plugins={[Thumbnails, Fullscreen, Zoom]}
+				/>
+			</>
+		);
+	}
+
+	// 2 images: side by side
+	if (images.length === 2) {
+		return (
+			<>
+				<div className="mt-3 gap-[2px] grid grid-cols-2 overflow-hidden rounded-2xl">
+					{images.map((item, i) => renderMedia(item, i))}
+				</div>
+				{renderNonImages()}
+				<Lightbox
+					open={openIndex >= 0}
+					slides={slides}
+					index={openIndex}
+					close={onClose}
+					onClose={onClose}
+					plugins={[Thumbnails, Fullscreen, Zoom]}
+				/>
+			</>
+		);
+	}
+
+	// 3 images: one large (full width row), two small below
+	if (images.length === 3) {
+		return (
+			<>
+				<div className="mt-3 gap-[2px] grid grid-cols-2 rounded-2xl overflow-hidden">
+					<div className="col-span-2">{renderMedia(images[0], 0)}</div>
+					{images.slice(1).map((item, i) => renderMedia(item, i + 1))}
+				</div>
+				{renderNonImages()}
+				<Lightbox
+					open={openIndex >= 0}
+					slides={slides}
+					index={openIndex}
+					close={onClose}
+					onClose={onClose}
+					plugins={[Thumbnails, Fullscreen, Zoom]}
+				/>
+			</>
+		);
+	}
+
+	// 4+ images: one large taking half (rowspan 2), rest in grid
+	return (
+		<>
+			<div className="mt-3 gap-[2px] grid grid-cols-3 rounded-2xl overflow-hidden">
+				<div className="row-span-2">{renderMedia(images[0], 0)}</div>
+				{images.slice(1).map((item, i) => renderMedia(item, i + 1))}
+			</div>
+			{renderNonImages()}
+			<Lightbox
+				open={openIndex >= 0}
+				slides={slides}
+				index={openIndex}
+				close={onClose}
+				onClose={onClose}
+				plugins={[Thumbnails, Fullscreen, Zoom]}
+			/>
+		</>
 	);
 }

@@ -29,7 +29,7 @@ import {
 } from "#/lib/api-queries";
 import { readSession } from "#/lib/session";
 import type { AvatarTone, FeedPost } from "../../lib/feed-data";
-import { Avatar, PostMedia, toneGradient } from "./media";
+import { Avatar, MediaGrid, toneGradient } from "./media";
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -173,7 +173,9 @@ export function PostCard({
 				{post.body}
 			</p>
 
-			{post.media && <PostMedia media={post.media} />}
+			{post.mediaItems && post.mediaItems.length > 0 && (
+				<MediaGrid items={post.mediaItems} />
+			)}
 
 			{(hasEngagement || displayCommentCount > 0) && (
 				<div className="mt-3 flex items-center justify-between">

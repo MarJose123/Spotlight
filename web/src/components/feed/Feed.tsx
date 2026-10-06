@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Loader2, RefreshCw, WifiOff } from "lucide-react";
+import { RefreshCw, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePosts, useUserProfileStats } from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
@@ -14,6 +14,7 @@ import { VIEWER } from "#/lib/feed-data";
 import { readSession, type Session } from "#/lib/session";
 import { AuthTopBar } from "../AuthTopBar";
 import { ComposerCard } from "./ComposerCard";
+import { FeedSkeleton } from "./FeedSkeleton";
 import { Leaderboard } from "./Leaderboard";
 import { PostCard } from "./PostCard";
 import { ProfileCard } from "./ProfileCard";
@@ -90,11 +91,7 @@ export function Feed() {
 		useUserProfileStats(viewerId);
 
 	if (isLoading) {
-		return (
-			<div className="flex h-[60vh] items-center justify-center">
-				<Loader2 className="h-8 w-8 animate-spin text-[var(--sea-ink-soft)]" />
-			</div>
-		);
+		return <FeedSkeleton />;
 	}
 
 	if (isError) {
@@ -127,21 +124,18 @@ export function Feed() {
 	// Map API posts to the feed shape PostCard expects.
 	const posts = (data?.data ?? []).map((post) => {
 		const tone = toneForId(post.author.id);
-		const attachment = post.attachments[0];
-		const media = attachment
-			? {
-					alt: post.content.slice(0, 120),
-					title:
-						attachment.type === "image"
-							? "Photo"
-							: attachment.type === "video"
-								? "Video"
-								: "GIF",
-					subtitle: post.content.slice(0, 80),
-					url: attachment.url,
-					type: attachment.type,
-				}
-			: undefined;
+		const mediaItems = post.attachments.map((attachment) => ({
+			alt: post.content.slice(0, 120),
+			title:
+				attachment.type === "image"
+					? "Photo"
+					: attachment.type === "video"
+						? "Video"
+						: "GIF",
+			subtitle: post.content.slice(0, 80),
+			url: attachment.url,
+			type: attachment.type,
+		}));
 
 		return {
 			id: post.id,
@@ -161,7 +155,7 @@ export function Feed() {
 			})),
 			reactionCount: String(post.likesCount),
 			commentCount: `${post.commentsCount} Comments`,
-			media,
+			mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
 		};
 	});
 

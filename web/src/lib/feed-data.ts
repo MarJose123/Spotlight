@@ -36,6 +36,14 @@ export interface FeedPerson {
 	tone: AvatarTone;
 }
 
+export interface FeedMediaItem {
+	alt: string;
+	title: string;
+	subtitle: string;
+	url: string;
+	type: "image" | "video" | "gif";
+}
+
 export interface FeedPost {
 	id: string;
 	/** The API user ID of the author, used to match against the session. */
@@ -52,13 +60,8 @@ export interface FeedPost {
 	reactions: Array<{ id: string; emoji: string; tone: AvatarTone }>;
 	reactionCount: string;
 	commentCount: string;
-	media?: {
-		alt: string;
-		title: string;
-		subtitle: string;
-		url: string;
-		type: "image" | "video" | "gif";
-	};
+	/** One or more media attachments; empty or absent for text-only posts. */
+	mediaItems?: FeedMediaItem[];
 }
 
 export interface FeedTrend {
@@ -128,13 +131,15 @@ export const POSTS: FeedPost[] = [
 		],
 		reactionCount: "3.1k",
 		commentCount: "128 Comments",
-		media: {
-			alt: "Ralph Sugutan holding a pair of Nike KD 4 Easter sneakers in front of a shelf of shoe boxes",
-			title: "On the shelf",
-			subtitle: "Nike KD 4 “Easter” · 2026",
-			url: "",
-			type: "image",
-		},
+		mediaItems: [
+			{
+				alt: "Ralph Sugutan holding a pair of Nike KD 4 Easter sneakers in front of a shelf of shoe boxes",
+				title: "On the shelf",
+				subtitle: 'Nike KD 4 "Easter" · 2026',
+				url: "",
+				type: "image",
+			},
+		],
 	},
 ];
 
