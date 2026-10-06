@@ -22,6 +22,7 @@ import { Exclude } from 'class-transformer';
 import { Collection } from '@mikro-orm/core';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
+import { Comments } from '#/posts/entities/comments.entity.js';
 import { UserRole } from '#/users/enums/role.enum.js';
 
 @Entity({ tableName: 'users' })
@@ -63,6 +64,9 @@ export class User {
 
   @OneToMany(() => Likes, (like: Likes) => like.user)
   likes? = new Collection<Likes>(this);
+
+  @OneToMany(() => Comments, (comment: Comments) => comment.user)
+  comments? = new Collection<Comments>(this);
 
   @Property()
   createdAt: Date = new Date();

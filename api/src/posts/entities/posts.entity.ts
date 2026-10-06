@@ -19,6 +19,7 @@ import { IsNotEmpty } from 'class-validator';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 import { User } from '#/users/entities/user.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
+import { Comments } from '#/posts/entities/comments.entity.js';
 import { Collection, type Rel } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -76,6 +77,13 @@ export class Posts {
 
   @Property({ type: 'number', default: 0 })
   likesCount: number = 0;
+
+  @ApiProperty({ type: Object, format: 'uuid', isArray: true })
+  @OneToMany(() => Comments, (comment: Comments) => comment.post)
+  comments? = new Collection<Comments>(this);
+
+  @Property({ type: 'number', default: 0 })
+  commentsCount: number = 0;
 
   @ApiProperty({ type: 'string', format: 'date-time' })
   @Property({ onCreate: () => new Date() })

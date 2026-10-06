@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PostsService } from '#/posts/posts.service.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
@@ -14,6 +14,7 @@ import { User } from '#/users/entities/user.entity.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 import type { BucketService } from '#/bucket/bucket.service.js';
+import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -225,7 +226,7 @@ describe('PostsService', () => {
         user: 'user-123',
         attachmentType: AttachmentType.GIF,
       };
-      const files = [];
+      const files: FastifyMultipartFile[] = [];
 
       await expect(service.create(dto, files)).rejects.toThrow(
         'A GIF URL is required for GIF posts',
@@ -240,7 +241,7 @@ describe('PostsService', () => {
         attachmentType: AttachmentType.GIF,
         gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
       };
-      const files = [];
+      const files: FastifyMultipartFile[] = [];
 
       const result = await service.create(dto, files);
 
@@ -260,7 +261,7 @@ describe('PostsService', () => {
         attachmentType: AttachmentType.GIF,
         gifUrl: '',
       };
-      const files = [];
+      const files: FastifyMultipartFile[] = [];
 
       await expect(service.create(dto, files)).rejects.toThrow(
         'A GIF URL is required for GIF posts',
@@ -339,8 +340,11 @@ describe('PostsService', () => {
   });
 
   describe('delete', () => {
-    it('should delete the post and its likes', async () => {
-      await service.delete('post-123');
+    it('should delete the post and its likes when author and within time window', async () => {
+      const post = makePost();
+      postRepository.findOne.mockResolvedValue(post);
+
+      await service.delete('post-123', 'user-123');
 
       expect(postRepository.nativeDelete).toHaveBeenCalledWith({
         id: 'post-123',
@@ -350,15 +354,77 @@ describe('PostsService', () => {
       });
     });
 
-    it('should delete likes even if post does not exist', async () => {
-      await service.delete('missing');
+    it('should throw NotFoundException when post does not exist', async () => {
+      postRepository.findOne.mockResolvedValue(null);
 
-      expect(postRepository.nativeDelete).toHaveBeenCalledWith({
-        id: 'missing',
+      await expect(service.delete('missing', 'user-123')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException when not the author', async () => {
+      const post = makePost();
+      postRepository.findOne.mockResolvedValue(post);
+
+      await expect(service.delete('post-123', 'other-user')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw ForbiddenException when post is older than 15 minutes', async () => {
+      const post = makePost({
+        createdAt: new Date(Date.now() - 16 * 60 * 1000),
       });
-      expect(likesRepository.nativeDelete).toHaveBeenCalledWith({
-        post: 'missing',
+      postRepository.findOne.mockResolvedValue(post);
+
+      await expect(service.delete('post-123', 'user-123')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('should update content when author and within time window', async () => {
+      const post = makePost();
+      postRepository.findOne.mockResolvedValue(post);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
+
+      const result = await service.update('post-123', 'user-123', {
+        content: 'Updated content',
       });
+
+      expect(post.content).toBe('Updated content');
+      expect(result.content).toBe('Updated content');
+    });
+
+    it('should throw NotFoundException when post does not exist', async () => {
+      postRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.update('missing', 'user-123', { content: 'New content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when not the author', async () => {
+      const post = makePost();
+      postRepository.findOne.mockResolvedValue(post);
+
+      await expect(
+        service.update('post-123', 'other-user', { content: 'New content' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException when post is older than 15 minutes', async () => {
+      const post = makePost({
+        createdAt: new Date(Date.now() - 16 * 60 * 1000),
+      });
+      postRepository.findOne.mockResolvedValue(post);
+
+      await expect(
+        service.update('post-123', 'user-123', { content: 'New content' }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

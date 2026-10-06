@@ -7,6 +7,7 @@
  */
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { PaginationResponseDto } from '#/common/dto/pagination/pagination-respon
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { User } from '#/users/entities/user.entity.js';
 import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
+import { UpdatePostDto } from '#/posts/dto/update-post.dto.js';
 import { LikePostDto } from '#/posts/dto/like-post.dto.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
 import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
@@ -189,6 +191,56 @@ export class PostsService {
     }
   }
 
+  /**
+   * Guard that ensures the request comes from the post author and the post is
+   * less than 15 minutes old. Throws 403 or 410 accordingly.
+   */
+  private assertAuthorAndTimeWindow(post: Posts, userId: string) {
+    if (post.user.id !== userId) {
+      throw new ForbiddenException('Only the author can modify this post');
+    }
+    const ageMinutes = (Date.now() - post.createdAt.getTime()) / 60000;
+    if (ageMinutes > 15) {
+      throw new ForbiddenException(
+        'Posts can only be edited or deleted within 15 minutes of creation',
+      );
+    }
+  }
+
+  /** Update a post's content. Only the author may edit, and only within 15 minutes. */
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdatePostDto,
+  ): Promise<PostResponseDto> {
+    const post = await this.postRepository.findOne(
+      { id },
+      { populate: ['likes'] },
+    );
+    if (!post) {
+      throw new NotFoundException(`Post with id ${id} not found`);
+    }
+    this.assertAuthorAndTimeWindow(post, userId);
+
+    post.content = dto.content;
+    await this.em.flush();
+
+    return (await this.mapPostsToResponse([post]))[0];
+  }
+
+  /** Delete a post. Only the author may delete, and only within 15 minutes. */
+  async delete(id: string, userId: string): Promise<void> {
+    const post = await this.postRepository.findOne({ id });
+    if (!post) {
+      throw new NotFoundException(`Post with id ${id} not found`);
+    }
+    this.assertAuthorAndTimeWindow(post, userId);
+
+    await this.postRepository.nativeDelete({ id });
+    await this.likesRepository.nativeDelete({ post: id });
+    await this.em.flush();
+  }
+
   /** Like a post. */
   async likePost(dto: LikePostDto): Promise<PostLikeResponseDto> {
     const post = await this.findById(dto.postId);
@@ -221,12 +273,6 @@ export class PostsService {
     await this.em.flush();
 
     return PostLikeMapper.toResponse(true, post);
-  }
-
-  async delete(postId: string): Promise<void> {
-    await this.postRepository.nativeDelete({ id: postId });
-    await this.likesRepository.nativeDelete({ post: postId });
-    await this.em.flush();
   }
 
   private async incrementLikeCount(postDto: PostResponseDto): Promise<void> {

@@ -10,6 +10,8 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -22,6 +24,9 @@ import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
+import { CreateCommentDto } from '#/posts/dto/create-comment.dto.js';
+import { CommentResponseDto } from '#/posts/dto/comment-response.dto.js';
+import { UpdatePostDto } from '#/posts/dto/update-post.dto.js';
 
 /** Shared by both like endpoints, which respond identically. */
 const likeResponse = () =>
@@ -133,4 +138,106 @@ export const ApiLikePostById = () =>
     }),
     ApiBody({ type: LikePostByIdDto }),
     likeResponse(),
+  );
+
+export const ApiCommentPost = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Comment on a post',
+      description:
+        'Create a comment on the post identified by the path parameter.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post to comment on.',
+      format: 'uuid',
+    }),
+    ApiBody({ type: CreateCommentDto }),
+    ApiCreatedResponse({
+      description: 'The comment has been created.',
+      type: CommentResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Too many comment requests.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiListComments = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'List comments',
+      description: 'Return all comments for a post, newest first.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post whose comments should be returned.',
+      format: 'uuid',
+    }),
+    ApiOkResponse({
+      description: 'List of comments.',
+      type: [CommentResponseDto],
+    }),
+    ApiNotFoundResponse({
+      description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiUpdatePost = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Update post',
+      description:
+        'Update the content of a post. Only the author may edit, and only within 15 minutes of creation.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post to update.',
+      format: 'uuid',
+    }),
+    ApiBody({ type: UpdatePostDto }),
+    ApiOkResponse({
+      description: 'The updated post.',
+      type: PostResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
+    ApiForbiddenResponse({
+      description:
+        'The request is not from the author or the 15-minute window has passed.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiDeletePost = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Delete post',
+      description:
+        'Delete a post. Only the author may delete, and only within 15 minutes of creation.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post to delete.',
+      format: 'uuid',
+    }),
+    ApiNoContentResponse({
+      description: 'The post has been deleted.',
+    }),
+    ApiNotFoundResponse({
+      description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
+    ApiForbiddenResponse({
+      description:
+        'The request is not from the author or the 15-minute window has passed.',
+      type: ErrorResponseDto,
+    }),
   );

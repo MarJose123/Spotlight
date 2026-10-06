@@ -62,6 +62,12 @@ export class PostResponseDto {
   })
   likesCount: number;
 
+  @ApiProperty({
+    description: 'Number of comments the post has received.',
+    example: 0,
+  })
+  commentsCount: number;
+
   @ApiProperty({ description: 'Creation timestamp.', format: 'date-time' })
   createdAt: Date;
 }

@@ -9,10 +9,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { PostsController } from '#/posts/posts.controller.js';
 import { PostsService } from '#/posts/posts.service.js';
+import { CommentsService } from '#/posts/comments.service.js';
 import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
+import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 describe('PostsController', () => {
   let controller: PostsController;
@@ -28,6 +30,7 @@ describe('PostsController', () => {
     postType: PostType.USER,
     likedBy: undefined,
     likesCount: 0,
+    commentsCount: 0,
     createdAt: new Date(),
     ...overrides,
   });
@@ -39,10 +42,18 @@ describe('PostsController', () => {
     likePost: vi.fn(),
   });
 
+  const mockCommentsService = () => ({
+    create: vi.fn(),
+    findByPost: vi.fn(),
+  });
+
+  let commentsService: CommentsService;
+
   beforeEach(() => {
     vi.clearAllMocks();
     postsService = mockPostsService() as unknown as PostsService;
-    controller = new PostsController(postsService);
+    commentsService = mockCommentsService() as unknown as CommentsService;
+    controller = new PostsController(postsService, commentsService);
   });
 
   describe('getPosts', () => {
@@ -119,7 +130,7 @@ describe('PostsController', () => {
         attachmentType: AttachmentType.GIF,
         gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
       };
-      const files = [];
+      const files: FastifyMultipartFile[] = [];
       const created = makePostResponse({
         id: 'new-post',
         content: 'Funny GIF',

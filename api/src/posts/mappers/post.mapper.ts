@@ -12,7 +12,14 @@ import { Likes } from '#/posts/entities/likes.entity.js';
 
 type PostResponseSource = Pick<
   Posts,
-  'id' | 'user' | 'content' | 'postType' | 'likes' | 'likesCount' | 'createdAt'
+  | 'id'
+  | 'user'
+  | 'content'
+  | 'postType'
+  | 'likes'
+  | 'likesCount'
+  | 'commentsCount'
+  | 'createdAt'
 >;
 
 type PostResponseBase = Omit<PostResponseDto, 'attachments'>;
@@ -34,6 +41,7 @@ export class PostMapper {
       postType: post.postType,
       likedBy: post.likes?.map((like: Likes) => like.user.id),
       likesCount: post.likesCount,
+      commentsCount: post.commentsCount,
       createdAt: post.createdAt,
     };
   }
