@@ -1,0 +1,20 @@
+info:
+  name: List Comments
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{domain}}:{{port}}/api/{{version}}/posts/:id/comments"
+  params:
+    - name: id
+      value: 36f10d86-930e-49f6-8cbe-322cf32fd826
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

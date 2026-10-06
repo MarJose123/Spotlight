@@ -1,0 +1,22 @@
+info:
+  name: Upload Avatar
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{domain}}:{{port}}/api/{{version}}/users/me/avatar"
+  body:
+    type: formdata
+    formdata:
+      - name: file
+        value: /path/to/avatar.png
+        type: file
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,20 @@
+info:
+  name: Delete Post
+  type: http
+  seq: 11
+
+http:
+  method: DELETE
+  url: "{{domain}}:{{port}}/api/{{version}}/posts/:id"
+  params:
+    - name: id
+      value: 36f10d86-930e-49f6-8cbe-322cf32fd826
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

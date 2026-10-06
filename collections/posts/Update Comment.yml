@@ -1,0 +1,29 @@
+info:
+  name: Update Comment
+  type: http
+  seq: 8
+
+http:
+  method: PATCH
+  url: "{{domain}}:{{port}}/api/{{version}}/posts/:id/comments/:commentId"
+  params:
+    - name: id
+      value: 36f10d86-930e-49f6-8cbe-322cf32fd826
+      type: path
+    - name: commentId
+      value: comment-uuid-here
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "content": "Updated comment content"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

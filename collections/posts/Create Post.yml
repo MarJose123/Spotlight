@@ -1,17 +1,17 @@
 info:
-  name: Like post
+  name: Create Post
   type: http
-  seq: 3
+  seq: 5
 
 http:
-  method: PUT
-  url: "{{domain}}:{{port}}/api/{{version}}/posts/like"
+  method: POST
+  url: "{{domain}}:{{port}}/api/{{version}}/posts"
   body:
     type: json
     data: |-
       {
-        "postId": "58b2ae66-f7e3-48e2-a5e4-696bc272bca5",
-        "userId": "76626230-cc0a-4928-8cd8-77b7d07424b3"
+        "content": "Hello, this is a new post!",
+        "attachmentType": "text"
       }
   auth: inherit
 

@@ -1,0 +1,9 @@
+info:
+  name: leaderboard
+  type: folder
+  seq: 6
+
+request:
+  auth:
+    type: bearer
+    token: "{{access_token}}"

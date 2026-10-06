@@ -1,0 +1,20 @@
+info:
+  name: Deactivate User
+  type: http
+  seq: 8
+
+http:
+  method: PATCH
+  url: "{{domain}}:{{port}}/api/{{version}}/users/:id/deactivate"
+  params:
+    - name: id
+      value: c5622426-f92f-4375-933c-1ca06d349e5e
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

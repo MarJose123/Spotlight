@@ -1,0 +1,26 @@
+info:
+  name: Create Comment
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{domain}}:{{port}}/api/{{version}}/posts/:id/comments"
+  params:
+    - name: id
+      value: 36f10d86-930e-49f6-8cbe-322cf32fd826
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "content": "This is a comment"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

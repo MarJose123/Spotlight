@@ -1,0 +1,27 @@
+info:
+  name: SSO Exchange
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{domain}}:{{port}}/api/{{version}}/auth/:provider/exchange"
+  params:
+    - name: provider
+      value: zoho
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "code": "authorization_code_from_callback",
+        "code_verifier": "code_verifier_value"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
