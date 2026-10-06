@@ -7,9 +7,9 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Feed } from "../components/feed/Feed";
+import { Feed } from "#/components/feed/Feed";
 
-export const Route = createFileRoute("/feed")({
+export const Route = createFileRoute("/_authenticated/feed")({
 	head: () => ({
 		meta: [{ title: "Feed · Spotlight" }],
 	}),

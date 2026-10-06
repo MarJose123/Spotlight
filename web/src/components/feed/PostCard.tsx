@@ -6,15 +6,29 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button, Menu } from "@mantine/core";
+import { Button, Menu, Textarea } from "@mantine/core";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime.js";
 import {
+	Check,
 	Edit,
 	Heart,
 	MessageCircle,
 	MoreHorizontal,
+	Send,
 	Trash2,
+	X,
 } from "lucide-react";
-import type { FeedPost } from "../../lib/feed-data";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useComments,
+	useCreateComment,
+	useDeleteComment,
+	useToggleLike,
+	useUpdateComment,
+} from "#/lib/api-queries";
+import { readSession } from "#/lib/session";
+import type { AvatarTone, FeedPost } from "../../lib/feed-data";
 import { Avatar, PostMedia, toneGradient } from "./media";
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -25,6 +39,36 @@ function canEditPost(viewerId: string, post: FeedPost): boolean {
 	return age >= 0 && age <= EDIT_WINDOW_MS;
 }
 
+function canEditComment(_authorId: string, createdAt: string): boolean {
+	const age = Date.now() - new Date(createdAt).getTime();
+	return age >= 0 && age <= EDIT_WINDOW_MS;
+}
+
+/** Derive a stable avatar tone from a user id so the same author always renders the same colour. */
+function toneForId(id: string): AvatarTone {
+	const tones: AvatarTone[] = [
+		"lagoon",
+		"violet",
+		"amber",
+		"rose",
+		"mint",
+		"slate",
+		"sky",
+	];
+	let hash = 0;
+	for (let i = 0; i < id.length; i++) {
+		hash = (hash * 31 + id.charCodeAt(i)) | 0;
+	}
+	return tones[Math.abs(hash) % tones.length];
+}
+
+dayjs.extend(relativeTime);
+
+/** Format an ISO timestamp as a short relative string ("3m", "2h", "5d"). */
+function formatRelativeTime(iso: string): string {
+	return dayjs(iso).fromNow(true);
+}
+
 export function PostCard({
 	post,
 	viewerId,
@@ -32,8 +76,57 @@ export function PostCard({
 	post: FeedPost;
 	viewerId: string;
 }) {
-	const hasEngagement = post.reactions.length > 0;
+	const [commentOpen, setCommentOpen] = useState(false);
+	const [commentText, setCommentText] = useState("");
+	const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+	const [editCommentText, setEditCommentText] = useState("");
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	const toggleLike = useToggleLike();
+	const createComment = useCreateComment();
+	const updateComment = useUpdateComment();
+	const deleteComment = useDeleteComment();
+	const { data: comments } = useComments(post.id);
+
+	const session = readSession();
+	const isLiked = post.reactions.some((r) => r.id === viewerId);
+	const likeCount = parseInt(post.reactionCount, 10) || 0;
+	const commentCount = parseInt(post.commentCount, 10) || 0;
+
+	const handleLike = useCallback(() => {
+		if (!session) return;
+		toggleLike.mutate({
+			postId: post.id,
+			userId: session.user?.id ?? viewerId,
+		});
+	}, [session, post.id, viewerId, toggleLike]);
+
+	const handleComment = useCallback(() => {
+		if (!commentText.trim()) return;
+		createComment.mutate(
+			{ postId: post.id, content: commentText.trim() },
+			{
+				onSettled: () => {
+					setCommentText("");
+					// Reset textarea height after clearing content.
+					if (textareaRef.current) {
+						textareaRef.current.style.height = "auto";
+					}
+				},
+			},
+		);
+	}, [commentText, post.id, createComment]);
+
+	// Focus the textarea when the comment section opens.
+	useEffect(() => {
+		if (commentOpen && textareaRef.current) {
+			textareaRef.current.focus();
+		}
+	}, [commentOpen]);
+
+	const hasEngagement = post.reactions.length > 0 || likeCount > 0;
 	const editable = canEditPost(viewerId, post);
+	const displayCommentCount = comments ? comments.length : commentCount;
 
 	return (
 		<article className="rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-4">
@@ -45,7 +138,7 @@ export function PostCard({
 						{post.author.name}
 					</span>
 					<p className="m-0 text-[11.5px] text-[var(--feed-ink-dim)]">
-						{post.time}
+						{formatRelativeTime(post.createdAt)}
 					</p>
 				</div>
 
@@ -82,29 +175,37 @@ export function PostCard({
 
 			{post.media && <PostMedia media={post.media} />}
 
-			{hasEngagement && (
-				<div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2">
-					<div className="flex items-center">
-						{post.reactions.map((reaction, index) => (
-							<span
-								key={reaction.id}
-								className="grid h-[22px] w-[22px] place-items-center rounded-full text-[11px] ring-2 ring-[var(--feed-card)]"
-								style={{
-									backgroundImage: toneGradient(reaction.tone),
-									marginLeft: index === 0 ? 0 : -7,
-								}}
-							>
-								{reaction.emoji}
-							</span>
-						))}
-					</div>
+			{(hasEngagement || displayCommentCount > 0) && (
+				<div className="mt-3 flex items-center justify-between">
+					{hasEngagement && (
+						<div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+							<div className="flex items-center">
+								{post.reactions.map((reaction, index) => (
+									<span
+										key={reaction.id}
+										className="grid h-[22px] w-[22px] place-items-center rounded-full text-[11px] ring-2 ring-[var(--feed-card)]"
+										style={{
+											backgroundImage: toneGradient(reaction.tone),
+											marginLeft: index === 0 ? 0 : -7,
+										}}
+									>
+										{reaction.emoji}
+									</span>
+								))}
+							</div>
 
-					<span className="text-[12px] text-[var(--feed-ink-soft)]">
-						{post.reactionCount}
-					</span>
-					<span className="ml-auto text-[12px] text-[var(--feed-ink-dim)]">
-						{post.commentCount}
-					</span>
+							<span className="text-[12px] text-[var(--feed-ink-soft)]">
+								{likeCount}
+							</span>
+						</div>
+					)}
+
+					{displayCommentCount > 0 && (
+						<span className="text-[12px] text-[var(--feed-ink-dim)]">
+							{displayCommentCount}{" "}
+							{displayCommentCount === 1 ? "Comment" : "Comments"}
+						</span>
+					)}
 				</div>
 			)}
 
@@ -112,8 +213,17 @@ export function PostCard({
 				<Button
 					variant="subtle"
 					size="xs"
-					leftSection={<Heart size={14} aria-hidden="true" />}
-					className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
+					leftSection={
+						<Heart
+							size={14}
+							aria-hidden="true"
+							fill={isLiked ? "currentColor" : "none"}
+						/>
+					}
+					loading={toggleLike.isPending}
+					onClick={handleLike}
+					c={isLiked ? "#e0245e" : "var(--feed-ink-soft)"}
+					className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold hover:text-[var(--feed-ink)]"
 				>
 					Like
 				</Button>
@@ -121,11 +231,212 @@ export function PostCard({
 					variant="subtle"
 					size="xs"
 					leftSection={<MessageCircle size={14} aria-hidden="true" />}
+					onClick={() => setCommentOpen((open) => !open)}
 					className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
 				>
 					Comment
 				</Button>
 			</div>
+
+			{commentOpen && (
+				<div className="mt-3 border-t border-[var(--feed-line)] pt-3">
+					{session && (
+						<div className="flex gap-2">
+							<Textarea
+								ref={textareaRef}
+								placeholder="Write a comment..."
+								value={commentText}
+								onChange={(e) => setCommentText(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										handleComment();
+									}
+								}}
+								autoResize
+								minRows={1}
+								maxRows={4}
+								className="flex-1"
+								inputProps={{
+									className:
+										"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+								}}
+							/>
+							<Button
+								variant="subtle"
+								size="xs"
+								disabled={!commentText.trim() || createComment.isPending}
+								loading={createComment.isPending}
+								onClick={handleComment}
+								className="shrink-0 rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								<Send size={14} aria-hidden="true" />
+							</Button>
+						</div>
+					)}
+
+					{!session && (
+						<p className="m-0 text-[12px] text-[var(--feed-ink-dim)]">
+							Sign in to comment.
+						</p>
+					)}
+
+					{comments && comments.length > 0 && (
+						<div className="mt-3 space-y-3">
+							{comments.map((comment) => {
+								const isAuthor = session?.user?.id === comment.author.id;
+								const editable =
+									isAuthor &&
+									canEditComment(comment.author.id, comment.createdAt);
+								const isEditing = editingCommentId === comment.id;
+
+								return (
+									<div key={comment.id} className="flex gap-2">
+										<Avatar
+											name={comment.author.name}
+											tone={toneForId(comment.author.id)}
+											size={28}
+										/>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-1.5">
+												<span className="text-[12px] font-semibold text-[var(--feed-ink)]">
+													{comment.author.name}
+												</span>
+												<span className="text-[11px] text-[var(--feed-ink-dim)]">
+													{formatRelativeTime(comment.createdAt)}
+												</span>
+
+												{isEditing ? (
+													<div className="ml-auto flex gap-1">
+														<Button
+															variant="subtle"
+															size="xs"
+															leftSection={
+																<Check size={12} aria-hidden="true" />
+															}
+															disabled={updateComment.isPending}
+															loading={updateComment.isPending}
+															onClick={() => {
+																if (
+																	editCommentText.trim() === comment.content
+																) {
+																	setEditingCommentId(null);
+																	return;
+																}
+																updateComment.mutate(
+																	{
+																		postId: post.id,
+																		commentId: comment.id,
+																		content: editCommentText.trim(),
+																	},
+																	{
+																		onSettled: () => setEditingCommentId(null),
+																	},
+																);
+															}}
+															className="rounded-full p-0 h-5 w-5 text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
+														/>
+														<Button
+															variant="subtle"
+															size="xs"
+															leftSection={<X size={12} aria-hidden="true" />}
+															onClick={() => {
+																setEditingCommentId(null);
+																setEditCommentText("");
+															}}
+															className="rounded-full p-0 h-5 w-5 text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+														/>
+													</div>
+												) : (
+													editable && (
+														<Menu position="bottom-end" shadow="xs" width={140}>
+															<Menu.Target>
+																<button
+																	type="button"
+																	aria-label="Comment actions"
+																	className="ml-auto grid h-5 w-5 shrink-0 place-items-center rounded text-[var(--feed-ink-dim)] transition hover:bg-[var(--feed-hover)] hover:text-[var(--feed-ink)]"
+																>
+																	<MoreHorizontal
+																		size={12}
+																		aria-hidden="true"
+																	/>
+																</button>
+															</Menu.Target>
+															<Menu.Dropdown>
+																<Menu.Item
+																	leftSection={
+																		<Edit size={12} aria-hidden="true" />
+																	}
+																	onClick={() => {
+																		setEditingCommentId(comment.id);
+																		setEditCommentText(comment.content);
+																	}}
+																>
+																	Edit
+																</Menu.Item>
+																<Menu.Item
+																	color="red"
+																	leftSection={
+																		<Trash2 size={12} aria-hidden="true" />
+																	}
+																	onClick={() => {
+																		deleteComment.mutate({
+																			postId: post.id,
+																			commentId: comment.id,
+																		});
+																	}}
+																>
+																	Delete
+																</Menu.Item>
+															</Menu.Dropdown>
+														</Menu>
+													)
+												)}
+											</div>
+
+											{isEditing ? (
+												<Textarea
+													value={editCommentText}
+													onChange={(e) => setEditCommentText(e.target.value)}
+													onKeyDown={(e) => {
+														if (e.key === "Enter" && !e.shiftKey) {
+															e.preventDefault();
+															if (editCommentText.trim()) {
+																updateComment.mutate(
+																	{
+																		postId: post.id,
+																		commentId: comment.id,
+																		content: editCommentText.trim(),
+																	},
+																	{
+																		onSettled: () => setEditingCommentId(null),
+																	},
+																);
+															}
+														}
+													}}
+													autoResize
+													minRows={1}
+													maxRows={3}
+													className="mt-1"
+													inputProps={{
+														className:
+															"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+													}}
+												/>
+											) : (
+												<p className="m-0 text-[12px] text-[var(--feed-ink-soft)]">
+													{comment.content}
+												</p>
+											)}
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			)}
 		</article>
 	);
 }

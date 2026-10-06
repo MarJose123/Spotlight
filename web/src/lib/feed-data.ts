@@ -52,7 +52,13 @@ export interface FeedPost {
 	reactions: Array<{ id: string; emoji: string; tone: AvatarTone }>;
 	reactionCount: string;
 	commentCount: string;
-	media?: { alt: string; title: string; subtitle: string };
+	media?: {
+		alt: string;
+		title: string;
+		subtitle: string;
+		url: string;
+		type: "image" | "video" | "gif";
+	};
 }
 
 export interface FeedTrend {
@@ -126,6 +132,8 @@ export const POSTS: FeedPost[] = [
 			alt: "Ralph Sugutan holding a pair of Nike KD 4 Easter sneakers in front of a shelf of shoe boxes",
 			title: "On the shelf",
 			subtitle: "Nike KD 4 “Easter” · 2026",
+			url: "",
+			type: "image",
 		},
 	},
 ];

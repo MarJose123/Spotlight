@@ -32,15 +32,22 @@ import {
 export const FEED_PATH = "/feed";
 
 /**
- * Only same-origin paths are honoured, so a crafted `?redirect=` cannot bounce a
- * freshly authenticated visitor to another host.
+ * Only same-origin paths are honoured. Resolves against the origin so a crafted
+ * `?redirect=` (e.g. `/\evil.com`) cannot bounce a freshly authenticated visitor
+ * to another host via WHATWG URL parsing.
  */
 export function postSignInTarget(redirectTo?: string): string {
-	if (redirectTo?.startsWith("/") && !redirectTo.startsWith("//")) {
-		return redirectTo;
+	if (typeof redirectTo !== "string" || redirectTo === "") {
+		return FEED_PATH;
 	}
 
-	return FEED_PATH;
+	// Resolve against the origin to neutralize backslash tricks like `/\evil.com`.
+	const resolved = new URL(redirectTo, window.location.origin);
+	if (resolved.origin !== window.location.origin) {
+		return FEED_PATH;
+	}
+
+	return resolved.pathname;
 }
 
 export async function signInWithPassword(

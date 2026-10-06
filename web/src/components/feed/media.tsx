@@ -10,9 +10,9 @@ import { useId } from "react";
 import type { AvatarTone, FeedPost } from "../../lib/feed-data";
 
 /**
- * Portrait stand-ins for the feed. Real avatars come from `avatarUrl` once the
- * feed is wired to the API; until then a toned silhouette keeps the layout
- * honest without shipping stock photography.
+ * Tone palettes used for both avatar backgrounds (ui-avatars.com) and reaction
+ * badge gradients. Each entry is `[light, dark]` where `dark` is the single
+ * hex value sent to ui-avatars.com.
  */
 const TONES: Record<AvatarTone, [string, string]> = {
 	lagoon: ["#5eead4", "#0f766e"],
@@ -38,35 +38,21 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, tone, size = 36, brand = false }: AvatarProps) {
+	const [, background] = TONES[tone];
+	const bgColor = background.replace("#", "");
+	const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&size=${size * 2}&bold=${brand ? "true" : "false"}`;
+
 	return (
-		<span
-			aria-hidden="true"
-			className={`inline-flex shrink-0 items-center justify-center overflow-hidden border border-[var(--feed-avatar-ring)] ${
+		<img
+			src={avatarUrl}
+			alt={name}
+			width={size}
+			height={size}
+			className={`shrink-0 border border-[var(--feed-avatar-ring)] ${
 				brand ? "rounded-[0.65rem]" : "rounded-full"
 			}`}
-			style={{
-				width: size,
-				height: size,
-				backgroundImage: toneGradient(tone),
-			}}
-		>
-			{brand ? (
-				<span
-					className="font-black text-white/85"
-					style={{ fontSize: Math.round(size * 0.46), lineHeight: 1 }}
-				>
-					{name.slice(0, 1)}
-				</span>
-			) : (
-				<svg viewBox="0 0 40 40" width={size} height={size} aria-hidden="true">
-					<circle cx="20" cy="15.5" r="6.4" fill="rgba(255,255,255,0.7)" />
-					<path
-						d="M6.4 41c0-7.5 6.1-13.6 13.6-13.6S33.6 33.5 33.6 41Z"
-						fill="rgba(255,255,255,0.7)"
-					/>
-				</svg>
-			)}
-		</span>
+			style={{ width: size, height: size }}
+		/>
 	);
 }
 
@@ -283,67 +269,117 @@ export function PostMedia({
 	const room = `feed-room-${uid}`;
 	const scrim = `feed-scrim-${uid}`;
 
+	const hasUrl = media.url && media.url.length > 0;
+
 	return (
 		<div className="relative mt-3 overflow-hidden rounded-2xl border border-[var(--feed-line)]">
-			<svg
-				viewBox="0 0 640 360"
-				preserveAspectRatio="xMidYMid slice"
-				className="block h-full w-full"
-				role="img"
-				aria-label={media.alt}
-			>
-				<defs>
-					<linearGradient id={room} x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0" stopColor="#9aa0a6" />
-						<stop offset="0.55" stopColor="#727981" />
-						<stop offset="1" stopColor="#4b5259" />
-					</linearGradient>
-					<linearGradient id={scrim} x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0.45" stopColor="#05070a" stopOpacity="0" />
-						<stop offset="1" stopColor="#05070a" stopOpacity="0.72" />
-					</linearGradient>
-				</defs>
-
-				<rect width="640" height="360" fill={`url(#${room})`} />
-
-				<g>
-					<rect x="30" y="40" width="580" height="14" rx="4" fill="#f8fafc" />
-					<rect x="30" y="150" width="580" height="14" rx="4" fill="#f8fafc" />
-					<rect x="30" y="260" width="580" height="14" rx="4" fill="#f8fafc" />
-				</g>
-
-				<g>
-					{BOXES.map((box) => (
-						<rect
-							key={`${box.x}-${box.y}`}
-							x={box.x}
-							y={box.y}
-							width={box.w}
-							height={box.h}
-							rx="6"
-							fill={box.fill}
-							opacity="0.96"
-						/>
-					))}
-				</g>
-
-				<ellipse
-					cx="320"
-					cy="352"
-					rx="260"
-					ry="40"
-					fill="#0d1117"
-					opacity="0.35"
+			{hasUrl && media.type === "image" && (
+				<img
+					src={media.url}
+					alt={media.alt}
+					className="block w-full object-cover"
 				/>
-				<rect width="640" height="360" fill={`url(#${scrim})`} />
-			</svg>
+			)}
+			{hasUrl && media.type === "video" && (
+				/* biome-ignore lint/a11y/useMediaCaption: user-uploaded videos have no caption track */
+				<video
+					src={media.url}
+					controls
+					aria-label={media.alt}
+					className="block w-full"
+				/>
+			)}
+			{hasUrl && media.type === "gif" && (
+				<img
+					src={media.url}
+					alt={media.alt}
+					className="block w-full object-cover"
+				/>
+			)}
+			{!hasUrl && (
+				<>
+					<svg
+						viewBox="0 0 640 360"
+						preserveAspectRatio="xMidYMid slice"
+						className="block h-full w-full"
+						role="img"
+						aria-label={media.alt}
+					>
+						<defs>
+							<linearGradient id={room} x1="0" y1="0" x2="0" y2="1">
+								<stop offset="0" stopColor="#9aa0a6" />
+								<stop offset="0.55" stopColor="#727981" />
+								<stop offset="1" stopColor="#4b5259" />
+							</linearGradient>
+							<linearGradient id={scrim} x1="0" y1="0" x2="0" y2="1">
+								<stop offset="0.45" stopColor="#05070a" stopOpacity="0" />
+								<stop offset="1" stopColor="#05070a" stopOpacity="0.72" />
+							</linearGradient>
+						</defs>
 
-			<div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
-				<p className="m-0 text-[13px] font-semibold text-white">
-					{media.title}
-				</p>
-				<p className="m-0 text-[11.5px] text-white/70">{media.subtitle}</p>
-			</div>
+						<rect width="640" height="360" fill={`url(#${room})`} />
+
+						<g>
+							<rect
+								x="30"
+								y="40"
+								width="580"
+								height="14"
+								rx="4"
+								fill="#f8fafc"
+							/>
+							<rect
+								x="30"
+								y="150"
+								width="580"
+								height="14"
+								rx="4"
+								fill="#f8fafc"
+							/>
+							<rect
+								x="30"
+								y="260"
+								width="580"
+								height="14"
+								rx="4"
+								fill="#f8fafc"
+							/>
+						</g>
+
+						<g>
+							{BOXES.map((box) => (
+								<rect
+									key={`${box.x}-${box.y}`}
+									x={box.x}
+									y={box.y}
+									width={box.w}
+									height={box.h}
+									rx="6"
+									fill={box.fill}
+									opacity="0.96"
+								/>
+							))}
+						</g>
+
+						<ellipse
+							cx="320"
+							cy="352"
+							rx="260"
+							ry="40"
+							fill="#0d1117"
+							opacity="0.35"
+						/>
+						<rect width="640" height="360" fill={`url(#${scrim})`} />
+					</svg>
+
+					<div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
+						<p className="m-0 text-[13px] font-semibold text-white">
+							{media.title}
+						</p>
+						<p className="m-0 text-[11.5px] text-white/70">{media.subtitle}</p>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

@@ -9,7 +9,23 @@
 import type { FeedViewer } from "#/lib/feed-data.ts";
 import { Avatar, CoverArt } from "./media";
 
-export function ProfileCard({ viewer }: { viewer: FeedViewer }) {
+interface ProfileCardProps {
+	viewer: FeedViewer;
+	/** Live stats from the API; when absent, falls back to `viewer.stats`. */
+	stats?: { postsCount: number; likesCount: number } | null;
+	/** True while stats are still loading from the API. */
+	statsLoading?: boolean;
+}
+
+export function ProfileCard({ viewer, stats, statsLoading }: ProfileCardProps) {
+	const statItems =
+		stats !== null && stats !== undefined
+			? [
+					{ label: "Likes", value: String(stats.likesCount) },
+					{ label: "Posts", value: String(stats.postsCount) },
+				]
+			: viewer.stats;
+
 	return (
 		<section className="overflow-hidden rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)]">
 			<div className="h-[104px] w-full">
@@ -28,14 +44,20 @@ export function ProfileCard({ viewer }: { viewer: FeedViewer }) {
 			</div>
 
 			<div className="grid grid-cols-2 border-t border-[var(--feed-line)]">
-				{viewer.stats.map((stat, index) => (
+				{statItems.map((stat, index) => (
 					<div
 						key={stat.label}
 						className={`py-2.5 text-center ${
-							index > 0 ? "border-l border-[var(--feed-line)]" : ""
+							statsLoading
+								? "animate-pulse"
+								: index > 0
+									? "border-l border-[var(--feed-line)]"
+									: ""
 						}`}
 					>
-						<p className="m-0 text-[13px] font-bold">{stat.value}</p>
+						<p className="m-0 text-[13px] font-bold">
+							{statsLoading ? "—" : stat.value}
+						</p>
 						<p className="m-0 text-[11px] text-[var(--feed-ink-dim)]">
 							{stat.label}
 						</p>

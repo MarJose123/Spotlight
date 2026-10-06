@@ -13,7 +13,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import rootPkg from "./package.json";
+import rootPkg from "./package.json" with { type: "json" };
 
 const apiOrigin = process.env.API_INTERNAL_URL ?? "http://localhost:3000";
 

@@ -7,7 +7,7 @@
  */
 
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useThemeMode } from "../../lib/theme-mode";
+import { useThemeMode } from "../lib/theme-mode";
 import { TopBarAction } from "./TopBarAction";
 
 const MODE_ICON = {
@@ -20,7 +20,7 @@ const MODE_ICON = {
  * Signed-in top bar toggle. Shares behaviour with the guest `ThemeToggle` but
  * borrows `TopBarAction` so it lines up with the Explore/Feed/Notifications row.
  */
-export function FeedThemeToggle() {
+export function AuthThemeToggle() {
 	const { mode, toggleMode, label } = useThemeMode();
 	const Icon = MODE_ICON[mode];
 

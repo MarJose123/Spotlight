@@ -8,6 +8,15 @@
 
 const SESSION_KEY = "spotlight.session";
 
+/** Fired whenever the session changes in this tab, so components can react. */
+const SESSION_CHANGED_EVENT = "spotlight:session-changed";
+
+function notifySessionChanged(): void {
+	if (typeof window !== "undefined") {
+		window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
+	}
+}
+
 /** Subset of the API's `UserResponseDto` the UI needs to render a session. */
 export interface SessionUser {
 	id: string;
@@ -75,6 +84,7 @@ export function saveSession(tokens: AuthTokens): Session {
 	};
 
 	storage()?.setItem(SESSION_KEY, JSON.stringify(session));
+	notifySessionChanged();
 
 	return session;
 }
@@ -85,6 +95,7 @@ export function readSession(): Session | null {
 
 export function clearSession(): void {
 	storage()?.removeItem(SESSION_KEY);
+	notifySessionChanged();
 }
 
 export function isExpired(session: Session): boolean {

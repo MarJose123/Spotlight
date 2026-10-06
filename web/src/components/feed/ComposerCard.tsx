@@ -22,8 +22,10 @@ import Lightbox, {
 } from "yet-another-react-lightbox";
 import video from "yet-another-react-lightbox/plugins/video";
 import "yet-another-react-lightbox/styles.css";
-import type { FeedViewer } from "#/lib/feed-data.ts";
-import { COMPOSER_ACTIONS } from "#/lib/feed-data.ts";
+import { useCreatePost } from "#/lib/api-queries";
+import type { FeedViewer } from "#/lib/feed-data";
+import { COMPOSER_ACTIONS } from "#/lib/feed-data";
+import { readSession } from "#/lib/session";
 import { Avatar, ComposerPhotoPreview, ComposerVideoPreview } from "./media";
 
 /** Longest commendation a single post accepts. */
@@ -76,6 +78,36 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	const counterId = useId();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const videoInputRef = useRef<HTMLInputElement>(null);
+	const { mutate: createPost, isPending } = useCreatePost();
+
+	const handleSubmit = useCallback(() => {
+		const session = readSession();
+		if (!session) {
+			return;
+		}
+
+		const hasFiles = photos.length > 0 || videos.length > 0;
+		const attachmentType =
+			videos.length > 0 ? "video" : photos.length > 0 ? "image" : "text";
+
+		createPost(
+			{
+				content: value,
+				attachmentType,
+				files: hasFiles
+					? [...photos.map((p) => p.file), ...videos.map((v) => v.file)]
+					: undefined,
+			},
+			{
+				onSuccess: () => {
+					setValue("");
+					setPhotos([]);
+					setVideos([]);
+					setFocused(false);
+				},
+			},
+		);
+	}, [value, photos, videos, createPost]);
 
 	const remaining = MAX_LENGTH - value.length;
 	// The counter and the extra rows only appear once the writer engages, so the
@@ -368,12 +400,15 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 											variant="subtle"
 											size="xs"
 											rightSection={<Send size={14} aria-hidden="true" />}
+											loading={isPending}
 											disabled={
 												(!value &&
 													photos.length === 0 &&
 													videos.length === 0) ||
-												remaining <= 0
+												remaining <= 0 ||
+												isPending
 											}
+											onClick={handleSubmit}
 											className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"
 										>
 											Post

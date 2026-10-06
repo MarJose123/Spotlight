@@ -17,7 +17,7 @@ export function UserMenu({ viewer }: { viewer: FeedViewer }) {
 		<Menu position="bottom-end" shadow="md" width={180}>
 			<Menu.Target>
 				<button type="button" className="flex items-center">
-					<Avatar name={viewer.name} tone={viewer.tone} size={22} />
+					<Avatar name={viewer.name} tone={viewer.tone} size={36} />
 				</button>
 			</Menu.Target>
 
@@ -28,7 +28,7 @@ export function UserMenu({ viewer }: { viewer: FeedViewer }) {
 				<Menu.Divider />
 				<Menu.Item
 					component="a"
-					href="/about"
+					href="/#"
 					leftSection={
 						<Settings
 							size={15}

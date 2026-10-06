@@ -25,7 +25,8 @@ export default function LoadingScreen() {
 				<h1 className="spotlight-loading__word">
 					{LETTERS.map((letter, i) => (
 						<span
-							key={letter}
+							// biome-ignore lint/suspicious/noArrayIndexKey: LETTERS is a static constant
+							key={i}
 							className="spotlight-loading__letter"
 							style={{
 								"--index": i,

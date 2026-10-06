@@ -8,7 +8,7 @@
 
 import { MantineProvider } from "@mantine/core";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -17,23 +17,26 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import Footer from "#/components/Footer";
-import Header from "#/components/Header";
+import GuestHeader from "#/components/GuestHeader";
 import {
 	StatusErrorBoundary,
 	StatusNotFound,
 } from "#/components/status/boundaries";
 import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
+import TanstackQueryProvider from "#/integrations/tanstack-query/root-provider";
+import type { Session } from "#/lib/session";
 import { colorSchemeManager, theme } from "#/theme";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
+	session: Session | null;
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);root.setAttribute('data-mantine-color-scheme',resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
 
-/** Routes that draw the whole viewport and bring their own chrome. */
-const FULL_BLEED_ROUTES = new Set(["/feed"]);
+/** Pathnames under the authenticated layout route that bring their own chrome. */
+const FULL_BLEED_PATHNAMES = new Set(["/feed"]);
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	head: () => ({
@@ -84,7 +87,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	});
-	const fullBleed = FULL_BLEED_ROUTES.has(pathname);
+	const fullBleed = FULL_BLEED_PATHNAMES.has(pathname);
+	const queryClient = useQueryClient();
 
 	return (
 		<html lang="en" suppressHydrationWarning>
@@ -94,15 +98,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
-				<MantineProvider
-					theme={theme}
-					defaultColorScheme="auto"
-					colorSchemeManager={colorSchemeManager}
-				>
-					{!fullBleed && <Header />}
-					{children}
-					{!fullBleed && <Footer />}
-				</MantineProvider>
+				<TanstackQueryProvider queryClient={queryClient}>
+					<MantineProvider
+						theme={theme}
+						defaultColorScheme="auto"
+						colorSchemeManager={colorSchemeManager}
+					>
+						{!fullBleed && <GuestHeader />}
+						{children}
+						{!fullBleed && <Footer />}
+					</MantineProvider>
+				</TanstackQueryProvider>
 				<TanStackDevtools
 					config={{
 						position: "bottom-right",

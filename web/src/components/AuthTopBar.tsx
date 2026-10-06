@@ -8,11 +8,11 @@
 
 import { Bell, Home, LayoutGrid, Search, Spotlight } from "lucide-react";
 import type { FeedViewer } from "#/lib/feed-data.ts";
-import { FeedThemeToggle } from "./FeedThemeToggle";
+import { AuthThemeToggle } from "./AuthThemeToggle";
+import { UserMenu } from "./feed/UserMenu";
 import { TopBarAction } from "./TopBarAction";
-import { UserMenu } from "./UserMenu";
 
-export function FeedTopBar({ viewer }: { viewer: FeedViewer }) {
+export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 	return (
 		<header className="sticky top-0 z-30 shrink-0 border-b border-[var(--feed-line-soft)] bg-[var(--feed-panel)]">
 			<div className="mx-auto flex w-full max-w-[1360px] flex-wrap items-center gap-3 px-3 py-3.5 sm:px-5">
@@ -52,7 +52,7 @@ export function FeedTopBar({ viewer }: { viewer: FeedViewer }) {
 						</TopBarAction>
 					</div>
 
-					<FeedThemeToggle />
+					<AuthThemeToggle />
 
 					<UserMenu viewer={viewer} />
 				</div>

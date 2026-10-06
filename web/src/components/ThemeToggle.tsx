@@ -15,8 +15,8 @@ const MODE_ICON = {
 } as const;
 
 /**
- * Guest-facing toggle, styled for the site header. The signed-in feed top bar
- * has its own `FeedThemeToggle` so it can match the `TopBarAction` shell.
+ * Guest-facing toggle, styled for the site header. The signed-in top bar
+ * has its own `AuthThemeToggle` so it can match the `TopBarAction` shell.
  */
 export default function ThemeToggle() {
 	const { mode, toggleMode, label } = useThemeMode();
