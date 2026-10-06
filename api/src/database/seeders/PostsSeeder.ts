@@ -36,10 +36,13 @@ async function fetchRandomGif(): Promise<string> {
 export class PostsSeeder extends Seeder {
   async run(em: EntityManager, context: Dictionary<User[]>): Promise<void> {
     const gifUrl = await fetchRandomGif();
-    new PostsFactory(em).make(10, {
-      user: faker.helpers.arrayElement(context.user),
-      attachments: [{ url: gifUrl, type: AttachmentType.GIF }],
-    });
+    const factory = new PostsFactory(em);
+    for (let i = 0; i < 10; i++) {
+      factory.make(1, {
+        user: faker.helpers.arrayElement(context.user),
+        attachments: [{ url: gifUrl, type: AttachmentType.GIF }],
+      });
+    }
     await em.flush();
   }
 }
