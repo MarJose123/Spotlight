@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Marjose Darang
+ * SPDX-License-Identifier: AGPL-3.0
+ *
+ * Part of Spotlight. Licensed under the GNU Affero General Public License,
+ * version 3 only. See the LICENSE file at the repository root for the full terms.
+ */
+import * as fs from "node:fs";
+import * as path from "node:path";
+const root = path.resolve(path.dirname(__filename), "..");
+const rootPackagePath = path.join(root, "package.json");
+const apps = ["api", "web"];
+const rootPackage = JSON.parse(fs.readFileSync(rootPackagePath, "utf8"));
+if (!rootPackage.version) {
+    throw new Error("Root package.json does not have a version.");
+}
+for (const app of apps) {
+    const packagePath = path.join(root, app, "package.json");
+    if (!fs.existsSync(packagePath)) {
+        console.warn(`Skipping ${app}: package.json not found.`);
+        continue;
+    }
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    packageJson.version = rootPackage.version;
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2) + "\n");
+    console.log(`${app}: ${packageJson.version}`);
+}

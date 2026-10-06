@@ -14,7 +14,7 @@ interface PackageJson {
   [key: string]: unknown;
 }
 
-const root = path.resolve(path.dirname(), "..");
+const root = path.resolve(path.dirname(__filename), "..");
 const rootPackagePath = path.join(root, "package.json");
 
 const apps = ["api", "web"];
