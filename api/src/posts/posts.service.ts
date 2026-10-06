@@ -61,7 +61,7 @@ export class PostsService {
       },
     );
 
-    const dataTransformed = await this.mapPostsToResponse(data);
+    const dataTransformed = this.mapPostsToResponse(data);
 
     return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
@@ -75,7 +75,7 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
-    return (await this.mapPostsToResponse([post]))[0];
+    return this.mapPostsToResponse([post])[0];
   }
 
   /** Retrieves posts by user id. */
@@ -99,7 +99,7 @@ export class PostsService {
       },
     );
 
-    const dataTransformed = await this.mapPostsToResponse(data);
+    const dataTransformed = this.mapPostsToResponse(data);
 
     return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
@@ -149,7 +149,7 @@ export class PostsService {
       { populate: ['user', 'likes.user'] },
     );
     if (!populated) return null;
-    return (await this.mapPostsToResponse([populated]))[0];
+    return this.mapPostsToResponse([populated])[0];
   }
 
   /** Validates that a GIF URL is provided when attachmentType is GIF. */
@@ -160,27 +160,24 @@ export class PostsService {
   }
 
   /**
-   * Maps post entities to response DTOs, generating temporary URLs from S3 keys.
-   * GIF attachments use their stored URL directly.
+   * Maps post entities to response DTOs, converting S3 keys to relative API
+   * paths. GIF attachments use their stored URL directly.
    */
-  private async mapPostsToResponse(posts: Posts[]): Promise<PostResponseDto[]> {
-    const results = await Promise.all(
-      posts.map(async (post) => {
-        const base = PostMapper.toResponse(post);
-        if (!base) return null;
+  private mapPostsToResponse(posts: Posts[]): PostResponseDto[] {
+    const results = posts.map((post) => {
+      const base = PostMapper.toResponse(post);
+      if (!base) return null;
 
-        const attachments = await Promise.all(
-          post.attachments.map(async (a) => {
-            // GIF attachments store the URL directly; others store an S3 key
-            const url =
-              a.url ?? (await this.bucketService.getTemporaryUrl(a.key!));
-            return { url, type: a.type as AttachmentType };
-          }),
-        );
+      const attachments = post.attachments.map((a) => {
+        // GIF attachments store the URL directly; others store an S3 key
+        // that is resolved via the API proxy endpoint
+        const url =
+          a.url ?? `/api/v1/posts/attachment/${encodeURIComponent(a.key!)}`;
+        return { url, type: a.type as AttachmentType };
+      });
 
-        return { ...base, attachments } as PostResponseDto;
-      }),
-    );
+      return { ...base, attachments } as PostResponseDto;
+    });
     return results.filter((r): r is PostResponseDto => r !== null);
   }
 
@@ -232,7 +229,7 @@ export class PostsService {
     post.content = dto.content;
     await this.em.flush();
 
-    return (await this.mapPostsToResponse([post]))[0];
+    return this.mapPostsToResponse([post])[0];
   }
 
   /** Delete a post. Only the author may delete, and only within 15 minutes. */

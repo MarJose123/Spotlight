@@ -306,3 +306,27 @@ export const ApiDeleteComment = () =>
       type: ErrorResponseDto,
     }),
   );
+
+export const ApiGetAttachment = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Get attachment',
+      description:
+        'Stream an attachment file by its S3 key. This endpoint proxies the file through the API so the browser never needs to resolve the internal storage hostname.',
+    }),
+    ApiParam({
+      name: 'key',
+      description: 'S3 object key of the attachment.',
+    }),
+    ApiOkResponse({
+      description: 'The attachment file stream.',
+      schema: {
+        type: 'string',
+        format: 'binary',
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'The attachment does not exist.',
+      type: ErrorResponseDto,
+    }),
+  );

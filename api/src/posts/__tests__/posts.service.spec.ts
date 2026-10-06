@@ -68,7 +68,6 @@ describe('PostsService', () => {
 
   const mockBucketService = () => ({
     uploadFile: vi.fn(),
-    getTemporaryUrl: vi.fn(),
   });
 
   beforeEach(() => {
@@ -89,9 +88,6 @@ describe('PostsService', () => {
     it('should return paginated posts', async () => {
       const posts = [makePost({ id: 'a' }), makePost({ id: 'b' })];
       postRepository.findAndCount.mockResolvedValue([posts, 2]);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.findAll({ page: 1, limit: 10 });
 
@@ -113,9 +109,6 @@ describe('PostsService', () => {
     it('should return the post when found', async () => {
       const post = makePost();
       postRepository.findOne.mockResolvedValue(post);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.findById('post-123');
 
@@ -136,9 +129,6 @@ describe('PostsService', () => {
     it('should return posts filtered by user id', async () => {
       const posts = [makePost({ id: 'a' })];
       postRepository.findAndCount.mockResolvedValue([posts, 1]);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.findByUserId({
         paginationQuery: { page: 1, limit: 10 },
@@ -178,9 +168,6 @@ describe('PostsService', () => {
       vi.mocked(bucketService.uploadFile).mockResolvedValue(
         'posts/123-img.png',
       );
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
       // After create, the service reloads the post to populate the user.
       postRepository.findOne.mockResolvedValue(
         makePost({ content: 'Thanks!' }),
@@ -192,7 +179,9 @@ describe('PostsService', () => {
       expect(postRepository.create).toHaveBeenCalled();
       expect(em.flush).toHaveBeenCalled();
       expect(result!.content).toBe('Thanks!');
-      expect(result!.attachments[0].url).toBe('https://example.com/img.png');
+      expect(result!.attachments[0].url).toBe(
+        '/api/v1/posts/attachment/posts%2F123-img.png',
+      );
     });
 
     it('should reject more than 5 images', async () => {
@@ -294,9 +283,6 @@ describe('PostsService', () => {
       vi.mocked(bucketService.uploadFile).mockResolvedValue(
         'posts/123-file.png',
       );
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/file.png',
-      );
       postRepository.findOne.mockResolvedValue(
         makePost({
           content: 'Multiple images',
@@ -322,9 +308,6 @@ describe('PostsService', () => {
       postRepository.findOne.mockResolvedValue(post);
       postRepository.findOneOrFail.mockResolvedValue(post);
       likesRepository.findOne.mockResolvedValue(null);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.likePost({
         postId: 'post-123',
@@ -341,9 +324,6 @@ describe('PostsService', () => {
       postRepository.findOneOrFail.mockResolvedValue(post);
       const existingLike = new Likes();
       likesRepository.findOne.mockResolvedValue(existingLike);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.likePost({
         postId: 'post-123',
@@ -411,9 +391,6 @@ describe('PostsService', () => {
     it('should update content when author and within time window', async () => {
       const post = makePost();
       postRepository.findOne.mockResolvedValue(post);
-      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
-        'https://example.com/img.png',
-      );
 
       const result = await service.update('post-123', 'user-123', {
         content: 'Updated content',

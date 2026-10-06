@@ -14,7 +14,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
@@ -45,19 +44,32 @@ export class BucketService {
     this.bucket = configService.getOrThrow<string>('bucket.bucketName');
   }
 
-  async getTemporaryUrl(key: string): Promise<string> {
+  /**
+   * Streams an object from S3 and returns the body stream along with metadata.
+   * Used by the attachment proxy endpoint to serve files through the API.
+   */
+  async getObjectStream(key: string): Promise<{
+    body: NodeJS.ReadableStream;
+    contentType: string;
+    contentLength: number;
+  }> {
     const params = {
       Bucket: this.bucket,
       Key: key,
     };
 
     const command = new GetObjectCommand(params);
+    const response = await this.s3Client.send(command);
 
-    return getSignedUrl(this.s3Client, command, {
-      expiresIn: Number(
-        this.configService.getOrThrow<number>('bucket.expiration'),
-      ),
-    });
+    if (!response.Body) {
+      throw new BadRequestException(`Object not found: ${key}`);
+    }
+
+    return {
+      body: response.Body as NodeJS.ReadableStream,
+      contentType: response.ContentType ?? 'application/octet-stream',
+      contentLength: response.ContentLength ?? 0,
+    };
   }
 
   async deleteFile(key: string): Promise<void> {

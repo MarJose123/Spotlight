@@ -122,13 +122,11 @@ export class LeaderboardService {
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const mapped = await Promise.all(
-      ranked.map(async (entry, index) => ({
-        rank: index + 1,
-        user: await this.userMapper.toResponse(userMap.get(entry.userId)),
-        likesCount: entry.likesCount,
-      })),
-    );
+    const mapped = ranked.map((entry, index) => ({
+      rank: index + 1,
+      user: this.userMapper.toResponse(userMap.get(entry.userId)),
+      likesCount: entry.likesCount,
+    }));
     return mapped.filter(
       (entry): entry is LeaderboardEntryDto => entry.user !== null,
     );

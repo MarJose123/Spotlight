@@ -8,6 +8,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostsController } from '#/posts/posts.controller.js';
+import { AttachmentController } from '#/posts/attachment.controller.js';
 import { PostsService } from '#/posts/posts.service.js';
 import { CommentsService } from '#/posts/comments.service.js';
 import { AuthModule } from '#/auth/auth.module.js';
@@ -22,7 +23,7 @@ import { Comments } from '#/posts/entities/comments.entity.js';
     BucketModule,
     MikroOrmModule.forFeature([Posts, Likes, Comments]),
   ],
-  controllers: [PostsController],
+  controllers: [PostsController, AttachmentController],
   providers: [PostsService, CommentsService],
 })
 export class PostsModule {}

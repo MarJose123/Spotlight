@@ -24,7 +24,7 @@ export class AuthenticatedUserMapper {
     user: User | null,
     payload: VerifiedPayloadInterface,
   ): Promise<AuthenticatedUserDto | null> {
-    const profile = await this.userMapper.toResponse(user ?? undefined);
+    const profile = this.userMapper.toResponse(user ?? undefined);
     if (!profile) {
       return null;
     }

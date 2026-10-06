@@ -30,7 +30,10 @@ describe('PostsController', () => {
     },
     content: 'Great work!',
     attachments: [
-      { url: 'https://example.com/img.png', type: AttachmentType.IMAGE },
+      {
+        url: '/api/v1/posts/attachment/posts%2Fimg.png',
+        type: AttachmentType.IMAGE,
+      },
     ],
     postType: PostType.USER,
     likedBy: undefined,

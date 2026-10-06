@@ -97,12 +97,12 @@ describe('UsersService', () => {
   });
 
   const mockUserMapper = () => ({
-    toResponse: vi.fn(async (user) => {
+    toResponse: vi.fn((user) => {
       if (!user) return null;
       return {
         id: user.id,
         avatarUrl: user.avatar
-          ? `https://presigned.example.com/${user.avatar}`
+          ? `/api/v1/posts/attachment/${encodeURIComponent(user.avatar)}`
           : undefined,
         email: user.email,
         name: user.name,
@@ -119,7 +119,6 @@ describe('UsersService', () => {
   const mockBucketService = () => ({
     uploadFile: vi.fn(),
     deleteFile: vi.fn(),
-    getTemporaryUrl: vi.fn(),
   });
 
   beforeEach(() => {

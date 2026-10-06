@@ -17,7 +17,7 @@ export class JwtTokenMapper {
 
   async toResponse(token: JwtTokenDto): Promise<JwtTokenResponse> {
     return {
-      user: await this.userMapper.toResponse(token.user),
+      user: this.userMapper.toResponse(token.user),
       access_token: token.access_token,
       refresh_token: token.refresh_token,
       expires_in: token.expires_in,

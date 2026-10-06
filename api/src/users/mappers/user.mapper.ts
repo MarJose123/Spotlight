@@ -7,7 +7,6 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { BucketService } from '#/bucket/bucket.service.js';
 import { User } from '#/users/entities/user.entity.js';
 import { UserResponseDto } from '#/users/dto/user-response.dto.js';
 
@@ -26,19 +25,14 @@ type UserResponseSource = Pick<
 
 @Injectable()
 export class UserMapper {
-  constructor(private readonly bucketService: BucketService) {}
-
-  async toResponse(
-    user: UserResponseSource | undefined,
-  ): Promise<UserResponseDto | null> {
+  toResponse(user: UserResponseSource | undefined): UserResponseDto | null {
     if (!user) {
       return null;
     }
 
-    let avatarUrl: string | undefined;
-    if (user.avatar) {
-      avatarUrl = await this.bucketService.getTemporaryUrl(user.avatar);
-    }
+    const avatarUrl = user.avatar
+      ? `/api/v1/posts/attachment/${encodeURIComponent(user.avatar)}`
+      : undefined;
 
     return {
       id: user.id,

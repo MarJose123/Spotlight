@@ -65,8 +65,8 @@ export class UsersService {
       { offset: skip, limit, orderBy: { createdAt: 'desc' } },
     );
 
-    const dataTransformed = await Promise.all(
-      data.map((user) => this.userMapper.toResponse(user)),
+    const dataTransformed = data.map((user) =>
+      this.userMapper.toResponse(user),
     );
 
     return new PaginationResponseDto(dataTransformed, total, page, limit);

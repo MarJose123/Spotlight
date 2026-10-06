@@ -20,7 +20,6 @@ import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
 import { AuthController } from './auth.controller.js';
 import { OAuthService } from './oauth.service.js';
 import { ZohoStrategy } from './strategies/zoho.strategy.js';
-import { BucketModule } from '#/bucket/bucket.module.js';
 import { UserMapper } from '#/users/mappers/user.mapper.js';
 import { AuthenticatedUserMapper } from '#/auth/mappers/authenticated-user.mapper.js';
 import { JwtTokenMapper } from '#/auth/mappers/jwt-token.mapper.js';
@@ -40,7 +39,6 @@ import { JwtTokenMapper } from '#/auth/mappers/jwt-token.mapper.js';
       }),
     }),
     MikroOrmModule.forFeature([User, RefreshToken]),
-    BucketModule,
   ],
   providers: [
     AuthService,

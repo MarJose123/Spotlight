@@ -12,7 +12,7 @@ import { UserStatus } from '#/users/enums/status.enum.js';
 import { UserRole } from '#/users/enums/role.enum.js';
 
 const mockUserMapper = () => ({
-  toResponse: vi.fn(async (user) => {
+  toResponse: vi.fn((user) => {
     if (!user) return null;
     return {
       id: user.id,
