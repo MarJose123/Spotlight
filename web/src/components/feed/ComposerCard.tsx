@@ -7,7 +7,8 @@
  */
 
 import { Button } from "@mantine/core";
-import { Film, Image, Send, Video } from "lucide-react";
+import { useDisclosure } from "@mantine/hooks";
+import { Film, Image, Send, Video, X } from "lucide-react";
 import {
 	Fragment,
 	useCallback,
@@ -22,10 +23,12 @@ import Lightbox, {
 } from "yet-another-react-lightbox";
 import video from "yet-another-react-lightbox/plugins/video";
 import "yet-another-react-lightbox/styles.css";
+import type { GiphyGif } from "#/lib/api/gif";
 import { useCreatePost } from "#/lib/api-queries";
 import type { FeedViewer } from "#/lib/feed-data";
 import { COMPOSER_ACTIONS } from "#/lib/feed-data";
 import { readSession } from "#/lib/session";
+import { GifPicker } from "./GifPicker";
 import { Avatar, ComposerPhotoPreview, ComposerVideoPreview } from "./media";
 
 /** Longest commendation a single post accepts. */
@@ -68,13 +71,15 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	const [photos, setPhotos] = useState<
 		Array<{ id: string; file: File; preview: string }>
 	>([]);
-	// Combined index into photos + videos for the lightbox.
+	// Combined index into photos + videos + gif for the lightbox.
 	const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(
 		null,
 	);
 	const [videos, setVideos] = useState<
 		Array<{ id: string; file: File; preview: string }>
 	>([]);
+	const [selectedGif, setSelectedGif] = useState<GiphyGif | null>(null);
+	const [gifOpened, gifHandlers] = useDisclosure(false);
 	const counterId = useId();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const videoInputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +93,13 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 		const hasFiles = photos.length > 0 || videos.length > 0;
 		const attachmentType =
-			videos.length > 0 ? "video" : photos.length > 0 ? "image" : "text";
+			videos.length > 0
+				? "video"
+				: photos.length > 0
+					? "image"
+					: selectedGif !== null
+						? "gif"
+						: "text";
 
 		createPost(
 			{
@@ -97,24 +108,30 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				files: hasFiles
 					? [...photos.map((p) => p.file), ...videos.map((v) => v.file)]
 					: undefined,
+				gifUrl: selectedGif?.url,
 			},
 			{
 				onSuccess: () => {
 					setValue("");
 					setPhotos([]);
 					setVideos([]);
+					setSelectedGif(null);
 					setFocused(false);
 				},
 			},
 		);
-	}, [value, photos, videos, createPost]);
+	}, [value, photos, videos, selectedGif, createPost]);
 
 	const remaining = MAX_LENGTH - value.length;
 	// The counter and the extra rows only appear once the writer engages, so the
 	// resting card keeps its original one-line look. Staying active when attachments
 	// are present lets the user remove them even after the field blurs.
 	const active =
-		focused || value.length > 0 || photos.length > 0 || videos.length > 0;
+		focused ||
+		value.length > 0 ||
+		photos.length > 0 ||
+		videos.length > 0 ||
+		selectedGif !== null;
 
 	/**
 	 * Fit the field to its content. The DOM holds the truth here (the browser
@@ -243,17 +260,23 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 		setSelectedMediaIndex(null);
 	}, []);
 
-	// Build a combined slides array: photos come first (index 0..photos.length-1),
-	// then videos (index photos.length..photos.length+videos.length-1).
+	// Build a combined slides array: photos come first, then videos, then GIF.
 	// The key includes all preview URLs so the lightbox remounts with fresh slides
 	// when any media is added or removed (revoking the old object URLs).
-	const slidesKey = `${photos.length}-${videos.length}-${photos.map((p) => p.preview).join(",")}-${videos.map((v) => v.preview).join(",")}`;
+	const slidesKey = `${photos.length}-${videos.length}-${selectedGif?.id ?? ""}-${photos.map((p) => p.preview).join(",")}-${videos.map((v) => v.preview).join(",")}`;
 	const slides: Array<SlideImage | SlideVideo> = [
-		...photos.map((photo) => ({ type: "image", src: photo.preview })),
-		...videos.map((v) => ({
-			type: "video",
-			sources: [{ src: v.preview, type: v.file.type }],
-		})),
+		...photos.map(
+			(photo): SlideImage => ({ type: "image", src: photo.preview }),
+		),
+		...videos.map(
+			(v): SlideVideo => ({
+				type: "video",
+				sources: [{ src: v.preview, type: v.file.type }],
+			}),
+		),
+		...(selectedGif !== null
+			? [{ type: "image", src: selectedGif.url } satisfies SlideImage]
+			: []),
 	];
 
 	// Close the lightbox if the selected index is out of bounds — e.g., when all
@@ -299,7 +322,9 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 						{active && (
 							<>
-								{(photos.length > 0 || videos.length > 0) && (
+								{(photos.length > 0 ||
+									videos.length > 0 ||
+									selectedGif !== null) && (
 									<div className="mt-3 flex flex-wrap gap-2">
 										{photos.map((photo, i) => (
 											<ComposerPhotoPreview
@@ -317,6 +342,30 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 												onView={() => setSelectedMediaIndex(photos.length + i)}
 											/>
 										))}
+										{selectedGif !== null && (
+											<div className="group relative">
+												<button
+													type="button"
+													onClick={() =>
+														setSelectedMediaIndex(photos.length + videos.length)
+													}
+													className="h-24 w-32"
+												>
+													<img
+														src={selectedGif.url}
+														alt={selectedGif.title}
+														className="pointer-events-none h-full w-full rounded-lg object-cover"
+													/>
+												</button>
+												<button
+													type="button"
+													onClick={() => setSelectedGif(null)}
+													className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--feed-danger)] text-white"
+												>
+													<X size={12} />
+												</button>
+											</div>
+										)}
 									</div>
 								)}
 
@@ -342,14 +391,18 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 										const hasInput = value.trim().length > 0;
 										const photosInUse = photos.length > 0;
 										const videosInUse = videos.length > 0;
+										const gifsInUse = selectedGif !== null;
 										const isPhotoFull =
 											action.id === "photo" && photos.length >= MAX_PHOTOS;
 										const isVideoFull =
 											action.id === "video" && videos.length >= MAX_VIDEOS;
+										const isGifFull =
+											action.id === "gif" && selectedGif !== null;
 										// When one action is in use, disable the others.
 										const isOtherActionInUse =
 											(photosInUse && action.id !== "photo") ||
-											(videosInUse && action.id !== "video");
+											(videosInUse && action.id !== "video") ||
+											(gifsInUse && action.id !== "gif");
 
 										return (
 											<Button
@@ -369,17 +422,23 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 														photos.length < MAX_PHOTOS) ||
 													(hasInput &&
 														action.id === "video" &&
-														videos.length < MAX_VIDEOS)
+														videos.length < MAX_VIDEOS) ||
+													(hasInput &&
+														action.id === "gif" &&
+														selectedGif === null)
 														? () =>
 																action.id === "photo"
 																	? fileInputRef.current?.click()
-																	: videoInputRef.current?.click()
+																	: action.id === "video"
+																		? videoInputRef.current?.click()
+																		: gifHandlers.open()
 														: undefined
 												}
 												disabled={
 													!hasInput ||
 													isPhotoFull ||
 													isVideoFull ||
+													isGifFull ||
 													isOtherActionInUse
 												}
 												className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"
@@ -404,7 +463,8 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 											disabled={
 												(!value &&
 													photos.length === 0 &&
-													videos.length === 0) ||
+													videos.length === 0 &&
+													selectedGif === null) ||
 												remaining <= 0 ||
 												isPending
 											}
@@ -438,6 +498,14 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 							}
 						: undefined
 				}
+			/>
+			<GifPicker
+				opened={gifOpened}
+				onClose={gifHandlers.close}
+				onSelect={(gif) => {
+					setSelectedGif(gif);
+					gifHandlers.close();
+				}}
 			/>
 		</Fragment>
 	);

@@ -111,9 +111,10 @@ export class GifService {
       title: result.title,
     }));
 
-    // Giphy doesn't return a total count for trending, so we estimate from the response
-    const total =
-      data.length === cappedLimit ? page * cappedLimit : offset + data.length;
+    // Giphy doesn't return a total count for trending. If we got a full page,
+    // assume there are more results; otherwise we've reached the end.
+    const hasMore = data.length === cappedLimit;
+    const total = hasMore ? page * cappedLimit + 1 : offset + data.length;
 
     return new PaginationResponseDto(data, total, page, cappedLimit);
   }

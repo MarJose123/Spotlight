@@ -243,6 +243,44 @@ describe('GifService', () => {
       expect(calledUrl).toContain('limit=100');
     });
 
+    it('should report a next page when Giphy returns a full page', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGiphyTrendingResponse),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await service.getTrendingGifs({ page: 1, limit: 2 });
+
+      expect(result.meta.hasNextPage).toBe(true);
+      expect(result.meta.hasPreviousPage).toBe(false);
+    });
+
+    it('should report a next page from a later full page', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGiphyTrendingResponse),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await service.getTrendingGifs({ page: 2, limit: 2 });
+
+      expect(result.meta.hasNextPage).toBe(true);
+      expect(result.meta.hasPreviousPage).toBe(true);
+    });
+
+    it('should report the last page when Giphy returns a partial page', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGiphyTrendingResponse),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await service.getTrendingGifs({ page: 1, limit: 10 });
+
+      expect(result.meta.hasNextPage).toBe(false);
+    });
+
     it('should throw when Giphy API returns non-ok response', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,

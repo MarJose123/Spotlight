@@ -5,7 +5,12 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type {
 	ApiComment,
 	ApiLeaderboardEntry,
@@ -343,6 +348,39 @@ export function useUserProfileStats(userId: string | undefined) {
 			return fetchUserProfileStats(userId);
 		},
 		enabled: !!userId,
+		staleTime: 60_000,
+	});
+}
+
+// ── GIF queries ──────────────────────────────────────────────────────────────
+
+import type { GiphyGif } from "./api/gif";
+import { fetchTrendingGifs, searchGifs } from "./api/gif";
+
+export const gifQueryKeys = {
+	trending: ["gifs", "trending"],
+	search: (query: string) => ["gifs", "search", query],
+} as const;
+
+export function useTrendingGifsInfinite(options?: { enabled?: boolean }) {
+	return useInfiniteQuery({
+		queryKey: gifQueryKeys.trending,
+		queryFn: ({ pageParam }) => fetchTrendingGifs(pageParam),
+		initialPageParam: 1,
+		enabled: options?.enabled ?? true,
+		getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+			if (!lastPage.meta.hasNextPage) return undefined;
+			return lastPageParam + 1;
+		},
+		staleTime: 120_000,
+	});
+}
+
+export function useSearchGifs(query: string) {
+	return useQuery<GiphyGif[]>({
+		queryKey: gifQueryKeys.search(query),
+		queryFn: () => searchGifs(query),
+		enabled: query.trim().length > 0,
 		staleTime: 60_000,
 	});
 }

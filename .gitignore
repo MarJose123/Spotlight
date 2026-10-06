@@ -4,4 +4,5 @@
 .idea/*
 !.idea/copyright/
 .reasonix
+.junie
 /node_modules
