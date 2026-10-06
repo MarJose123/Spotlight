@@ -7,7 +7,9 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/about")({ component: About });
+export const Route = createFileRoute("/about")({
+	component: About,
+});
 
 const SOURCE_URL = "https://github.com/MarJose123/spotlight";
 const API_DOCS_URL = "http://localhost:3000/docs";

@@ -77,6 +77,15 @@ function Home() {
 					</article>
 				))}
 			</section>
+
+			<div className="mx-auto mt-8 w-full max-w-4xl text-center">
+				<Link
+					to="/about"
+					className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-6 py-3 text-sm font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
+				>
+					Learn more
+				</Link>
+			</div>
 		</main>
 	);
 }
