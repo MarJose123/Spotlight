@@ -33,6 +33,7 @@ describe('AuthService', () => {
   let userRepository: any;
   let refreshTokenRepository: any;
   let em: EntityManager;
+  let jwtTokenMapper: any;
 
   const makeUser = (overrides = {}): User => {
     const user = new User();
@@ -70,6 +71,29 @@ describe('AuthService', () => {
     create: vi.fn(),
   });
 
+  const mockJwtTokenMapper = () => ({
+    toResponse: vi.fn(async (token) => ({
+      user: token.user
+        ? {
+            id: token.user.id,
+            avatarUrl: undefined,
+            email: token.user.email,
+            name: token.user.name,
+            username: token.user.username,
+            displayName: token.user.name,
+            status: token.user.status,
+            role: token.user.type,
+            createdAt: token.user.createdAt,
+            updatedAt: token.user.updatedAt,
+          }
+        : null,
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
+      expires_in: token.expires_in,
+      token_type: 'Bearer',
+    })),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
@@ -77,11 +101,13 @@ describe('AuthService', () => {
     userRepository = mockUserRepo();
     refreshTokenRepository = mockRefreshTokenRepo();
     em = mockEm() as unknown as EntityManager;
+    jwtTokenMapper = mockJwtTokenMapper();
     service = new AuthService(
       tokenService,
       userRepository,
       refreshTokenRepository,
       em,
+      jwtTokenMapper,
     );
   });
 

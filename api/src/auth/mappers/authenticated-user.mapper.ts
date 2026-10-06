@@ -6,21 +6,25 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+import { Injectable } from '@nestjs/common';
 import { UserMapper } from '#/users/mappers/user.mapper.js';
 import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
 import type { User } from '#/users/entities/user.entity.js';
 import type { VerifiedPayloadInterface } from '#/auth/interface/payload.interface.js';
 
+@Injectable()
 export class AuthenticatedUserMapper {
+  constructor(private readonly userMapper: UserMapper) {}
+
   /**
    * Nests a user's profile under `user`, alongside the verified access token's
    * claims. Returns null when the user no longer exists.
    */
-  static toResponse(
+  async toResponse(
     user: User | null,
     payload: VerifiedPayloadInterface,
-  ): AuthenticatedUserDto | null {
-    const profile = UserMapper.toResponse(user ?? undefined);
+  ): Promise<AuthenticatedUserDto | null> {
+    const profile = await this.userMapper.toResponse(user ?? undefined);
     if (!profile) {
       return null;
     }

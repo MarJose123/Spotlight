@@ -21,6 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     configService: ConfigService,
     private readonly em: EntityManager,
+    private readonly authenticatedUserMapper: AuthenticatedUserMapper,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -45,7 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Filtering on status makes a deactivated account indistinguishable from a
     // missing one, and stops its already-issued tokens from working.
-    const user = AuthenticatedUserMapper.toResponse(
+    const user = await this.authenticatedUserMapper.toResponse(
       await this.em.findOne(User, {
         id: payload.sub,
         status: UserStatus.ACTIVE,

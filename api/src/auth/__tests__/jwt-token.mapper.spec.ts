@@ -5,13 +5,34 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JwtTokenMapper } from '#/auth/mappers/jwt-token.mapper.js';
 import { User } from '#/users/entities/user.entity.js';
 import { UserStatus } from '#/users/enums/status.enum.js';
 import { UserRole } from '#/users/enums/role.enum.js';
 
+const mockUserMapper = () => ({
+  toResponse: vi.fn(async (user) => {
+    if (!user) return null;
+    return {
+      id: user.id,
+      avatarUrl: undefined,
+      email: user.email,
+      name: user.name,
+      username: user.username,
+      displayName: user.name,
+      status: user.status,
+      role: user.type,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }),
+});
+
 describe('JwtTokenMapper', () => {
+  let mapper: JwtTokenMapper;
+  let userMapper: any;
+
   const makeUser = () => {
     const user = new User();
     Object.assign(user, {
@@ -27,10 +48,16 @@ describe('JwtTokenMapper', () => {
     return user;
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+    userMapper = mockUserMapper();
+    mapper = new JwtTokenMapper(userMapper);
+  });
+
   describe('toResponse', () => {
-    it('should map token and user to response DTO', () => {
+    it('should map token and user to response DTO', async () => {
       const user = makeUser();
-      const result = JwtTokenMapper.toResponse({
+      const result = await mapper.toResponse({
         user,
         access_token: 'access-123',
         refresh_token: 'refresh-123',
@@ -46,8 +73,8 @@ describe('JwtTokenMapper', () => {
       expect(result.user!.email).toBe('test@example.com');
     });
 
-    it('should return null user when input user is undefined', () => {
-      const result = JwtTokenMapper.toResponse({
+    it('should return null user when input user is undefined', async () => {
+      const result = await mapper.toResponse({
         user: undefined,
         access_token: 'access-123',
         refresh_token: 'refresh-123',

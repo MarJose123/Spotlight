@@ -33,6 +33,7 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: EntityRepository<RefreshToken>,
     private readonly em: EntityManager,
+    private readonly jwtTokenMapper: JwtTokenMapper,
   ) {}
 
   /** Validates the user email and returns true if it exists. */
@@ -80,7 +81,7 @@ export class AuthService {
     this.refreshTokenRepository.create(refreshTokenModel);
     await this.em.flush();
 
-    return JwtTokenMapper.toResponse({
+    return this.jwtTokenMapper.toResponse({
       user,
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -115,7 +116,7 @@ export class AuthService {
 
     const newAccessToken = this.tokenService.createAccessToken(user);
 
-    return JwtTokenMapper.toResponse({
+    return this.jwtTokenMapper.toResponse({
       user,
       access_token: newAccessToken,
       refresh_token: token,
