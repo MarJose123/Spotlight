@@ -29,7 +29,7 @@ export class PaginationResponseDto<T> {
       perPage: limit,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      hasNextPage: page < total,
+      hasNextPage: page < Math.ceil(total / limit),
       hasPreviousPage: page > 1,
     };
   }
