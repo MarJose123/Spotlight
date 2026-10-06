@@ -38,6 +38,8 @@ describe('UsersService', () => {
   let em: any;
   let mailer: MailerService;
   let config: ConfigService;
+  let userMapper: any;
+  let bucketService: any;
 
   const makeUser = (overrides = {}): User => {
     const user = new User();
@@ -94,13 +96,48 @@ describe('UsersService', () => {
     }),
   });
 
+  const mockUserMapper = () => ({
+    toResponse: vi.fn(async (user) => {
+      if (!user) return null;
+      return {
+        id: user.id,
+        avatarUrl: user.avatar
+          ? `https://presigned.example.com/${user.avatar}`
+          : undefined,
+        email: user.email,
+        name: user.name,
+        username: user.username,
+        displayName: user.name,
+        status: user.status,
+        role: user.type,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    }),
+  });
+
+  const mockBucketService = () => ({
+    uploadFile: vi.fn(),
+    deleteFile: vi.fn(),
+    getTemporaryUrl: vi.fn(),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     userRepository = mockUserRepo();
     em = mockEm();
     mailer = mockMailer() as unknown as MailerService;
     config = mockConfig() as unknown as ConfigService;
-    service = new UsersService(userRepository, em, mailer, config);
+    userMapper = mockUserMapper();
+    bucketService = mockBucketService();
+    service = new UsersService(
+      userRepository,
+      em,
+      mailer,
+      config,
+      userMapper,
+      bucketService,
+    );
   });
 
   describe('findAll', () => {

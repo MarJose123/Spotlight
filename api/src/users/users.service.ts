@@ -35,6 +35,9 @@ import WelcomeEmail, {
 import { UserStatus } from '#/users/enums/status.enum.js';
 import { UpdateUserRoleDto } from '#/users/dto/update-user-role.dto.js';
 import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
+import { BucketService } from '#/bucket/bucket.service.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
+import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 @Injectable()
 export class UsersService {
@@ -46,6 +49,8 @@ export class UsersService {
     private readonly em: EntityManager,
     private readonly mailer: MailerService,
     private readonly config: ConfigService,
+    private readonly userMapper: UserMapper,
+    private readonly bucketService: BucketService,
   ) {}
 
   /** Returns all users. */
@@ -60,7 +65,9 @@ export class UsersService {
       { offset: skip, limit, orderBy: { createdAt: 'desc' } },
     );
 
-    const dataTransformed = data.map((user) => UserMapper.toResponse(user));
+    const dataTransformed = await Promise.all(
+      data.map((user) => this.userMapper.toResponse(user)),
+    );
 
     return new PaginationResponseDto(dataTransformed, total, page, limit);
   }
@@ -71,13 +78,13 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   /** Returns a single user by email or null when it does not exist. */
   async findByEmail(email: string): Promise<UserResponseDto | null> {
     const user = await this.userRepository.findOneOrFail({ email });
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   /** Creates and persists a new user, then welcomes them by email. */
@@ -98,7 +105,7 @@ export class UsersService {
 
     await this.sendWelcomeEmail(user, invitedBy);
 
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   /** Updates the provided fields of an existing user. */
@@ -126,7 +133,7 @@ export class UsersService {
     }
     wrap(user).assign(patch);
     await this.flushOrConflict();
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   async deactivateUser(
@@ -151,7 +158,7 @@ export class UsersService {
 
     await this.em.flush();
 
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   async activateUser(
@@ -172,7 +179,7 @@ export class UsersService {
     user.status = UserStatus.ACTIVE;
     await this.em.flush();
 
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   async updateUserRole(
@@ -192,7 +199,7 @@ export class UsersService {
     user.type = dto.role;
     await this.em.flush();
 
-    return UserMapper.toResponse(user);
+    return this.userMapper.toResponse(user);
   }
 
   /** Deletes a user by id and returns the removed user (or throws 404). */
@@ -244,6 +251,30 @@ export class UsersService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Uploads a profile avatar image for the given user.
+   */
+  async uploadAvatar(
+    userId: string,
+    file: FastifyMultipartFile,
+  ): Promise<UserResponseDto | null> {
+    const user = await this.userRepository.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    // Delete the old avatar if one exists
+    if (user.avatar) {
+      await this.bucketService.deleteFile(user.avatar);
+    }
+
+    const key = await this.bucketService.uploadFile(file, AttachmentType.IMAGE);
+    user.avatar = key;
+    await this.em.flush();
+
+    return this.userMapper.toResponse(user);
   }
 
   /**

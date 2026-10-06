@@ -28,6 +28,7 @@ describe('UsersController', () => {
     activateUser: vi.fn(),
     updateUserRole: vi.fn(),
     delete: vi.fn(),
+    uploadAvatar: vi.fn(),
   });
 
   const makeUserResponse = (overrides = {}): UserResponseDto => ({

@@ -7,6 +7,7 @@
  */
 import { HttpCode, HttpStatus, applyDecorators } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -15,6 +16,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthenticatedUserDto } from '#/auth/dto/authenticated-user.dto.js';
 import { UserResponseDto } from '#/users/dto/user-response.dto.js';
@@ -167,6 +169,37 @@ export const ApiUpdateUserRole = () =>
     userNotFound(),
     ApiForbiddenResponse({
       description: 'You cannot update your own role.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiUploadAvatar = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Upload avatar',
+      description:
+        'Upload a profile avatar image for the authenticated user. Replaces any existing avatar. Accepts image files up to 50 MB.',
+    }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+            description: 'Avatar image file (JPEG, PNG, GIF, WebP).',
+          },
+        },
+        required: ['file'],
+      },
+    }),
+    ApiOkResponse({
+      description: 'The updated user profile with the new avatar URL.',
+      type: UserResponseDto,
+    }),
+    ApiBadRequestResponse({
+      description:
+        'The uploaded file is not a valid image or exceeds the size limit.',
       type: ErrorResponseDto,
     }),
   );

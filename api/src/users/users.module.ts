@@ -12,9 +12,15 @@ import { UsersController } from '#/users/users.controller.js';
 import { UsersService } from '#/users/users.service.js';
 import { AuthModule } from '#/auth/auth.module.js';
 import { MailerModule } from '#/mailer/mailer.module.js';
+import { BucketModule } from '#/bucket/bucket.module.js';
 
 @Module({
-  imports: [AuthModule, MailerModule, MikroOrmModule.forFeature([User])],
+  imports: [
+    AuthModule,
+    MailerModule,
+    BucketModule,
+    MikroOrmModule.forFeature([User]),
+  ],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

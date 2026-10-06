@@ -17,6 +17,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '#/users/dto/create-user.dto.js';
@@ -41,8 +42,12 @@ import {
   ApiListUsers,
   ApiUpdateUser,
   ApiUpdateUserRole,
+  ApiUploadAvatar,
 } from '#/users/decorators/user-api.decorator.js';
 import { UpdateUserRoleDto } from '#/users/dto/update-user-role.dto.js';
+import { MultipartFileInterceptor } from '#/common/interceptors/multipart-file.interceptor.js';
+import { UploadedFiles } from '#/common/decorators/uploaded-files.decorator.js';
+import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 @ApiTags('Users')
 @ApiAuthenticated()
@@ -69,6 +74,19 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
   ): Promise<AuthenticatedUserDto | null> {
     return req.auth;
+  }
+
+  @ApiUploadAvatar()
+  @Post('me/avatar')
+  @UseInterceptors(new MultipartFileInterceptor('file'))
+  async uploadAvatar(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFiles() files: FastifyMultipartFile[],
+  ): Promise<UserResponseDto | null> {
+    if (!files.length) {
+      throw new Error('No file uploaded');
+    }
+    return this.usersService.uploadAvatar(req.auth.sub, files[0]);
   }
 
   @ApiGetUser()
