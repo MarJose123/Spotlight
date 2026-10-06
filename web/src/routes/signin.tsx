@@ -20,7 +20,7 @@ import {
 	Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useState } from "react";
@@ -32,6 +32,7 @@ import {
 	signInWithPassword,
 } from "../lib/auth";
 import { type SignInValues, signInSchema } from "../lib/schemas/auth";
+import { isExpired, readSession } from "../lib/session";
 
 type SignInSearch = {
 	redirect?: string;
@@ -41,6 +42,12 @@ export const Route = createFileRoute("/signin")({
 	validateSearch: (search: Record<string, unknown>): SignInSearch => ({
 		redirect: typeof search.redirect === "string" ? search.redirect : undefined,
 	}),
+	beforeLoad: () => {
+		const session = readSession();
+		if (session && !isExpired(session)) {
+			throw redirect({ to: "/feed" });
+		}
+	},
 	loader: () => fetchEnabledProviders(),
 	head: () => ({
 		meta: [{ title: "Sign in · Spotlight" }],

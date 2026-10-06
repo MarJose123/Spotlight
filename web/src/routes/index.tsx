@@ -5,11 +5,20 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Heart, LogIn, Megaphone, Newspaper, Users } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { isExpired, readSession } from "#/lib/session";
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute("/")({
+	beforeLoad: () => {
+		const session = readSession();
+		if (session && !isExpired(session)) {
+			throw redirect({ to: "/feed" });
+		}
+	},
+	component: Home,
+});
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
