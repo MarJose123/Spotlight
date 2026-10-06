@@ -22,7 +22,12 @@ describe('PostsController', () => {
 
   const makePostResponse = (overrides = {}): PostResponseDto => ({
     id: 'post-123',
-    userId: 'user-123',
+    author: {
+      id: 'user-123',
+      name: 'Test User',
+      username: undefined,
+      avatarUrl: undefined,
+    },
     content: 'Great work!',
     attachments: [
       { url: 'https://example.com/img.png', type: AttachmentType.IMAGE },
@@ -116,10 +121,11 @@ describe('PostsController', () => {
       const created = makePostResponse({ id: 'new-post', content: 'Thanks!' });
       vi.mocked(postsService.create).mockResolvedValue(created);
 
-      const result = await controller.createPost(dto, files);
+      const mockReq = { auth: { sub: 'user-123', user: {} } } as any;
+      const result = await controller.createPost(mockReq, dto, files);
 
       expect(result).toBe(created);
-      expect(postsService.create).toHaveBeenCalledWith(dto, files);
+      expect(postsService.create).toHaveBeenCalledWith(dto, 'user-123', files);
     });
 
     it('should create a GIF post with a URL and no files', async () => {
@@ -143,10 +149,11 @@ describe('PostsController', () => {
       });
       vi.mocked(postsService.create).mockResolvedValue(created);
 
-      const result = await controller.createPost(dto, files);
+      const mockReq = { auth: { sub: 'user-123', user: {} } } as any;
+      const result = await controller.createPost(mockReq, dto, files);
 
       expect(result).toBe(created);
-      expect(postsService.create).toHaveBeenCalledWith(dto, files);
+      expect(postsService.create).toHaveBeenCalledWith(dto, 'user-123', files);
     });
   });
 

@@ -26,6 +26,7 @@ import { PostsService } from '#/posts/posts.service.js';
 import { CommentsService } from '#/posts/comments.service.js';
 import { Auth } from '#/auth/guard/auth.guard.js';
 import { CreateCommentDto } from '#/posts/dto/create-comment.dto.js';
+import { UpdateCommentDto } from '#/posts/dto/update-comment.dto.js';
 import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
 import { UpdatePostDto } from '#/posts/dto/update-post.dto.js';
 import { LikePostDto } from '#/posts/dto/like-post.dto.js';
@@ -39,6 +40,8 @@ import {
   ApiListComments,
   ApiUpdatePost,
   ApiDeletePost,
+  ApiUpdateComment,
+  ApiDeleteComment,
 } from '#/posts/decorators/post-api.decorator.js';
 import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
 import { MultipartFileInterceptor } from '#/common/interceptors/multipart-file.interceptor.js';
@@ -78,10 +81,11 @@ export class PostsController {
   })
   @UseInterceptors(new MultipartFileInterceptor('file'))
   async createPost(
+    @Req() req: AuthenticatedRequest,
     @Body() dto: CreatePostDto,
     @UploadedFiles() files: FastifyMultipartFile[],
   ) {
-    return this.postsService.create(dto, files);
+    return this.postsService.create(dto, req.auth.sub, files);
   }
 
   @ApiLikePost()
@@ -119,6 +123,28 @@ export class PostsController {
   @Get('/:id/comments')
   async getComments(@Param('id') id: string) {
     return this.commentsService.findByPost(id);
+  }
+
+  @ApiUpdateComment()
+  @Throttle({
+    default: { limit: 3, ttl: seconds(1), blockDuration: minutes(5) },
+  })
+  @Patch('/:id/comments/:commentId')
+  async updateComment(
+    @Param('commentId') commentId: string,
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateCommentDto,
+  ) {
+    return this.commentsService.update(commentId, req.auth.sub, dto);
+  }
+
+  @ApiDeleteComment()
+  @Delete('/:id/comments/:commentId')
+  async deleteComment(
+    @Param('commentId') commentId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commentsService.delete(commentId, req.auth.sub);
   }
 
   @ApiUpdatePost()

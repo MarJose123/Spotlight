@@ -27,7 +27,10 @@ export class CommentMapper {
     return {
       id: comment.id,
       content: comment.content,
-      userId: comment.user.id,
+      author: {
+        id: comment.user.id,
+        name: comment.user.name,
+      },
       createdAt: comment.createdAt,
     };
   }

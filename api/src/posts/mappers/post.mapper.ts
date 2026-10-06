@@ -7,7 +7,10 @@
  */
 
 import { Posts } from '#/posts/entities/posts.entity.js';
-import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import {
+  PostAuthorDto,
+  PostResponseDto,
+} from '#/posts/dto/post-response.dto.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
 
 type PostResponseSource = Pick<
@@ -24,6 +27,16 @@ type PostResponseSource = Pick<
 
 type PostResponseBase = Omit<PostResponseDto, 'attachments'>;
 
+function mapAuthor(post: PostResponseSource): PostAuthorDto {
+  const user = post.user;
+  return {
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    avatarUrl: user.avatar,
+  };
+}
+
 export class PostMapper {
   static toResponse(post: PostResponseSource): PostResponseBase;
   static toResponse(
@@ -36,7 +49,7 @@ export class PostMapper {
 
     return {
       id: post.id,
-      userId: post.user.id,
+      author: mapAuthor(post),
       content: post.content,
       postType: post.postType,
       likedBy: post.likes?.map((like: Likes) => like.user.id),

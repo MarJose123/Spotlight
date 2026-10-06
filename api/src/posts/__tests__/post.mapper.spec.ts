@@ -53,7 +53,8 @@ describe('PostMapper', () => {
 
       expect(result).not.toBeNull();
       expect(result!.id).toBe('post-123');
-      expect(result!.userId).toBe('user-123');
+      expect(result!.author.id).toBe('user-123');
+      expect(result!.author.name).toBeUndefined();
       expect(result!.content).toBe('Great work!');
       expect(result!.postType).toBe(PostType.USER);
       expect(result!.likedBy).toEqual(['user-456', 'user-789']);

@@ -102,8 +102,8 @@ describe('PostsService', () => {
         {
           offset: 0,
           limit: 10,
-          orderBy: { createdAt: 'desc' },
-          populate: ['likes'],
+          orderBy: { createdAt: 'desc', id: 'desc' },
+          populate: ['user', 'likes.user'],
         },
       );
     });
@@ -151,8 +151,8 @@ describe('PostsService', () => {
         {
           offset: 0,
           limit: 10,
-          orderBy: { createdAt: 'desc' },
-          populate: ['likes'],
+          orderBy: { createdAt: 'desc', id: 'desc' },
+          populate: ['user', 'likes.user'],
         },
       );
     });
@@ -181,8 +181,12 @@ describe('PostsService', () => {
       vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
         'https://example.com/img.png',
       );
+      // After create, the service reloads the post to populate the user.
+      postRepository.findOne.mockResolvedValue(
+        makePost({ content: 'Thanks!' }),
+      );
 
-      const result = await service.create(dto, files);
+      const result = await service.create(dto, 'user-123', files);
 
       expect(bucketService.uploadFile).toHaveBeenCalledTimes(1);
       expect(postRepository.create).toHaveBeenCalled();
@@ -200,7 +204,7 @@ describe('PostsService', () => {
       };
       const files = Array.from({ length: 6 }, () => makeFile());
 
-      await expect(service.create(dto, files)).rejects.toThrow(
+      await expect(service.create(dto, 'user-123', files)).rejects.toThrow(
         'A post can have at most 5 images',
       );
     });
@@ -214,7 +218,7 @@ describe('PostsService', () => {
       };
       const files = Array.from({ length: 2 }, () => makeFile('video/mp4'));
 
-      await expect(service.create(dto, files)).rejects.toThrow(
+      await expect(service.create(dto, 'user-123', files)).rejects.toThrow(
         'A post can have at most 1 video',
       );
     });
@@ -228,7 +232,7 @@ describe('PostsService', () => {
       };
       const files: FastifyMultipartFile[] = [];
 
-      await expect(service.create(dto, files)).rejects.toThrow(
+      await expect(service.create(dto, 'user-123', files)).rejects.toThrow(
         'A GIF URL is required for GIF posts',
       );
     });
@@ -242,8 +246,19 @@ describe('PostsService', () => {
         gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
       };
       const files: FastifyMultipartFile[] = [];
+      postRepository.findOne.mockResolvedValue(
+        makePost({
+          content: 'Funny GIF',
+          attachments: [
+            {
+              url: 'https://media.giphy.com/media/abc123/giphy.gif',
+              type: AttachmentType.GIF,
+            },
+          ],
+        }),
+      );
 
-      const result = await service.create(dto, files);
+      const result = await service.create(dto, 'user-123', files);
 
       expect(bucketService.uploadFile).not.toHaveBeenCalled();
       expect(postRepository.create).toHaveBeenCalled();
@@ -263,7 +278,7 @@ describe('PostsService', () => {
       };
       const files: FastifyMultipartFile[] = [];
 
-      await expect(service.create(dto, files)).rejects.toThrow(
+      await expect(service.create(dto, 'user-123', files)).rejects.toThrow(
         'A GIF URL is required for GIF posts',
       );
     });
@@ -282,8 +297,17 @@ describe('PostsService', () => {
       vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
         'https://example.com/file.png',
       );
+      postRepository.findOne.mockResolvedValue(
+        makePost({
+          content: 'Multiple images',
+          attachments: Array.from({ length: 5 }, () => ({
+            key: 'posts/123-file.png',
+            type: AttachmentType.IMAGE,
+          })),
+        }),
+      );
 
-      const result = await service.create(dto, files);
+      const result = await service.create(dto, 'user-123', files);
 
       expect(bucketService.uploadFile).toHaveBeenCalledTimes(5);
       expect(postRepository.create).toHaveBeenCalled();

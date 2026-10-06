@@ -6,6 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 export enum AttachmentType {
+  TEXT = 'text',
   IMAGE = 'image',
   GIF = 'gif',
   VIDEO = 'video',

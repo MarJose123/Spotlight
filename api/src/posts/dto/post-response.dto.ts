@@ -9,6 +9,21 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 
+/** Minimal author info embedded in a post response so the client avoids a second request. */
+export class PostAuthorDto {
+  @ApiProperty({ description: 'Author id.', format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: 'Author display name.' })
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Author username, may be absent.' })
+  username: string | undefined;
+
+  @ApiPropertyOptional({ description: 'Author avatar URL, may be absent.' })
+  avatarUrl: string | undefined;
+}
+
 export class AttachmentItemResponseDto {
   @ApiProperty({ description: 'URL of the attached media.', format: 'uri' })
   url: string;
@@ -27,10 +42,10 @@ export class PostResponseDto {
   id: string;
 
   @ApiProperty({
-    description: 'Id of the user who authored the post.',
-    format: 'uuid',
+    description: 'Author of the post.',
+    type: () => PostAuthorDto,
   })
-  userId: string;
+  author: PostAuthorDto;
 
   @ApiProperty({ description: 'Body of the post.' })
   content: string;

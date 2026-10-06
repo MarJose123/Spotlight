@@ -25,6 +25,7 @@ import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { CreateCommentDto } from '#/posts/dto/create-comment.dto.js';
+import { UpdateCommentDto } from '#/posts/dto/update-comment.dto.js';
 import { CommentResponseDto } from '#/posts/dto/comment-response.dto.js';
 import { UpdatePostDto } from '#/posts/dto/update-post.dto.js';
 
@@ -233,6 +234,70 @@ export const ApiDeletePost = () =>
     }),
     ApiNotFoundResponse({
       description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
+    ApiForbiddenResponse({
+      description:
+        'The request is not from the author or the 15-minute window has passed.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiUpdateComment = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Update comment',
+      description:
+        'Update the content of a comment. Only the author may edit, and only within 15 minutes of creation.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post that owns the comment.',
+      format: 'uuid',
+    }),
+    ApiParam({
+      name: 'commentId',
+      description: 'Id of the comment to update.',
+      format: 'uuid',
+    }),
+    ApiBody({ type: UpdateCommentDto }),
+    ApiOkResponse({
+      description: 'The updated comment.',
+      type: CommentResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'The comment does not exist.',
+      type: ErrorResponseDto,
+    }),
+    ApiForbiddenResponse({
+      description:
+        'The request is not from the author or the 15-minute window has passed.',
+      type: ErrorResponseDto,
+    }),
+  );
+
+export const ApiDeleteComment = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Delete comment',
+      description:
+        'Delete a comment. Only the author may delete, and only within 15 minutes of creation.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post that owns the comment.',
+      format: 'uuid',
+    }),
+    ApiParam({
+      name: 'commentId',
+      description: 'Id of the comment to delete.',
+      format: 'uuid',
+    }),
+    ApiNoContentResponse({
+      description: 'The comment has been deleted.',
+    }),
+    ApiNotFoundResponse({
+      description: 'The comment does not exist.',
       type: ErrorResponseDto,
     }),
     ApiForbiddenResponse({

@@ -7,6 +7,15 @@
  */
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Minimal author info embedded in a comment response. */
+export class CommentAuthorDto {
+  @ApiProperty({ description: 'Author id.', format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: 'Author display name.' })
+  name: string;
+}
+
 /** A comment as returned by the API, decoupled from the persistence entity. */
 export class CommentResponseDto {
   @ApiProperty({ description: 'Comment id.', format: 'uuid' })
@@ -16,10 +25,10 @@ export class CommentResponseDto {
   content: string;
 
   @ApiProperty({
-    description: 'Id of the user who authored the comment.',
-    format: 'uuid',
+    description: 'Author of the comment.',
+    type: () => CommentAuthorDto,
   })
-  userId: string;
+  author: CommentAuthorDto;
 
   @ApiProperty({ description: 'Creation timestamp.', format: 'date-time' })
   createdAt: Date;

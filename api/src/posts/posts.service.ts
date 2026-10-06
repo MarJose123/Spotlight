@@ -56,8 +56,8 @@ export class PostsService {
       {
         offset: skip,
         limit,
-        orderBy: { createdAt: 'desc' },
-        populate: ['likes'],
+        orderBy: { createdAt: 'desc', id: 'desc' },
+        populate: ['user', 'likes.user'],
       },
     );
 
@@ -70,7 +70,7 @@ export class PostsService {
   async findById(id: string): Promise<PostResponseDto> {
     const post = await this.postRepository.findOne(
       { id },
-      { populate: ['likes'] },
+      { populate: ['user', 'likes.user'] },
     );
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
@@ -94,8 +94,8 @@ export class PostsService {
       {
         offset: skip,
         limit,
-        orderBy: { createdAt: 'desc' },
-        populate: ['likes'],
+        orderBy: { createdAt: 'desc', id: 'desc' },
+        populate: ['user', 'likes.user'],
       },
     );
 
@@ -105,10 +105,12 @@ export class PostsService {
   }
 
   /**
-   * Creates a post: GIF posts use a URL, image/video posts upload files to S3.
+   * Creates a post: TEXT posts have no attachments, GIF posts use a URL,
+   * image/video posts upload files to S3.
    */
   async create(
     dto: CreatePostDto,
+    userId: string,
     files: FastifyMultipartFile[],
   ): Promise<PostResponseDto | null> {
     if (dto.gifUrl && files.length > 0) {
@@ -120,12 +122,12 @@ export class PostsService {
     const attachmentType = dto.attachmentType;
     let attachments: { key?: string; url?: string; type: string }[];
 
-    if (attachmentType === AttachmentType.GIF) {
-      // GIF posts accept a URL, no file upload
+    if (attachmentType === AttachmentType.TEXT) {
+      attachments = [];
+    } else if (attachmentType === AttachmentType.GIF) {
       this.validateGifUrl(dto.gifUrl);
       attachments = [{ url: dto.gifUrl, type: attachmentType }];
     } else {
-      // Image and video posts require file uploads
       this.validateAttachments(files.length, attachmentType);
       attachments = await Promise.all(
         files.map(async (file) => {
@@ -138,11 +140,16 @@ export class PostsService {
     const post = new Posts();
     post.content = dto.content;
     post.attachments = attachments;
-    post.user = this.em.getReference(User, dto.user);
+    post.user = this.em.getReference(User, userId);
     this.postRepository.create(post);
     await this.em.flush();
 
-    return (await this.mapPostsToResponse([post]))[0];
+    const populated = await this.postRepository.findOne(
+      { id: post.id },
+      { populate: ['user', 'likes.user'] },
+    );
+    if (!populated) return null;
+    return (await this.mapPostsToResponse([populated]))[0];
   }
 
   /** Validates that a GIF URL is provided when attachmentType is GIF. */
@@ -215,7 +222,7 @@ export class PostsService {
   ): Promise<PostResponseDto> {
     const post = await this.postRepository.findOne(
       { id },
-      { populate: ['likes'] },
+      { populate: ['user', 'likes.user'] },
     );
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);

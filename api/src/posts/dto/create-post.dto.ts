@@ -18,14 +18,7 @@ export class CreatePostDto {
   content!: string;
 
   @ApiProperty({
-    description: 'Id of the user authoring the post.',
-    format: 'uuid',
-  })
-  @IsNotEmpty()
-  user!: string;
-
-  @ApiProperty({
-    description: 'The type of attachment for all uploaded files.',
+    description: 'The type of attachment for the post.',
     enum: AttachmentType,
     enumName: 'AttachmentType',
   })
