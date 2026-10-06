@@ -6,6 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+import { Image } from "@mantine/core";
 import { useCallback, useId, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
@@ -278,10 +279,11 @@ export function PostMedia({ media }: { media: FeedMediaItem }) {
 	return (
 		<div className="relative overflow-hidden rounded-2xl border border-[var(--feed-line)]">
 			{hasUrl && resolvedUrl && media.type === "image" && (
-				<img
+				<Image
 					src={resolvedUrl}
 					alt={media.alt}
-					className="block w-full object-cover"
+					className="block w-full"
+					fit="cover"
 				/>
 			)}
 			{hasUrl && resolvedUrl && media.type === "video" && (
@@ -294,10 +296,11 @@ export function PostMedia({ media }: { media: FeedMediaItem }) {
 				/>
 			)}
 			{hasUrl && resolvedUrl && media.type === "gif" && (
-				<img
+				<Image
 					src={resolvedUrl}
 					alt={media.alt}
-					className="block w-full object-cover"
+					className="block w-full"
+					fit="cover"
 				/>
 			)}
 			{!hasUrl && (
