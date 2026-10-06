@@ -22,6 +22,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { BucketModule } from './bucket/bucket.module.js';
 import { MailerModule } from './mailer/mailer.module.js';
 import { GifModule } from './gif/gif.module.js';
+import { LeaderboardModule } from './leaderboard/leaderboard.module.js';
 import bucketConfig from '#/config/bucket.config.js';
 import servicesConfig from '#/config/services.config.js';
 import mailConfig from '#/config/mail.config.js';
@@ -63,6 +64,7 @@ import giphyConfig from '#/config/giphy.config.js';
     BucketModule,
     MailerModule,
     GifModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [
