@@ -6,13 +6,34 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button } from "@mantine/core";
-import { Heart, MessageCircle, MoreHorizontal } from "lucide-react";
+import { Button, Menu } from "@mantine/core";
+import {
+	Edit,
+	Heart,
+	MessageCircle,
+	MoreHorizontal,
+	Trash2,
+} from "lucide-react";
 import type { FeedPost } from "../../lib/feed-data";
 import { Avatar, PostMedia, toneGradient } from "./media";
 
-export function PostCard({ post }: { post: FeedPost }) {
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+function canEditPost(viewerId: string, post: FeedPost): boolean {
+	if (viewerId !== post.authorId) return false;
+	const age = Date.now() - new Date(post.createdAt).getTime();
+	return age >= 0 && age <= EDIT_WINDOW_MS;
+}
+
+export function PostCard({
+	post,
+	viewerId,
+}: {
+	post: FeedPost;
+	viewerId: string;
+}) {
 	const hasEngagement = post.reactions.length > 0;
+	const editable = canEditPost(viewerId, post);
 
 	return (
 		<article className="rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-4">
@@ -28,13 +49,31 @@ export function PostCard({ post }: { post: FeedPost }) {
 					</p>
 				</div>
 
-				<button
-					type="button"
-					aria-label="More actions"
-					className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[var(--feed-ink-dim)] transition hover:bg-[var(--feed-hover)] hover:text-[var(--feed-ink)]"
-				>
-					<MoreHorizontal size={16} aria-hidden="true" />
-				</button>
+				{post.authorId === viewerId && editable && (
+					<Menu position="bottom-end" shadow="sm" width={160}>
+						<Menu.Target>
+							<button
+								type="button"
+								aria-label="More actions"
+								className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[var(--feed-ink-dim)] transition hover:bg-[var(--feed-hover)] hover:text-[var(--feed-ink)]"
+							>
+								<MoreHorizontal size={16} aria-hidden="true" />
+							</button>
+						</Menu.Target>
+
+						<Menu.Dropdown>
+							<Menu.Item leftSection={<Edit size={14} aria-hidden="true" />}>
+								Edit
+							</Menu.Item>
+							<Menu.Item
+								color="red"
+								leftSection={<Trash2 size={14} aria-hidden="true" />}
+							>
+								Delete
+							</Menu.Item>
+						</Menu.Dropdown>
+					</Menu>
+				)}
 			</header>
 
 			<p className="mt-2.5 mb-0 text-[13px] leading-6 text-[var(--feed-ink)]">

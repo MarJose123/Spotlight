@@ -29,6 +29,7 @@ export function Feed() {
 
 		setViewer((current) => ({
 			...current,
+			id: user.id,
 			name: user.displayName ?? user.name ?? current.name,
 			handle: user.username ? `@${user.username}` : current.handle,
 		}));
@@ -50,7 +51,7 @@ export function Feed() {
 					<ComposerCard viewer={viewer} />
 
 					{POSTS.map((post) => (
-						<PostCard key={post.id} post={post} />
+						<PostCard key={post.id} post={post} viewerId={viewer.id} />
 					))}
 				</div>
 

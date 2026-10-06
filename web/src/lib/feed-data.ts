@@ -22,6 +22,8 @@ export type AvatarTone =
 	| "sky";
 
 export interface FeedViewer {
+	/** The API user id of the logged-in viewer, used to match against post authors. */
+	id: string;
 	name: string;
 	handle: string;
 	tone: AvatarTone;
@@ -36,10 +38,15 @@ export interface FeedPerson {
 
 export interface FeedPost {
 	id: string;
+	/** The API user ID of the author, used to match against the session. */
+	authorId: string;
 	author: FeedPerson;
 	/** Organization accounts get a letter mark instead of a portrait. */
 	brand?: boolean;
 	verified?: boolean;
+	/** ISO-8601 timestamp when the post was created. */
+	createdAt: string;
+	/** Human-readable relative time for display. */
 	time: string;
 	body: string;
 	reactions: Array<{ id: string; emoji: string; tone: AvatarTone }>;
@@ -56,6 +63,7 @@ export interface FeedTrend {
 }
 
 export const VIEWER: FeedViewer = {
+	id: "viewer-1",
 	name: "Yeremias NJ",
 	handle: "@notajoyoo",
 	tone: "amber",
@@ -73,9 +81,22 @@ export const SUGGESTED: FeedPerson[] = [
 
 export const POSTS: FeedPost[] = [
 	{
+		id: "viewer-post",
+		authorId: VIEWER.id,
+		author: { name: VIEWER.name, handle: VIEWER.handle, tone: VIEWER.tone },
+		createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
+		time: "3 minutes ago",
+		body: "Just shipped the new feed redesign — check it out and let me know what you think!",
+		reactions: [{ id: "cheers", emoji: "🎉", tone: "amber" }],
+		reactionCount: "12",
+		commentCount: "3 Comments",
+	},
+	{
 		id: "elon-musk",
+		authorId: "user-elon-musk",
 		author: { name: "Elon Musk", handle: "@elonmusk", tone: "slate" },
 		verified: true,
+		createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
 		time: "Few minutes ago",
 		body: "Let's set an age limit after which you can't run for political office, perhaps a number just below 70 …",
 		reactions: [
@@ -88,9 +109,11 @@ export const POSTS: FeedPost[] = [
 	},
 	{
 		id: "hypebeast",
+		authorId: "user-hypebeast",
 		author: { name: "HYPEBEAST", handle: "@HYPEBEAST", tone: "slate" },
 		brand: true,
 		verified: true,
+		createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
 		time: "2 hours ago",
 		body: "Sole Mates: Ralph Sugutan and the Nike KD 4 'Easter'",
 		reactions: [
