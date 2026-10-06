@@ -287,21 +287,25 @@ export function PostMedia({ media }: { media: FeedMediaItem }) {
 				/>
 			)}
 			{hasUrl && resolvedUrl && media.type === "video" && (
-				/* biome-ignore lint/a11y/useMediaCaption: user-uploaded videos have no caption track */
-				<video
-					src={resolvedUrl}
-					controls
-					aria-label={media.alt}
-					className="block w-full"
-				/>
+				<div className="max-h-[400px] overflow-hidden">
+					{/* biome-ignore lint/a11y/useMediaCaption: user-uploaded videos have no caption track */}
+					<video
+						src={resolvedUrl}
+						controls
+						aria-label={media.alt}
+						className="block w-full"
+					/>
+				</div>
 			)}
 			{hasUrl && resolvedUrl && media.type === "gif" && (
-				<Image
-					src={resolvedUrl}
-					alt={media.alt}
-					className="block w-full"
-					fit="cover"
-				/>
+				<div className="max-h-[400px] overflow-hidden">
+					<Image
+						src={resolvedUrl}
+						alt={media.alt}
+						className="block w-full"
+						fit="cover"
+					/>
+				</div>
 			)}
 			{!hasUrl && (
 				<>
@@ -434,10 +438,7 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 		return (
 			<div className="mt-3 flex flex-col gap-3">
 				{nonImages.map((item) => (
-					<div
-						key={`${item.url}-${item.type}`}
-						className="overflow-hidden rounded-xl border border-[var(--feed-line)]"
-					>
+					<div key={`${item.url}-${item.type}`}>
 						<PostMedia media={item} />
 					</div>
 				))}
