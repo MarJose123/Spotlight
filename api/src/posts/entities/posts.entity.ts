@@ -15,13 +15,18 @@ import {
   Property,
 } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
 import { IsNotEmpty } from 'class-validator';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 import { User } from '#/users/entities/user.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
 import { Collection, type Rel } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
+
+export interface AttachmentItem {
+  key?: string;
+  url?: string;
+  type: string;
+}
 
 @Entity({ tableName: 'posts' })
 export class Posts {
@@ -35,15 +40,20 @@ export class Posts {
   @IsNotEmpty()
   content!: string;
 
-  @ApiProperty({ type: 'string', format: 'enum', enum: AttachmentType })
-  @Enum({ items: () => AttachmentType })
+  @ApiProperty({
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        key: { type: 'string' },
+        url: { type: 'string' },
+        type: { type: 'string' },
+      },
+    },
+  })
+  @Property({ type: 'json' })
   @IsNotEmpty()
-  attachmentType!: AttachmentType;
-
-  @ApiProperty({ type: 'array', items: { type: 'string' } })
-  @Property({ type: 'string', array: true })
-  @IsNotEmpty()
-  attachment!: string[];
+  attachments!: AttachmentItem[];
 
   @ApiProperty({
     type: 'string',

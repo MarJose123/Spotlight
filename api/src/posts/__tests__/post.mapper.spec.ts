@@ -10,7 +10,7 @@ import { PostMapper } from '#/posts/mappers/post.mapper.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { User } from '#/users/entities/user.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 
 describe('PostMapper', () => {
@@ -31,8 +31,7 @@ describe('PostMapper', () => {
     Object.assign(post, {
       id: 'post-123',
       content: 'Great work!',
-      attachmentType: AttachmentType.IMAGE,
-      attachment: ['https://example.com/img.png'],
+      attachments: [{ key: 'posts/img.png', type: AttachmentType.IMAGE }],
       postType: PostType.USER,
       user: makeUser(),
       likes: [makeLike('user-456'), makeLike('user-789')],
@@ -56,8 +55,6 @@ describe('PostMapper', () => {
       expect(result!.id).toBe('post-123');
       expect(result!.userId).toBe('user-123');
       expect(result!.content).toBe('Great work!');
-      expect(result!.attachment).toEqual(['https://example.com/img.png']);
-      expect(result!.attachmentType).toBe(AttachmentType.IMAGE);
       expect(result!.postType).toBe(PostType.USER);
       expect(result!.likedBy).toEqual(['user-456', 'user-789']);
       expect(result!.likesCount).toBe(2);

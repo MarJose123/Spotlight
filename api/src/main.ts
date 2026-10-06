@@ -21,6 +21,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 import { PaginationMetaDto } from '#/common/dto/pagination/pagination-meta.dto.js';
 import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
@@ -37,8 +38,6 @@ import { CredentialDto } from '#/auth/dto/credential.dto.js';
 import { CredentialLoginDto } from '#/auth/dto/credential-login.dto.js';
 import { JwtTokenResponse } from '#/auth/dto/jwt-token-response.dto.js';
 import { RefreshTokenDto } from '#/auth/dto/refresh-token.dto.js';
-import { GeneratePresignedUrlDto } from '#/bucket/dto/generate-presigned-url.dto.js';
-import { PresignedUrlResponseDto } from '#/bucket/dto/presigned-url-response.dto.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -54,6 +53,9 @@ async function bootstrap() {
   });
   app.enableShutdownHooks();
   await app.register(helmet);
+  await app.register(multipart, {
+    limits: { fieldNameSize: 100, fields: 10, fileSize: 1024 * 1024 * 1024 },
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -136,8 +138,6 @@ async function bootstrap() {
     CredentialLoginDto,
     JwtTokenResponse,
     RefreshTokenDto,
-    GeneratePresignedUrlDto,
-    PresignedUrlResponseDto,
   ];
 
   const openApiDocumentFactory = () =>

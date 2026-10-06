@@ -203,10 +203,10 @@ describe('GifService', () => {
       const result = await service.getTrendingGifs({ page: 1, limit: 10 });
 
       expect(result.data).toHaveLength(2);
-      expect(result.data[0].url).toBe(
+      expect(result.data![0].url).toBe(
         'https://media.giphy.com/media/trending1/giphy.gif',
       );
-      expect(result.data[0].id).toBe('trending1');
+      expect(result.data![0].id).toBe('trending1');
       expect(result.meta.currentPage).toBe(1);
       expect(result.meta.perPage).toBe(10);
       expect(result.meta.itemCount).toBe(2);

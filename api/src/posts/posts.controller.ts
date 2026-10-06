@@ -14,6 +14,7 @@ import {
   Put,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { minutes, seconds, Throttle } from '@nestjs/throttler';
@@ -22,27 +23,24 @@ import { PostsService } from '#/posts/posts.service.js';
 import { Auth } from '#/auth/guard/auth.guard.js';
 import { CreatePostDto } from '#/posts/dto/create-post.dto.js';
 import { LikePostDto } from '#/posts/dto/like-post.dto.js';
-import { BucketService } from '#/bucket/bucket.service.js';
-import { GeneratePresignedUrlDto } from '#/bucket/dto/generate-presigned-url.dto.js';
-import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
 import {
   ApiCreatePost,
   ApiLikePost,
   ApiLikePostById,
   ApiListPosts,
   ApiListUserPosts,
-  ApiPresignedUpload,
 } from '#/posts/decorators/post-api.decorator.js';
+import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
+import { MultipartFileInterceptor } from '#/common/interceptors/multipart-file.interceptor.js';
+import { UploadedFiles } from '#/common/decorators/uploaded-files.decorator.js';
+import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 @ApiTags('Posts')
 @ApiAuthenticated()
 @Controller('posts')
 @UseGuards(Auth)
 export class PostsController {
-  constructor(
-    private readonly postsService: PostsService,
-    private readonly bucketService: BucketService,
-  ) {}
+  constructor(private readonly postsService: PostsService) {}
 
   @ApiListPosts()
   @Get()
@@ -61,8 +59,15 @@ export class PostsController {
 
   @ApiCreatePost()
   @Post()
-  async createPost(@Body() dto: CreatePostDto) {
-    return this.postsService.create(dto);
+  @Throttle({
+    default: { limit: 3, ttl: seconds(1), blockDuration: minutes(5) },
+  })
+  @UseInterceptors(new MultipartFileInterceptor('file'))
+  async createPost(
+    @Body() dto: CreatePostDto,
+    @UploadedFiles() files: FastifyMultipartFile[],
+  ) {
+    return this.postsService.create(dto, files);
   }
 
   @ApiLikePost()
@@ -81,11 +86,5 @@ export class PostsController {
   @Post('/:id/like')
   async likePostById(@Param('id') id: string, @Body('user') user: string) {
     return await this.postsService.likePost({ postId: id, userId: user });
-  }
-
-  @ApiPresignedUpload()
-  @Get('/upload/pre-signed-url')
-  async uploadPhotos(@Query() dto: GeneratePresignedUrlDto) {
-    return await this.bucketService.generatePresignedUploadUrl(dto);
   }
 }

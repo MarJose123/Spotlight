@@ -8,7 +8,7 @@
 import { Factory } from '@mikro-orm/seeder';
 import { faker } from '@faker-js/faker';
 import { Posts } from '#/posts/entities/posts.entity.js';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 
 export class PostsFactory extends Factory<Posts> {
@@ -17,8 +17,9 @@ export class PostsFactory extends Factory<Posts> {
   definition(): Partial<Posts> {
     return {
       content: faker.lorem.sentence(),
-      attachment: [faker.image.url()],
-      attachmentType: AttachmentType.IMAGE,
+      attachments: [
+        { key: 'posts/seed-image.png', type: AttachmentType.IMAGE },
+      ],
       postType: PostType.USER,
     };
   }

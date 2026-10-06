@@ -5,10 +5,10 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from 'class-validator';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
 import { PostType } from '#/posts/enums/post-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -17,26 +17,6 @@ export class CreatePostDto {
   })
   @IsNotEmpty()
   content!: string;
-
-  @ApiProperty({
-    description: 'Kind of media attached to the post.',
-    enum: AttachmentType,
-    enumName: 'AttachmentType',
-    example: AttachmentType.IMAGE,
-  })
-  @IsNotEmpty()
-  attachmentType!: AttachmentType;
-
-  @ApiProperty({
-    description: 'Attached media URLs (may be an empty list).',
-    type: 'array',
-    items: { type: 'string', format: 'uri' },
-    example: ['https://cdn.example.com/spotlight/photo.png'],
-  })
-  @ArrayNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  attachment!: string[];
 
   @ApiProperty({
     description: 'Whether the post is authored by the system or a user.',
@@ -54,4 +34,22 @@ export class CreatePostDto {
   })
   @IsNotEmpty()
   user!: string;
+
+  @ApiProperty({
+    description: 'The type of attachment for all uploaded files.',
+    enum: AttachmentType,
+    enumName: 'AttachmentType',
+  })
+  @IsEnum(AttachmentType)
+  attachmentType!: AttachmentType;
+
+  @ApiPropertyOptional({
+    description:
+      'GIF URL — required when attachmentType is GIF; ignored for images and videos.',
+    format: 'uri',
+    example: 'https://media.giphy.com/media/abc123/giphy.gif',
+  })
+  @IsOptional()
+  @IsUrl()
+  gifUrl?: string;
 }

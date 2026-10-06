@@ -11,14 +11,16 @@ import { PostsService } from '#/posts/posts.service.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
 import { User } from '#/users/entities/user.entity.js';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
+import type { BucketService } from '#/bucket/bucket.service.js';
 
 describe('PostsService', () => {
   let service: PostsService;
   let postRepository: any;
   let likesRepository: any;
   let em: any;
+  let bucketService: BucketService;
 
   const makeUser = (id = 'user-123') => {
     const user = new User();
@@ -31,8 +33,7 @@ describe('PostsService', () => {
     Object.assign(post, {
       id: 'post-123',
       content: 'Great work!',
-      attachmentType: AttachmentType.IMAGE,
-      attachment: ['https://example.com/img.png'],
+      attachments: [{ key: 'posts/img.png', type: AttachmentType.IMAGE }],
       postType: PostType.USER,
       user: makeUser(),
       likes: new (class extends Array {})(),
@@ -64,18 +65,32 @@ describe('PostsService', () => {
     getReference: vi.fn((entity, id) => ({ __entity: entity, __ref: id })),
   });
 
+  const mockBucketService = () => ({
+    uploadFile: vi.fn(),
+    getTemporaryUrl: vi.fn(),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     postRepository = mockPostRepo();
     likesRepository = mockLikesRepo();
     em = mockEm();
-    service = new PostsService(postRepository, likesRepository, em);
+    bucketService = mockBucketService() as unknown as BucketService;
+    service = new PostsService(
+      postRepository,
+      likesRepository,
+      em,
+      bucketService,
+    );
   });
 
   describe('findAll', () => {
     it('should return paginated posts', async () => {
       const posts = [makePost({ id: 'a' }), makePost({ id: 'b' })];
       postRepository.findAndCount.mockResolvedValue([posts, 2]);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
       const result = await service.findAll({ page: 1, limit: 10 });
 
@@ -97,6 +112,9 @@ describe('PostsService', () => {
     it('should return the post when found', async () => {
       const post = makePost();
       postRepository.findOne.mockResolvedValue(post);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
       const result = await service.findById('post-123');
 
@@ -117,6 +135,9 @@ describe('PostsService', () => {
     it('should return posts filtered by user id', async () => {
       const posts = [makePost({ id: 'a' })];
       postRepository.findAndCount.mockResolvedValue([posts, 1]);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
       const result = await service.findByUserId({
         paginationQuery: { page: 1, limit: 10 },
@@ -137,20 +158,136 @@ describe('PostsService', () => {
   });
 
   describe('create', () => {
+    const makeFile = (mimetype = 'image/png') => ({
+      fieldname: 'file',
+      filename: 'img.png',
+      mimetype,
+      encoding: '7bit',
+      buffer: Buffer.from('test'),
+    });
+
     it('should create and persist a post', async () => {
       const dto = {
         content: 'Thanks!',
-        attachmentType: AttachmentType.IMAGE,
-        attachment: ['https://example.com/img.png'],
         postType: PostType.USER,
         user: 'user-123',
+        attachmentType: AttachmentType.IMAGE,
       };
+      const files = [makeFile()];
+      vi.mocked(bucketService.uploadFile).mockResolvedValue(
+        'posts/123-img.png',
+      );
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
-      const result = await service.create(dto);
+      const result = await service.create(dto, files);
 
+      expect(bucketService.uploadFile).toHaveBeenCalledTimes(1);
       expect(postRepository.create).toHaveBeenCalled();
       expect(em.flush).toHaveBeenCalled();
       expect(result!.content).toBe('Thanks!');
+      expect(result!.attachments[0].url).toBe('https://example.com/img.png');
+    });
+
+    it('should reject more than 5 images', async () => {
+      const dto = {
+        content: 'Too many',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.IMAGE,
+      };
+      const files = Array.from({ length: 6 }, () => makeFile());
+
+      await expect(service.create(dto, files)).rejects.toThrow(
+        'A post can have at most 5 images',
+      );
+    });
+
+    it('should reject more than 1 video', async () => {
+      const dto = {
+        content: 'Too many',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.VIDEO,
+      };
+      const files = Array.from({ length: 2 }, () => makeFile('video/mp4'));
+
+      await expect(service.create(dto, files)).rejects.toThrow(
+        'A post can have at most 1 video',
+      );
+    });
+
+    it('should reject more than 1 GIF without a URL', async () => {
+      const dto = {
+        content: 'GIF post',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.GIF,
+      };
+      const files = [];
+
+      await expect(service.create(dto, files)).rejects.toThrow(
+        'A GIF URL is required for GIF posts',
+      );
+    });
+
+    it('should create a GIF post with a URL', async () => {
+      const dto = {
+        content: 'Funny GIF',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.GIF,
+        gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
+      };
+      const files = [];
+
+      const result = await service.create(dto, files);
+
+      expect(bucketService.uploadFile).not.toHaveBeenCalled();
+      expect(postRepository.create).toHaveBeenCalled();
+      expect(result!.content).toBe('Funny GIF');
+      expect(result!.attachments[0].url).toBe(
+        'https://media.giphy.com/media/abc123/giphy.gif',
+      );
+    });
+
+    it('should reject GIF post with empty URL', async () => {
+      const dto = {
+        content: 'GIF post',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.GIF,
+        gifUrl: '',
+      };
+      const files = [];
+
+      await expect(service.create(dto, files)).rejects.toThrow(
+        'A GIF URL is required for GIF posts',
+      );
+    });
+
+    it('should accept up to 5 images', async () => {
+      const dto = {
+        content: 'Multiple images',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.IMAGE,
+      };
+      const files = Array.from({ length: 5 }, () => makeFile('image/png'));
+      vi.mocked(bucketService.uploadFile).mockResolvedValue(
+        'posts/123-file.png',
+      );
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/file.png',
+      );
+
+      const result = await service.create(dto, files);
+
+      expect(bucketService.uploadFile).toHaveBeenCalledTimes(5);
+      expect(postRepository.create).toHaveBeenCalled();
+      expect(result!.content).toBe('Multiple images');
+      expect(result!.attachments).toHaveLength(5);
     });
   });
 
@@ -160,6 +297,9 @@ describe('PostsService', () => {
       postRepository.findOne.mockResolvedValue(post);
       postRepository.findOneOrFail.mockResolvedValue(post);
       likesRepository.findOne.mockResolvedValue(null);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
       const result = await service.likePost({
         postId: 'post-123',
@@ -176,6 +316,9 @@ describe('PostsService', () => {
       postRepository.findOneOrFail.mockResolvedValue(post);
       const existingLike = new Likes();
       likesRepository.findOne.mockResolvedValue(existingLike);
+      vi.mocked(bucketService.getTemporaryUrl).mockResolvedValue(
+        'https://example.com/img.png',
+      );
 
       const result = await service.likePost({
         postId: 'post-123',

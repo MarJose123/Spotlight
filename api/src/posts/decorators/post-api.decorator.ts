@@ -8,6 +8,7 @@
 import { HttpCode, HttpStatus, applyDecorators } from '@nestjs/common';
 import {
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -18,9 +19,10 @@ import {
 import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
 import { LikePostByIdDto } from '#/posts/dto/like-post.dto.js';
 import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
-import { PresignedUrlResponseDto } from '#/bucket/dto/presigned-url-response.dto.js';
 import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
+import { PostType } from '#/posts/enums/post-type.enum.js';
 
 /** Shared by both like endpoints, which respond identically. */
 const likeResponse = () =>
@@ -70,7 +72,42 @@ export const ApiCreatePost = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Create post',
-      description: 'Create a new post.',
+      description:
+        'Create a new post. Images and videos are uploaded as files (up to 5 images or 1 video). GIFs are provided as a URL link (1 GIF).',
+    }),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          content: { type: 'string', example: 'Thanks for the help!' },
+          user: { type: 'string', format: 'uuid' },
+          postType: {
+            type: 'string',
+            enum: Object.values(PostType),
+            default: PostType.USER,
+          },
+          file: {
+            type: 'array',
+            items: { type: 'string', format: 'binary' },
+            description:
+              'Attached files — required for IMAGE and VIDEO; omit for GIF',
+          },
+          attachmentType: {
+            type: 'string',
+            enum: Object.values(AttachmentType),
+            description: 'The type of attachment — IMAGE, VIDEO, or GIF',
+          },
+          gifUrl: {
+            type: 'string',
+            format: 'uri',
+            description:
+              'GIF URL — required when attachmentType is GIF; ignored otherwise',
+            example: 'https://media.giphy.com/media/abc123/giphy.gif',
+          },
+        },
+        required: ['content', 'user', 'attachmentType'],
+      },
     }),
     ApiCreatedResponse({
       description: 'The post has been created.',
@@ -102,18 +139,4 @@ export const ApiLikePostById = () =>
     }),
     ApiBody({ type: LikePostByIdDto }),
     likeResponse(),
-  );
-
-export const ApiPresignedUpload = () =>
-  applyDecorators(
-    ApiOperation({
-      summary: 'Generate a pre-signed upload URL',
-      description:
-        'Return a pre-signed URL the client can `PUT` an attachment to, together with the object key it will be stored under.',
-    }),
-    ApiOkResponse({
-      description: 'Pre-signed upload URL generated.',
-      type: PresignedUrlResponseDto,
-    }),
-    HttpCode(HttpStatus.OK),
   );

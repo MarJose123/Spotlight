@@ -9,23 +9,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { PostsController } from '#/posts/posts.controller.js';
 import { PostsService } from '#/posts/posts.service.js';
-import { BucketService } from '#/bucket/bucket.service.js';
 import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 
 describe('PostsController', () => {
   let controller: PostsController;
   let postsService: PostsService;
-  let bucketService: BucketService;
 
   const makePostResponse = (overrides = {}): PostResponseDto => ({
     id: 'post-123',
     userId: 'user-123',
     content: 'Great work!',
-    attachmentType: AttachmentType.IMAGE,
-    attachment: ['https://example.com/img.png'],
+    attachments: [
+      { url: 'https://example.com/img.png', type: AttachmentType.IMAGE },
+    ],
     postType: PostType.USER,
     likedBy: undefined,
     likesCount: 0,
@@ -40,15 +39,10 @@ describe('PostsController', () => {
     likePost: vi.fn(),
   });
 
-  const mockBucketService = () => ({
-    generatePresignedUploadUrl: vi.fn(),
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     postsService = mockPostsService() as unknown as PostsService;
-    bucketService = mockBucketService() as unknown as BucketService;
-    controller = new PostsController(postsService, bucketService);
+    controller = new PostsController(postsService);
   });
 
   describe('getPosts', () => {
@@ -92,21 +86,56 @@ describe('PostsController', () => {
   });
 
   describe('createPost', () => {
-    it('should create a post', async () => {
+    it('should create a post with files and a single attachment type', async () => {
       const dto = {
         content: 'Thanks!',
-        attachmentType: AttachmentType.IMAGE,
-        attachment: ['https://example.com/img.png'],
         postType: PostType.USER,
         user: 'user-123',
+        attachmentType: AttachmentType.IMAGE,
       };
+      const files = [
+        {
+          fieldname: 'file',
+          filename: 'img.png',
+          mimetype: 'image/png',
+          encoding: '7bit',
+          buffer: Buffer.from('test'),
+        },
+      ];
       const created = makePostResponse({ id: 'new-post', content: 'Thanks!' });
       vi.mocked(postsService.create).mockResolvedValue(created);
 
-      const result = await controller.createPost(dto);
+      const result = await controller.createPost(dto, files);
 
       expect(result).toBe(created);
-      expect(postsService.create).toHaveBeenCalledWith(dto);
+      expect(postsService.create).toHaveBeenCalledWith(dto, files);
+    });
+
+    it('should create a GIF post with a URL and no files', async () => {
+      const dto = {
+        content: 'Funny GIF',
+        postType: PostType.USER,
+        user: 'user-123',
+        attachmentType: AttachmentType.GIF,
+        gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
+      };
+      const files = [];
+      const created = makePostResponse({
+        id: 'new-post',
+        content: 'Funny GIF',
+        attachments: [
+          {
+            url: 'https://media.giphy.com/media/abc123/giphy.gif',
+            type: AttachmentType.GIF,
+          },
+        ],
+      });
+      vi.mocked(postsService.create).mockResolvedValue(created);
+
+      const result = await controller.createPost(dto, files);
+
+      expect(result).toBe(created);
+      expect(postsService.create).toHaveBeenCalledWith(dto, files);
     });
   });
 
@@ -145,31 +174,6 @@ describe('PostsController', () => {
       await expect(
         controller.likePostById('missing', 'user-123'),
       ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('uploadPhotos', () => {
-    it('should return a presigned upload URL', async () => {
-      const dto = {
-        key: 'uploads/img.png',
-        contentType: 'image/png',
-        fileSize: 1024,
-        filename: 'img.png',
-      };
-      const presigned = {
-        url: 'https://s3.example.com/upload',
-        path: 'uploads/img.png',
-      };
-      vi.mocked(bucketService.generatePresignedUploadUrl).mockResolvedValue(
-        presigned,
-      );
-
-      const result = await controller.uploadPhotos(dto);
-
-      expect(result).toBe(presigned);
-      expect(bucketService.generatePresignedUploadUrl).toHaveBeenCalledWith(
-        dto,
-      );
     });
   });
 });

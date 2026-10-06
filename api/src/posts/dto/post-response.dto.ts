@@ -6,8 +6,20 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AttachmentType } from '#/posts/enums/attachment-type.enum.js';
+import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
+
+export class AttachmentItemResponseDto {
+  @ApiProperty({ description: 'URL of the attached media.', format: 'uri' })
+  url: string;
+
+  @ApiProperty({
+    description: 'Type of the attached media.',
+    enum: AttachmentType,
+    enumName: 'AttachmentType',
+  })
+  type: AttachmentType;
+}
 
 /** A post as returned by the API, decoupled from the persistence entity. */
 export class PostResponseDto {
@@ -24,18 +36,10 @@ export class PostResponseDto {
   content: string;
 
   @ApiProperty({
-    description: 'Kind of media attached to the post.',
-    enum: AttachmentType,
-    enumName: 'AttachmentType',
+    description: 'Attached media items, each with a URL and type.',
+    type: [AttachmentItemResponseDto],
   })
-  attachmentType: AttachmentType;
-
-  @ApiProperty({
-    description: 'Attached media URLs.',
-    type: 'array',
-    items: { type: 'string', format: 'uri' },
-  })
-  attachment: string[];
+  attachments: AttachmentItemResponseDto[];
 
   @ApiProperty({
     description: 'Whether the post was authored by the system or a user.',
