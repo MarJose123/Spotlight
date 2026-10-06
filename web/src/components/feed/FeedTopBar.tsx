@@ -6,18 +6,11 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import {
-	Bell,
-	ChevronDown,
-	Home,
-	LayoutGrid,
-	Search,
-	Spotlight,
-} from "lucide-react";
+import { Bell, Home, LayoutGrid, Search, Spotlight } from "lucide-react";
 import type { FeedViewer } from "#/lib/feed-data.ts";
 import { FeedThemeToggle } from "./FeedThemeToggle";
-import { Avatar } from "./media";
 import { TopBarAction } from "./TopBarAction";
+import { UserMenu } from "./UserMenu";
 
 export function FeedTopBar({ viewer }: { viewer: FeedViewer }) {
 	return (
@@ -61,20 +54,7 @@ export function FeedTopBar({ viewer }: { viewer: FeedViewer }) {
 
 					<FeedThemeToggle />
 
-					<button
-						type="button"
-						className="flex items-center gap-2 rounded-full border border-[var(--feed-line-soft)] bg-[var(--feed-inset)] py-1.5 pl-1.5 pr-2.5 text-[12.5px] font-semibold transition hover:border-[var(--feed-line)]"
-					>
-						<Avatar name={viewer.name} tone={viewer.tone} size={22} />
-						<span className="hidden max-w-[104px] truncate sm:inline">
-							{viewer.name}
-						</span>
-						<ChevronDown
-							size={13}
-							className="text-[var(--feed-ink-dim)]"
-							aria-hidden="true"
-						/>
-					</button>
+					<UserMenu viewer={viewer} />
 				</div>
 			</div>
 		</header>

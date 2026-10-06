@@ -181,3 +181,46 @@ export function exchangeAuthorizationCode(
 		},
 	);
 }
+
+export interface CreatePostRequest {
+	content: string;
+	user: string;
+	attachmentType: "IMAGE" | "VIDEO" | "GIF";
+	/** GIF URL — required when attachmentType is GIF. */
+	gifUrl?: string;
+	/** Files to upload — required for IMAGE and VIDEO; ignored for GIF. */
+	files?: File[];
+}
+
+export function createPost(params: CreatePostRequest): Promise<unknown> {
+	const formData = new FormData();
+	formData.append("content", params.content);
+	formData.append("user", params.user);
+	formData.append("attachmentType", params.attachmentType);
+
+	if (params.attachmentType === "GIF" && params.gifUrl) {
+		formData.append("gifUrl", params.gifUrl);
+	} else if (params.files) {
+		for (const file of params.files) {
+			formData.append("file", file);
+		}
+	}
+
+	return requestJson<unknown>("/posts", {
+		method: "POST",
+		headers: { accept: "application/json" },
+		body: formData,
+	});
+}
+
+/** Call `POST /auth/logout` so the server revokes the refresh token. */
+export function logout(refreshToken: string): Promise<void> {
+	return requestJson<void>("/auth/logout", {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+			accept: "application/json",
+		},
+		body: JSON.stringify({ refresh_token: refreshToken }),
+	});
+}

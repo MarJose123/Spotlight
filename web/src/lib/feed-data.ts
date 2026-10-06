@@ -24,7 +24,6 @@ export type AvatarTone =
 export interface FeedViewer {
 	name: string;
 	handle: string;
-	bio: string;
 	tone: AvatarTone;
 	stats: Array<{ label: string; value: string }>;
 }
@@ -59,11 +58,10 @@ export interface FeedTrend {
 export const VIEWER: FeedViewer = {
 	name: "Yeremias NJ",
 	handle: "@notajoyoo",
-	bio: "Panting gak Penting yang penting Posting →",
 	tone: "amber",
 	stats: [
-		{ label: "Following", value: "6,664" },
-		{ label: "Followers", value: "9,991" },
+		{ label: "Likes", value: "6,664" },
+		{ label: "Posts", value: "9,991" },
 	],
 };
 

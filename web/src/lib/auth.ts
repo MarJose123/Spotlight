@@ -10,6 +10,7 @@ import {
 	exchangeAuthorizationCode,
 	fetchAuthorizeUrl,
 	loginWithCredentials,
+	logout,
 } from "./api";
 import {
 	clearPendingAuthorization,
@@ -20,7 +21,12 @@ import {
 	savePendingAuthorization,
 } from "./pkce";
 import type { SignInValues } from "./schemas/auth";
-import { type Session, saveSession } from "./session";
+import {
+	clearSession,
+	readSession,
+	type Session,
+	saveSession,
+} from "./session";
 
 /** Where a finished sign-in lands when nothing more specific was requested. */
 export const FEED_PATH = "/feed";
@@ -92,4 +98,21 @@ export function errorMessage(error: unknown, fallback: string): string {
 	return error instanceof Error && error.message !== ""
 		? error.message
 		: fallback;
+}
+
+/**
+ * Revoke the refresh token on the server, clear the local session, and
+ * navigate to the sign-in page. The local session is always cleared even if
+ * the server call fails, so the user is never stuck in a dead state.
+ */
+export async function performLogout(): Promise<void> {
+	const session = readSession();
+	if (session) {
+		void logout(session.refreshToken).catch(() => {
+			// Best-effort: the local session is already gone, so a server error
+			// does not block the user from signing back in.
+		});
+	}
+	clearSession();
+	window.location.assign("/signin");
 }

@@ -13,11 +13,15 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import rootPkg from "./package.json";
 
 const apiOrigin = process.env.API_INTERNAL_URL ?? "http://localhost:3000";
 
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
+	define: {
+		"import.meta.env.APP_VERSION": JSON.stringify(rootPkg.version || "0.0.0"),
+	},
 	plugins: [
 		devtools(),
 		tailwindcss(),

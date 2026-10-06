@@ -12,9 +12,11 @@ import { POSTS, VIEWER } from "../../lib/feed-data";
 import { readSession } from "../../lib/session";
 import { ComposerCard } from "./ComposerCard";
 import { FeedTopBar } from "./FeedTopBar";
+import { Leaderboard } from "./Leaderboard";
 import { PostCard } from "./PostCard";
 import { ProfileCard } from "./ProfileCard";
-import { TrendsCard } from "./TrendsCard";
+
+const APP_VERSION = import.meta.env.APP_VERSION;
 
 export function Feed() {
 	const [viewer, setViewer] = useState<FeedViewer>(VIEWER);
@@ -39,6 +41,9 @@ export function Feed() {
 			<div className="mx-auto grid min-h-0 w-full max-w-[1360px] flex-1 grid-cols-1 grid-rows-1 gap-4 px-3 pt-4 sm:px-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
 				<aside className="spotlight-feed-column hidden min-h-0 flex-col gap-4 overflow-y-auto pb-4 lg:flex">
 					<ProfileCard viewer={viewer} />
+					<p className="text-center text-[11px] text-[var(--feed-ink-dim)]">
+						v{APP_VERSION} · AGPL-3.0
+					</p>
 				</aside>
 
 				<div className="spotlight-feed-column flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pb-4">
@@ -50,7 +55,7 @@ export function Feed() {
 				</div>
 
 				<aside className="spotlight-feed-column hidden min-h-0 overflow-y-auto pb-4 xl:block">
-					<TrendsCard />
+					<Leaderboard />
 				</aside>
 			</div>
 		</div>

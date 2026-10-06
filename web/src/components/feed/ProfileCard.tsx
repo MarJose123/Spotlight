@@ -25,9 +25,6 @@ export function ProfileCard({ viewer }: { viewer: FeedViewer }) {
 				<p className="m-0 text-[12px] text-[var(--feed-ink-dim)]">
 					{viewer.handle}
 				</p>
-				<p className="mt-2 mb-0 text-center text-[12px] leading-5 text-[var(--feed-ink-soft)]">
-					{viewer.bio}
-				</p>
 			</div>
 
 			<div className="grid grid-cols-2 border-t border-[var(--feed-line)]">
