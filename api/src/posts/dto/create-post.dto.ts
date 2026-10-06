@@ -7,7 +7,6 @@
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
-import { PostType } from '#/posts/enums/post-type.enum.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 
 export class CreatePostDto {
@@ -17,16 +16,6 @@ export class CreatePostDto {
   })
   @IsNotEmpty()
   content!: string;
-
-  @ApiProperty({
-    description: 'Whether the post is authored by the system or a user.',
-    enum: PostType,
-    enumName: 'PostType',
-    default: PostType.USER,
-    example: PostType.USER,
-  })
-  @IsNotEmpty()
-  postType: PostType = PostType.USER;
 
   @ApiProperty({
     description: 'Id of the user authoring the post.',
@@ -40,6 +29,7 @@ export class CreatePostDto {
     enum: AttachmentType,
     enumName: 'AttachmentType',
   })
+  @IsNotEmpty()
   @IsEnum(AttachmentType)
   attachmentType!: AttachmentType;
 

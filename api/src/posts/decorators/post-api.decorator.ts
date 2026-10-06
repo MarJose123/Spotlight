@@ -22,7 +22,6 @@ import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
 import { ApiPaginatedResponse } from '#/common/decorators/api-paginated-response.decorator.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
-import { PostType } from '#/posts/enums/post-type.enum.js';
 
 /** Shared by both like endpoints, which respond identically. */
 const likeResponse = () =>
@@ -82,11 +81,6 @@ export const ApiCreatePost = () =>
         properties: {
           content: { type: 'string', example: 'Thanks for the help!' },
           user: { type: 'string', format: 'uuid' },
-          postType: {
-            type: 'string',
-            enum: Object.values(PostType),
-            default: PostType.USER,
-          },
           file: {
             type: 'array',
             items: { type: 'string', format: 'binary' },

@@ -32,7 +32,6 @@ export class PostsService {
   // Maximum attachments per type per post
   private readonly MAX_IMAGES = 5;
   private readonly MAX_VIDEOS = 1;
-  private readonly MAX_GIFS = 1;
 
   constructor(
     @InjectRepository(Posts)
@@ -110,6 +109,12 @@ export class PostsService {
     dto: CreatePostDto,
     files: FastifyMultipartFile[],
   ): Promise<PostResponseDto | null> {
+    if (dto.gifUrl && files.length > 0) {
+      throw new BadRequestException(
+        'Only one attachment method is allowed: gifUrl or files, not both',
+      );
+    }
+
     const attachmentType = dto.attachmentType;
     let attachments: { key?: string; url?: string; type: string }[];
 
@@ -131,7 +136,6 @@ export class PostsService {
     const post = new Posts();
     post.content = dto.content;
     post.attachments = attachments;
-    post.postType = dto.postType;
     post.user = this.em.getReference(User, dto.user);
     this.postRepository.create(post);
     await this.em.flush();
@@ -171,7 +175,7 @@ export class PostsService {
     return results.filter((r): r is PostResponseDto => r !== null);
   }
 
-  /** Validates attachment count for a single type: max 5 images, 1 video, 1 GIF. */
+  /** Validates attachment count for a single type: max 5 images, 1 video. */
   private validateAttachments(count: number, type: AttachmentType) {
     if (type === AttachmentType.IMAGE && count > this.MAX_IMAGES) {
       throw new BadRequestException(
@@ -181,11 +185,6 @@ export class PostsService {
     if (type === AttachmentType.VIDEO && count > this.MAX_VIDEOS) {
       throw new BadRequestException(
         `A post can have at most ${this.MAX_VIDEOS} video`,
-      );
-    }
-    if (type === AttachmentType.GIF && count > this.MAX_GIFS) {
-      throw new BadRequestException(
-        `A post can have at most ${this.MAX_GIFS} GIF`,
       );
     }
   }

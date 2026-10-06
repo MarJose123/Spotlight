@@ -61,12 +61,6 @@ export class MultipartFileInterceptor implements NestInterceptor {
       }
     }
 
-    if (files.length === 0) {
-      throw new BadRequestException(
-        `No file provided for field '${this.fieldName}'`,
-      );
-    }
-
     request.files = files;
     request.body = { ...request.body, ...body };
 
