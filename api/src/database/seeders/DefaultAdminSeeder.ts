@@ -13,7 +13,6 @@ import { UserRole } from '#/users/enums/role.enum.js';
 import { UserStatus } from '#/users/enums/status.enum.js';
 
 export class DefaultAdminSeeder extends Seeder {
-
   async run(em: EntityManager): Promise<void> {
     em.create(User, {
       avatar: undefined,
@@ -27,5 +26,4 @@ export class DefaultAdminSeeder extends Seeder {
       updatedAt: new Date(),
     });
   }
-
 }
