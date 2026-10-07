@@ -6,11 +6,13 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+import { useDisclosure } from "@mantine/hooks";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { Bell, Home, LayoutGrid, Search, Spotlight } from "lucide-react";
 import { useInvalidatePosts } from "#/lib/api-queries.ts";
 import type { FeedViewer } from "#/lib/feed-data.ts";
 import { AuthThemeToggle } from "./AuthThemeToggle";
+import { ExploreModal } from "./ExploreModal";
 import { UserMenu } from "./feed/UserMenu";
 import { TopBarAction } from "./TopBarAction";
 
@@ -18,6 +20,7 @@ export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 	const router = useRouter();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const invalidatePosts = useInvalidatePosts();
+	const [exploreOpened, exploreControls] = useDisclosure(false);
 
 	const isFeedPage = pathname === "/feed";
 
@@ -69,7 +72,7 @@ export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 
 				<div className="ml-auto flex items-center gap-2">
 					<div className="hidden items-center gap-0.5 rounded-full border border-[var(--feed-line-soft)] bg-[var(--feed-inset)] p-1 md:inline-flex">
-						<TopBarAction label="Explore">
+						<TopBarAction label="Explore" onClick={exploreControls.open}>
 							<LayoutGrid size={15} aria-hidden="true" />
 						</TopBarAction>
 						<TopBarAction label="Feed" onClick={handleHomeClick}>
@@ -85,6 +88,8 @@ export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 					<UserMenu viewer={viewer} />
 				</div>
 			</div>
+
+			<ExploreModal opened={exploreOpened} onClose={exploreControls.close} />
 		</header>
 	);
 }
