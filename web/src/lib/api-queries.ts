@@ -22,6 +22,7 @@ import {
 	createComment,
 	createPost,
 	deleteComment,
+	deletePost,
 	fetchComments,
 	fetchCurrentUser,
 	fetchLeaderboard,
@@ -29,6 +30,7 @@ import {
 	fetchUserProfileStats,
 	toggleLikePost,
 	updateComment,
+	updatePost,
 } from "./api";
 import { readSession } from "./session";
 
@@ -67,6 +69,31 @@ export function useCreatePost() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (params: CreatePostRequest) => createPost(params),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+		},
+	});
+}
+
+// ── Update post mutation ─────────────────────────────────────────────────────
+
+export function useUpdatePost() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { postId: string; content: string }) =>
+			updatePost(params.postId, { content: params.content }),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+		},
+	});
+}
+
+// ── Delete post mutation ─────────────────────────────────────────────────────
+
+export function useDeletePost() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (postId: string) => deletePost(postId),
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
 		},

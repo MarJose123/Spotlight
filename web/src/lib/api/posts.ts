@@ -101,3 +101,25 @@ export async function fetchUserPostsCount(userId: string): Promise<number> {
 	);
 	return result.meta.total;
 }
+
+export interface UpdatePostRequest {
+	content: string;
+}
+
+export async function updatePost(
+	postId: string,
+	params: UpdatePostRequest,
+): Promise<ApiPost> {
+	return requestJsonAuth<ApiPost>(`/posts/${encodeURIComponent(postId)}`, {
+		method: "PATCH",
+		headers: { "Content-Type": "application/json", accept: "application/json" },
+		body: JSON.stringify(params),
+	});
+}
+
+export async function deletePost(postId: string): Promise<void> {
+	return requestJsonAuth<void>(`/posts/${encodeURIComponent(postId)}`, {
+		method: "DELETE",
+		headers: { accept: "application/json" },
+	});
+}

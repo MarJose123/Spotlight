@@ -7,6 +7,8 @@
  */
 
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
+import "@mantine/notifications/styles.css";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
@@ -104,6 +106,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						defaultColorScheme="auto"
 						colorSchemeManager={colorSchemeManager}
 					>
+						<Notifications />
 						{!fullBleed && <GuestHeader />}
 						{children}
 						{!fullBleed && <Footer />}

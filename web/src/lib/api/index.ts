@@ -35,8 +35,15 @@ export type {
 	ApiPostAuthor,
 	CreatePostRequest,
 	FetchPostsParams,
+	UpdatePostRequest,
 } from "./posts";
-export { createPost, fetchPosts, fetchUserPostsCount } from "./posts";
+export {
+	createPost,
+	deletePost,
+	fetchPosts,
+	fetchUserPostsCount,
+	updatePost,
+} from "./posts";
 
 // ── Users ────────────────────────────────────────────────────────────────────
 

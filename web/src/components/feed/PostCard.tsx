@@ -6,7 +6,8 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button, Menu, Textarea } from "@mantine/core";
+import { Button, Menu, Modal, Textarea } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import {
@@ -24,8 +25,10 @@ import {
 	useComments,
 	useCreateComment,
 	useDeleteComment,
+	useDeletePost,
 	useToggleLike,
 	useUpdateComment,
+	useUpdatePost,
 } from "#/lib/api-queries";
 import { readSession } from "#/lib/session";
 import type { AvatarTone, FeedPost } from "../../lib/feed-data";
@@ -80,12 +83,17 @@ export function PostCard({
 	const [commentText, setCommentText] = useState("");
 	const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 	const [editCommentText, setEditCommentText] = useState("");
+	const [editingPost, setEditingPost] = useState(false);
+	const [editPostText, setEditPostText] = useState("");
+	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const toggleLike = useToggleLike();
 	const createComment = useCreateComment();
 	const updateComment = useUpdateComment();
 	const deleteComment = useDeleteComment();
+	const updatePostMutation = useUpdatePost();
+	const deletePostMutation = useDeletePost();
 	const { data: comments } = useComments(post.id);
 
 	const session = readSession();
@@ -155,12 +163,21 @@ export function PostCard({
 						</Menu.Target>
 
 						<Menu.Dropdown>
-							<Menu.Item leftSection={<Edit size={14} aria-hidden="true" />}>
+							<Menu.Item
+								leftSection={<Edit size={14} aria-hidden="true" />}
+								onClick={() => {
+									setEditingPost(true);
+									setEditPostText(post.body);
+								}}
+							>
 								Edit
 							</Menu.Item>
 							<Menu.Item
 								color="red"
 								leftSection={<Trash2 size={14} aria-hidden="true" />}
+								onClick={() => {
+									setDeleteConfirmOpen(true);
+								}}
 							>
 								Delete
 							</Menu.Item>
@@ -169,9 +186,139 @@ export function PostCard({
 				)}
 			</header>
 
-			<p className="mt-2.5 mb-0 text-[13px] leading-6 text-[var(--feed-ink)]">
-				{post.body}
-			</p>
+			<Modal
+				opened={deleteConfirmOpen}
+				onClose={() => setDeleteConfirmOpen(false)}
+				title="Delete post"
+				size="sm"
+				centered
+			>
+				<p className="text-[13px] text-[var(--feed-ink)]">
+					Are you sure you want to delete this post? This action cannot be
+					undone.
+				</p>
+				<div className="mt-4 flex justify-end gap-2">
+					<Button
+						variant="subtle"
+						size="xs"
+						onClick={() => setDeleteConfirmOpen(false)}
+						className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+					>
+						Cancel
+					</Button>
+					<Button
+						color="red"
+						size="xs"
+						loading={deletePostMutation.isPending}
+						disabled={deletePostMutation.isPending}
+						onClick={() => {
+							deletePostMutation.mutate(post.id, {
+								onSuccess: () => {
+									notifications.show({
+										title: "Post deleted",
+										message: "Your post has been deleted.",
+										color: "teal",
+										autoClose: 3000,
+									});
+								},
+								onError: () => {
+									notifications.show({
+										title: "Delete failed",
+										message: "Could not delete the post. Please try again.",
+										color: "red",
+										autoClose: 5000,
+									});
+								},
+								onSettled: () => setDeleteConfirmOpen(false),
+							});
+						}}
+						className="rounded-full text-[12px] font-semibold"
+					>
+						Delete
+					</Button>
+				</div>
+			</Modal>
+
+			{editingPost ? (
+				<div className="mt-2.5 space-y-2">
+					<Textarea
+						value={editPostText}
+						onChange={(e) => setEditPostText(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" && !e.shiftKey) {
+								e.preventDefault();
+								if (editPostText.trim() && editPostText.trim() !== post.body) {
+									updatePostMutation.mutate(
+										{ postId: post.id, content: editPostText.trim() },
+										{
+											onSuccess: () => {
+												notifications.show({
+													title: "Post updated",
+													message: "Your post has been updated.",
+													color: "teal",
+													autoClose: 3000,
+												});
+											},
+											onSettled: () => setEditingPost(false),
+										},
+									);
+								} else {
+									setEditingPost(false);
+								}
+							}
+						}}
+						autoResize
+						minRows={1}
+						maxRows={6}
+						inputProps={{
+							className:
+								"bg-[var(--feed-inset)] text-[13px] leading-6 text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+						}}
+					/>
+					<div className="flex gap-2">
+						<Button
+							variant="subtle"
+							size="xs"
+							leftSection={<Check size={12} aria-hidden="true" />}
+							disabled={
+								!editPostText.trim() ||
+								editPostText.trim() === post.body ||
+								updatePostMutation.isPending
+							}
+							loading={updatePostMutation.isPending}
+							onClick={() => {
+								if (editPostText.trim() && editPostText.trim() !== post.body) {
+									updatePostMutation.mutate(
+										{ postId: post.id, content: editPostText.trim() },
+										{ onSettled: () => setEditingPost(false) },
+									);
+								} else {
+									setEditingPost(false);
+								}
+							}}
+							className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
+						>
+							Save
+						</Button>
+						<Button
+							variant="subtle"
+							size="xs"
+							leftSection={<X size={12} aria-hidden="true" />}
+							onClick={() => {
+								setEditingPost(false);
+								setEditPostText("");
+							}}
+							className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+						>
+							Cancel
+						</Button>
+					</div>
+				</div>
+			) : (
+				<p className="mt-2.5 mb-0 text-[13px] leading-6 text-[var(--feed-ink)]">
+					{post.body}
+				</p>
+			)}
 
 			{post.mediaItems && post.mediaItems.length > 0 && (
 				<MediaGrid items={post.mediaItems} />
