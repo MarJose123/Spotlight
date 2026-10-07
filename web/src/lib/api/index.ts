@@ -56,8 +56,8 @@ export { fetchCurrentUser, fetchUserProfileStats } from "./users";
 
 // ── Likes ────────────────────────────────────────────────────────────────────
 
-export type { ApiPostLikeResponse } from "./likes";
-export { toggleLikePost } from "./likes";
+export type { ApiPostLikeResponse, ApiPostLiker } from "./likes";
+export { fetchPostLikes, toggleLikePost } from "./likes";
 
 // ── Comments ─────────────────────────────────────────────────────────────────
 

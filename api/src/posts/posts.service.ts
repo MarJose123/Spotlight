@@ -23,6 +23,7 @@ import { Likes } from '#/posts/entities/likes.entity.js';
 import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { PostLikerDto } from '#/posts/dto/post-liker.dto.js';
 import { PostMapper } from '#/posts/mappers/post.mapper.js';
 import { PostLikeMapper } from '#/posts/mappers/post-like.mapper.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
@@ -243,6 +244,23 @@ export class PostsService {
     await this.postRepository.nativeDelete({ id });
     await this.likesRepository.nativeDelete({ post: id });
     await this.em.flush();
+  }
+
+  /** Return the list of users who liked a post. */
+  async findLikesByPost(postId: string): Promise<PostLikerDto[]> {
+    const post = await this.postRepository.findOne({ id: postId });
+    if (!post) {
+      throw new NotFoundException(`Post with id ${postId} not found`);
+    }
+    const likes = await this.likesRepository.find(
+      { post: postId },
+      { populate: ['user'], orderBy: { createdAt: 'desc' } },
+    );
+    return likes.map((like) => ({
+      id: like.user.id,
+      name: like.user.name,
+      avatarUrl: like.user.avatar,
+    }));
   }
 
   /** Like a post. */

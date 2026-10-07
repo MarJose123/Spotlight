@@ -36,6 +36,7 @@ import {
   ApiLikePostById,
   ApiListPosts,
   ApiListUserPosts,
+  ApiListLikes,
   ApiCommentPost,
   ApiListComments,
   ApiUpdatePost,
@@ -104,6 +105,12 @@ export class PostsController {
   @Post('/:id/like')
   async likePostById(@Param('id') id: string, @Body('user') user: string) {
     return await this.postsService.likePost({ postId: id, userId: user });
+  }
+
+  @ApiListLikes()
+  @Get('/:id/likes')
+  async getPostLikes(@Param('id') id: string) {
+    return this.postsService.findLikesByPost(id);
   }
 
   @ApiCommentPost()

@@ -19,6 +19,7 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { PostResponseDto } from '#/posts/dto/post-response.dto.js';
+import { PostLikerDto } from '#/posts/dto/post-liker.dto.js';
 import { LikePostByIdDto } from '#/posts/dto/like-post.dto.js';
 import { PostLikeResponseDto } from '#/common/dto/post-like-response.dto.js';
 import { ErrorResponseDto } from '#/common/dto/error-response.dto.js';
@@ -139,6 +140,27 @@ export const ApiLikePostById = () =>
     }),
     ApiBody({ type: LikePostByIdDto }),
     likeResponse(),
+  );
+
+export const ApiListLikes = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'List post likers',
+      description: 'Return the list of users who liked a post.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'Id of the post whose likers should be returned.',
+      format: 'uuid',
+    }),
+    ApiOkResponse({
+      description: 'List of users who liked the post.',
+      type: [PostLikerDto],
+    }),
+    ApiNotFoundResponse({
+      description: 'The post does not exist.',
+      type: ErrorResponseDto,
+    }),
   );
 
 export const ApiCommentPost = () =>

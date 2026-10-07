@@ -14,6 +14,7 @@ import {
 import type {
 	ApiComment,
 	ApiLeaderboardEntry,
+	ApiPostLiker,
 	CreatePostRequest,
 	FetchPostsParams,
 	UserProfileStats,
@@ -26,6 +27,7 @@ import {
 	fetchComments,
 	fetchCurrentUser,
 	fetchLeaderboard,
+	fetchPostLikes,
 	fetchPosts,
 	fetchUserProfileStats,
 	toggleLikePost,
@@ -40,6 +42,7 @@ export const queryKeys = {
 	posts: ["posts"],
 	currentUser: ["currentUser"],
 	comments: (postId: string) => ["comments", postId],
+	postLikes: (postId: string) => ["postLikes", postId],
 	leaderboard: ["leaderboard"],
 	profileStats: (userId: string) => ["profileStats", userId],
 } as const;
@@ -192,6 +195,16 @@ export function useToggleLike() {
 				},
 			);
 		},
+	});
+}
+
+// ── Post likes query ─────────────────────────────────────────────────────────
+
+export function usePostLikes(postId: string) {
+	return useQuery<ApiPostLiker[]>({
+		queryKey: queryKeys.postLikes(postId),
+		queryFn: () => fetchPostLikes(postId),
+		enabled: !!postId,
 	});
 }
 

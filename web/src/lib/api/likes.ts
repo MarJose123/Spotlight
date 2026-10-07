@@ -14,6 +14,12 @@ export interface ApiPostLikeResponse {
 	post: ApiPost;
 }
 
+export interface ApiPostLiker {
+	id: string;
+	name: string;
+	avatarUrl: string | undefined;
+}
+
 export function toggleLikePost(
 	postId: string,
 	userId: string,
@@ -26,4 +32,13 @@ export function toggleLikePost(
 		},
 		body: JSON.stringify({ postId, userId }),
 	});
+}
+
+export function fetchPostLikes(postId: string): Promise<ApiPostLiker[]> {
+	return requestJsonAuth<ApiPostLiker[]>(
+		`/posts/${encodeURIComponent(postId)}/likes`,
+		{
+			headers: { accept: "application/json" },
+		},
+	);
 }

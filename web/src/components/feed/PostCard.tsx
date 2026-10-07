@@ -26,6 +26,7 @@ import {
 	useCreateComment,
 	useDeleteComment,
 	useDeletePost,
+	usePostLikes,
 	useToggleLike,
 	useUpdateComment,
 	useUpdatePost,
@@ -86,6 +87,7 @@ export function PostCard({
 	const [editingPost, setEditingPost] = useState(false);
 	const [editPostText, setEditPostText] = useState("");
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+	const [likesModalOpen, setLikesModalOpen] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const toggleLike = useToggleLike();
@@ -95,6 +97,7 @@ export function PostCard({
 	const updatePostMutation = useUpdatePost();
 	const deletePostMutation = useDeletePost();
 	const { data: comments } = useComments(post.id);
+	const { data: likers, isLoading: likersLoading } = usePostLikes(post.id);
 
 	const session = readSession();
 	const isLiked = post.reactions.some((r) => r.id === viewerId);
@@ -239,6 +242,39 @@ export function PostCard({
 				</div>
 			</Modal>
 
+			<Modal
+				opened={likesModalOpen}
+				onClose={() => setLikesModalOpen(false)}
+				title={`${likeCount} ${likeCount === 1 ? "Like" : "Likes"}`}
+				size="sm"
+				centered
+			>
+				{likersLoading ? (
+					<p className="text-[13px] text-[var(--feed-ink-dim)]">Loading...</p>
+				) : likers && likers.length > 0 ? (
+					<div className="space-y-2">
+						{likers.map((liker) => (
+							<div key={liker.id} className="flex items-center gap-3">
+								<Avatar
+									name={liker.name}
+									tone={toneForId(liker.id)}
+									size={32}
+								/>
+								<div className="min-w-0 flex-1">
+									<span className="block truncate text-[13px] font-semibold text-[var(--feed-ink)]">
+										{liker.name}
+									</span>
+								</div>
+							</div>
+						))}
+					</div>
+				) : (
+					<p className="text-[13px] text-[var(--feed-ink-dim)]">
+						No likes yet.
+					</p>
+				)}
+			</Modal>
+
 			{editingPost ? (
 				<div className="mt-2.5 space-y-2">
 					<Textarea
@@ -343,14 +379,18 @@ export function PostCard({
 								))}
 							</div>
 
-							<span className="text-[12px] text-[var(--feed-ink-soft)]">
-								{likeCount}
+							<span
+								role={"button"}
+								onClick={() => setLikesModalOpen(true)}
+								className="text-[12px] text-[var(--feed-ink-soft)] hover:underline cursor-pointer"
+							>
+								{likeCount} {likeCount === 1 ? "Like" : "Likes"}
 							</span>
 						</div>
 					)}
 
 					{displayCommentCount > 0 && (
-						<span className="text-[12px] text-[var(--feed-ink-dim)]">
+						<span className="text-[12px] text-[var(--feed-ink-soft)]">
 							{displayCommentCount}{" "}
 							{displayCommentCount === 1 ? "Comment" : "Comments"}
 						</span>
