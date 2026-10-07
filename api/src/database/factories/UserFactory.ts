@@ -14,10 +14,16 @@ export class UserFactory extends Factory<User> {
   model = User;
 
   definition(): Partial<User> {
+    const name = faker.person.fullName();
     return {
       avatar: faker.image.avatar(),
-      username: faker.internet.username(),
-      name: faker.person.fullName(),
+      username: name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30),
+      name,
       email: faker.internet.email().toLowerCase(),
       password: bcrypt.hashSync('admin123', 12),
     };
