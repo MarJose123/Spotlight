@@ -235,6 +235,56 @@ describe('UsersService', () => {
         }),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('should auto-generate a username from the name', async () => {
+      userRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.create({
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      });
+
+      expect(result!.username).toBe('jane-doe');
+    });
+
+    it('should slugify the name for the username', async () => {
+      userRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.create({
+        name: '  Jane   Doe  ',
+        email: 'jane2@example.com',
+      });
+
+      expect(result!.username).toBe('jane-doe');
+    });
+
+    it('should append a suffix when the base username is taken', async () => {
+      // First call: email uniqueness check → null
+      // Second call: username uniqueness check for "jane-doe" → taken
+      // Third call: username uniqueness check for "jane-doe-xxxx" → null
+      userRepository.findOne
+        .mockResolvedValueOnce(null) // email check
+        .mockResolvedValueOnce(makeUser({ username: 'jane-doe' })) // base username taken
+        .mockResolvedValueOnce(null); // suffixed username free
+
+      const result = await service.create({
+        name: 'Jane Doe',
+        email: 'jane3@example.com',
+      });
+
+      expect(result!.username).toMatch(/^jane-doe-[a-z0-9]{4}$/);
+    });
+
+    it('should handle a name with no alphanumeric characters', async () => {
+      userRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.create({
+        name: '!!!',
+        email: 'weird@example.com',
+      });
+
+      expect(result!.username).toMatch(/^user-[a-z0-9]{4}$/);
+    });
   });
 
   describe('update', () => {

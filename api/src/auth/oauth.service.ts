@@ -123,33 +123,9 @@ export class OAuthService {
       throw new UnauthorizedException();
     }
 
-    // Only fill what is unset: both fields are editable locally, so syncing
-    // them every sign-in would undo corrections.
-    let changed = false;
-
+    // Fill avatar from SSO only if the user has none.
     if (!user.avatar && profile.avatar) {
       user.avatar = profile.avatar;
-      changed = true;
-    }
-
-    const providerName = profile.name?.trim();
-    if (!user.username && providerName) {
-      // `username` is unique and provider display names are not, so claim it
-      // only when free instead of failing the sign-in on a constraint.
-      const owner = await this.userRepository.findOne({
-        username: providerName,
-      });
-      if (!owner || owner.id === user.id) {
-        user.username = providerName;
-        changed = true;
-      } else {
-        this.logger.warn(
-          `Left username unset for user ${user.id}: "${providerName}" is already taken`,
-        );
-      }
-    }
-
-    if (changed) {
       await this.em.flush();
     }
 

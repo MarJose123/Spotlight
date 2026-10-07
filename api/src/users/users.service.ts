@@ -100,6 +100,9 @@ export class UsersService {
       password: password ? bcrypt.hashSync(password, 12) : undefined,
     });
 
+    // Auto-generate a unique username from the user's name.
+    user.username = await this.generateUsername(dto.name);
+
     this.userRepository.create(user);
     await this.flushOrConflict();
 
@@ -275,6 +278,49 @@ export class UsersService {
     await this.em.flush();
 
     return this.userMapper.toResponse(user);
+  }
+
+  /**
+   * Generates a unique username from a display name.  Starts with the
+   * slugified name and appends a short random suffix only when the base is
+   * already taken.
+   */
+  private async generateUsername(name: string): Promise<string> {
+    const base = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 30);
+
+    if (!base) {
+      // Fallback when the name contains no alphanumeric characters.
+      return 'user-' + this.randomSuffix();
+    }
+
+    // Try the base name first, then append a short random suffix.
+    for (let i = 0; i < 5; i++) {
+      const candidate = i === 0 ? base : `${base}-${this.randomSuffix()}`;
+      const existing = await this.userRepository.findOne({
+        username: candidate,
+      });
+      if (!existing) {
+        return candidate;
+      }
+    }
+
+    // Extremely unlikely: fall back to a fully random suffix.
+    return `${base}-${crypto.randomUUID().slice(0, 6)}`;
+  }
+
+  private randomSuffix(): string {
+    // 4-character alphanumeric suffix: ~1.4 million combinations.
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 4; i++) {
+      result += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return result;
   }
 
   /**
