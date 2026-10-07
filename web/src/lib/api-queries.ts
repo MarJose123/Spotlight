@@ -343,7 +343,8 @@ export function useLeaderboard() {
 	return useQuery<ApiLeaderboardEntry[]>({
 		queryKey: queryKeys.leaderboard,
 		queryFn: fetchLeaderboard,
-		staleTime: 10 * 60 * 1000,
+		staleTime: 5 * 60 * 1000,
+		refetchInterval: 5 * 60 * 1000,
 	});
 }
 
