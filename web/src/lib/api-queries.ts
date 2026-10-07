@@ -61,7 +61,7 @@ export function usePostsInfinite() {
 	return useInfiniteQuery({
 		queryKey: queryKeys.posts,
 		queryFn: ({ pageParam }) =>
-			fetchPosts({ page: pageParam as number, limit: 10 }),
+			fetchPosts({ page: pageParam as number, limit: 20 }),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
 			if (!lastPage.meta.hasNextPage) return undefined;
@@ -89,6 +89,10 @@ export function useCreatePost() {
 		mutationFn: (params: CreatePostRequest) => createPost(params),
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+			queryClient.invalidateQueries({
+				queryKey: ["profileStats"],
+				exact: false,
+			});
 		},
 	});
 }
@@ -114,6 +118,10 @@ export function useDeletePost() {
 		mutationFn: (postId: string) => deletePost(postId),
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+			queryClient.invalidateQueries({
+				queryKey: ["profileStats"],
+				exact: false,
+			});
 		},
 	});
 }
@@ -122,7 +130,8 @@ export function useDeletePost() {
 
 export function useInvalidatePosts() {
 	const queryClient = useQueryClient();
-	return () => queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+	return () =>
+		queryClient.resetQueries({ queryKey: queryKeys.posts, exact: true });
 }
 
 export function useInvalidateCurrentUser() {
@@ -148,67 +157,12 @@ export function useToggleLike() {
 	return useMutation({
 		mutationFn: (params: { postId: string; userId: string }) =>
 			toggleLikePost(params.postId, params.userId),
-		onMutate: ({ postId, userId }) => {
-			// Optimistically update all posts queries (matches ["posts"] and ["posts", ...params]).
-			queryClient.setQueriesData(
-				{ queryKey: queryKeys.posts, exact: false },
-				(old: unknown) => {
-					if (!old || typeof old !== "object") return old;
-					const payload = old as {
-						data: Array<{ id: string; likedBy?: string[]; likesCount: number }>;
-					};
-					if (!Array.isArray(payload.data)) return old;
-					return {
-						...payload,
-						data: payload.data.map((p) => {
-							if (p.id !== postId) return p;
-							const likedBy = p.likedBy ?? [];
-							const alreadyLiked = likedBy.includes(userId);
-							return {
-								...p,
-								likedBy: alreadyLiked
-									? likedBy.filter((id: string) => id !== userId)
-									: [...likedBy, userId],
-								likesCount: alreadyLiked
-									? Math.max(0, p.likesCount - 1)
-									: p.likesCount + 1,
-							};
-						}),
-					};
-				},
-			);
-		},
-		onError: (_error, { postId, userId }) => {
-			// Revert optimistic update on failure.
-			queryClient.setQueriesData(
-				{ queryKey: queryKeys.posts, exact: false },
-				(old: unknown) => {
-					if (!old || typeof old !== "object") return old;
-					const payload = old as {
-						data: Array<{ id: string; likedBy?: string[]; likesCount: number }>;
-					};
-					if (!Array.isArray(payload.data)) return old;
-					return {
-						...payload,
-						data: payload.data.map((p) => {
-							if (p.id !== postId) return p;
-							const likedBy = p.likedBy ?? [];
-							const currentlyLiked = likedBy.includes(userId);
-							// If the optimistic update added the like, remove it.
-							// If it removed the like, add it back.
-							return {
-								...p,
-								likedBy: currentlyLiked
-									? likedBy.filter((id: string) => id !== userId)
-									: [...likedBy, userId],
-								likesCount: currentlyLiked
-									? Math.max(0, p.likesCount - 1)
-									: p.likesCount + 1,
-							};
-						}),
-					};
-				},
-			);
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+			queryClient.invalidateQueries({
+				queryKey: ["profileStats"],
+				exact: false,
+			});
 		},
 	});
 }

@@ -36,5 +36,5 @@ export class PaginationQueryDto {
   @Min(1)
   @Max(100)
   @Type(() => Number)
-  limit: number = 10;
+  limit: number = 20;
 }

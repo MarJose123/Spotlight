@@ -5,14 +5,45 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
+import { notifications } from "@mantine/notifications";
 import {
+	MutationCache,
+	QueryCache,
 	QueryClient,
 	type QueryClientConfig,
 	QueryClientProvider,
 } from "@tanstack/react-query";
+import { ApiError } from "#/lib/api";
 import { readSession } from "#/lib/session";
 
+function showRateLimitNotification() {
+	notifications.show({
+		title: "Too many requests",
+		message:
+			"You are sending requests too quickly. Please wait a moment and try again.",
+		color: "orange",
+	});
+}
+
+const queryCache = new QueryCache({
+	onError: (error) => {
+		if (error instanceof ApiError && error.status === 429) {
+			showRateLimitNotification();
+		}
+	},
+});
+
+const mutationCache = new MutationCache({
+	onError: (error) => {
+		if (error instanceof ApiError && error.status === 429) {
+			showRateLimitNotification();
+		}
+	},
+});
+
 const defaultQueryClientConfig: QueryClientConfig = {
+	queryCache,
+	mutationCache,
 	defaultOptions: {
 		queries: {
 			staleTime: 1000 * 60 * 5,
