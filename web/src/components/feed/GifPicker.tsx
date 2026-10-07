@@ -119,6 +119,7 @@ export function GifPicker({ opened, onClose, onSelect }: GifPickerProps) {
 			onClose={handleClose}
 			title="Choose a GIF"
 			centered
+			padding={"xs"}
 			size="auto"
 			withinPortal
 		>
@@ -172,7 +173,7 @@ export function GifPicker({ opened, onClose, onSelect }: GifPickerProps) {
 				</div>
 
 				{/* Search input */}
-				<div className="border-t border-[var(--feed-line)] p-2">
+				<div className="pt-2">
 					<TextInput
 						placeholder="Search GIFs..."
 						value={inputValue}
