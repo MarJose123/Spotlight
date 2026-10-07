@@ -64,6 +64,7 @@ describe('PostsService', () => {
     flush: vi.fn(() => Promise.resolve()),
     remove: vi.fn(),
     getReference: vi.fn((entity, id) => ({ __entity: entity, __ref: id })),
+    transactional: vi.fn(async (cb) => cb()),
   });
 
   const mockBucketService = () => ({
@@ -99,7 +100,7 @@ describe('PostsService', () => {
           offset: 0,
           limit: 10,
           orderBy: { createdAt: 'desc', id: 'desc' },
-          populate: ['user', 'likes.user'],
+          populate: ['user', 'likes'],
         },
       );
     });
@@ -142,7 +143,7 @@ describe('PostsService', () => {
           offset: 0,
           limit: 10,
           orderBy: { createdAt: 'desc', id: 'desc' },
-          populate: ['user', 'likes.user'],
+          populate: ['user', 'likes'],
         },
       );
     });
@@ -167,10 +168,6 @@ describe('PostsService', () => {
       const files = [makeFile()];
       vi.mocked(bucketService.uploadFile).mockResolvedValue(
         'posts/123-img.png',
-      );
-      // After create, the service reloads the post to populate the user.
-      postRepository.findOne.mockResolvedValue(
-        makePost({ content: 'Thanks!' }),
       );
 
       const result = await service.create(dto, 'user-123', files);
@@ -235,17 +232,6 @@ describe('PostsService', () => {
         gifUrl: 'https://media.giphy.com/media/abc123/giphy.gif',
       };
       const files: FastifyMultipartFile[] = [];
-      postRepository.findOne.mockResolvedValue(
-        makePost({
-          content: 'Funny GIF',
-          attachments: [
-            {
-              url: 'https://media.giphy.com/media/abc123/giphy.gif',
-              type: AttachmentType.GIF,
-            },
-          ],
-        }),
-      );
 
       const result = await service.create(dto, 'user-123', files);
 
@@ -283,15 +269,6 @@ describe('PostsService', () => {
       vi.mocked(bucketService.uploadFile).mockResolvedValue(
         'posts/123-file.png',
       );
-      postRepository.findOne.mockResolvedValue(
-        makePost({
-          content: 'Multiple images',
-          attachments: Array.from({ length: 5 }, () => ({
-            key: 'posts/123-file.png',
-            type: AttachmentType.IMAGE,
-          })),
-        }),
-      );
 
       const result = await service.create(dto, 'user-123', files);
 
@@ -305,7 +282,6 @@ describe('PostsService', () => {
   describe('likePost', () => {
     it('should like a post when not already liked', async () => {
       const post = makePost();
-      postRepository.findOne.mockResolvedValue(post);
       postRepository.findOneOrFail.mockResolvedValue(post);
       likesRepository.findOne.mockResolvedValue(null);
 
@@ -320,7 +296,6 @@ describe('PostsService', () => {
 
     it('should unlike a post when already liked', async () => {
       const post = makePost();
-      postRepository.findOne.mockResolvedValue(post);
       postRepository.findOneOrFail.mockResolvedValue(post);
       const existingLike = new Likes();
       likesRepository.findOne.mockResolvedValue(existingLike);
@@ -335,7 +310,9 @@ describe('PostsService', () => {
     });
 
     it('should throw NotFoundException for unknown post', async () => {
-      postRepository.findOne.mockResolvedValue(null);
+      postRepository.findOneOrFail.mockRejectedValue(
+        new NotFoundException('Post not found'),
+      );
 
       await expect(
         service.likePost({ postId: 'missing', userId: 'user-123' }),

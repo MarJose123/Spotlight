@@ -58,7 +58,7 @@ export class PostsService {
         offset: skip,
         limit,
         orderBy: { createdAt: 'desc', id: 'desc' },
-        populate: ['user', 'likes.user'],
+        populate: ['user', 'likes'],
       },
     );
 
@@ -96,7 +96,7 @@ export class PostsService {
         offset: skip,
         limit,
         orderBy: { createdAt: 'desc', id: 'desc' },
-        populate: ['user', 'likes.user'],
+        populate: ['user', 'likes'],
       },
     );
 
@@ -145,12 +145,9 @@ export class PostsService {
     this.postRepository.create(post);
     await this.em.flush();
 
-    const populated = await this.postRepository.findOne(
-      { id: post.id },
-      { populate: ['user', 'likes.user'] },
-    );
-    if (!populated) return null;
-    return this.mapPostsToResponse([populated])[0];
+    // Map the managed entity directly — user is a reference we set above,
+    // likes are empty so no need to populate them for a fresh post.
+    return this.mapPostsToResponse([post])[0];
   }
 
   /** Validates that a GIF URL is provided when attachmentType is GIF. */
@@ -233,7 +230,7 @@ export class PostsService {
     return this.mapPostsToResponse([post])[0];
   }
 
-  /** Delete a post. Only the author may delete, and only within 15 minutes. */
+  /** Delete a post and its likes in a single transaction. */
   async delete(id: string, userId: string): Promise<void> {
     const post = await this.postRepository.findOne({ id });
     if (!post) {
@@ -241,9 +238,10 @@ export class PostsService {
     }
     this.assertAuthorAndTimeWindow(post, userId);
 
-    await this.postRepository.nativeDelete({ id });
-    await this.likesRepository.nativeDelete({ post: id });
-    await this.em.flush();
+    await this.em.transactional(async () => {
+      await this.postRepository.nativeDelete({ id });
+      await this.likesRepository.nativeDelete({ post: id });
+    });
   }
 
   /** Return the list of users who liked a post. */
@@ -263,9 +261,12 @@ export class PostsService {
     }));
   }
 
-  /** Like a post. */
+  /** Like a post — loads the entity once, mutates, and flushes once. */
   async likePost(dto: LikePostDto): Promise<PostLikeResponseDto> {
-    const post = await this.findById(dto.postId);
+    const post = await this.postRepository.findOneOrFail(
+      { id: dto.postId },
+      { populate: ['user', 'likes'] },
+    );
 
     const existingLike = await this.likesRepository.findOne({
       post: dto.postId,
@@ -275,39 +276,20 @@ export class PostsService {
     if (existingLike) {
       // Unlike
       this.em.remove(existingLike);
-      await this.decrementLikeCount(post);
-      post.likedBy = (post.likedBy ?? []).filter(
-        (id: string) => id !== dto.userId,
-      );
-      await this.em.flush();
-
-      return PostLikeMapper.toResponse(false, post);
+      post.likesCount = Math.max(0, post.likesCount - 1);
+    } else {
+      // Like
+      const like = new Likes();
+      like.post = this.em.getReference(Posts, dto.postId);
+      like.user = this.em.getReference(User, dto.userId);
+      this.likesRepository.create(like);
+      post.likesCount += 1;
     }
 
-    // Like
-    const like = new Likes();
-    like.post = this.em.getReference(Posts, dto.postId);
-    like.user = this.em.getReference(User, dto.userId);
-
-    this.likesRepository.create(like);
-    await this.incrementLikeCount(post);
-    post.likedBy = [...(post.likedBy ?? []), dto.userId];
     await this.em.flush();
 
-    return PostLikeMapper.toResponse(true, post);
-  }
-
-  private async incrementLikeCount(postDto: PostResponseDto): Promise<void> {
-    const post = await this.postRepository.findOneOrFail({ id: postDto.id });
-    post.likesCount += 1;
-    postDto.likesCount = post.likesCount;
-    await this.em.flush();
-  }
-
-  private async decrementLikeCount(postDto: PostResponseDto): Promise<void> {
-    const post = await this.postRepository.findOneOrFail({ id: postDto.id });
-    post.likesCount = Math.max(0, post.likesCount - 1);
-    postDto.likesCount = post.likesCount;
-    await this.em.flush();
+    // Map to DTO for the response
+    const postDto = this.mapPostsToResponse([post])[0];
+    return PostLikeMapper.toResponse(!existingLike, postDto);
   }
 }
