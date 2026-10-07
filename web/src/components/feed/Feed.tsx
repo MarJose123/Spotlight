@@ -6,8 +6,10 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime.js";
 import { RefreshCw, WifiOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePosts, useUserProfileStats } from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
 import { VIEWER } from "#/lib/feed-data";
@@ -57,16 +59,11 @@ function useSession(): Session | null {
 	return session;
 }
 
-/** Format an ISO timestamp as a short relative string ("3 minutes ago"). */
-function relativeTime(iso: string): string {
-	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-	if (seconds < 60) return "Just now";
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-	const days = Math.floor(hours / 24);
-	return `${days} day${days > 1 ? "s" : ""} ago`;
+dayjs.extend(relativeTime);
+
+/** Format an ISO timestamp as a relative string ("3 minutes ago"). */
+function formatRelativeTime(iso: string): string {
+	return dayjs(iso).fromNow();
 }
 
 const APP_VERSION = import.meta.env.APP_VERSION;
@@ -75,6 +72,49 @@ export function Feed() {
 	const { data, isLoading, isError } = usePosts();
 	const session = useSession();
 	const sessionUser = session?.user;
+
+	// Map API posts to the feed shape PostCard expects — memoized to avoid
+	// reallocating the entire array on every render. Must be before early returns.
+	const posts = useMemo(() => {
+		return (data?.data ?? []).map((post) => {
+			const tone = toneForId(post.author.id);
+			const mediaItems = post.attachments.map((attachment) => ({
+				alt: post.content.slice(0, 120),
+				title:
+					attachment.type === "image"
+						? "Photo"
+						: attachment.type === "video"
+							? "Video"
+							: "GIF",
+				subtitle: post.content.slice(0, 80),
+				url: attachment.url,
+				type: (attachment.type === "video" || attachment.type === "image"
+					? attachment.type
+					: "gif") as "image" | "video" | "gif",
+			}));
+
+			return {
+				id: post.id,
+				authorId: post.author.id,
+				author: {
+					name: post.author.name,
+					handle: post.author.username ? `@${post.author.username}` : "",
+					tone,
+				},
+				createdAt: post.createdAt,
+				time: formatRelativeTime(post.createdAt),
+				body: post.content,
+				reactions: (post.likedBy ?? []).map((id) => ({
+					id,
+					emoji: "❤️",
+					tone: toneForId(id),
+				})),
+				reactionCount: String(post.likesCount),
+				commentCount: `${post.commentsCount} Comments`,
+				mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
+			};
+		});
+	}, [data]);
 
 	// Build viewer from session, falling back to static placeholder.
 	const viewerId = sessionUser?.id;
@@ -121,44 +161,6 @@ export function Feed() {
 		);
 	}
 
-	// Map API posts to the feed shape PostCard expects.
-	const posts = (data?.data ?? []).map((post) => {
-		const tone = toneForId(post.author.id);
-		const mediaItems = post.attachments.map((attachment) => ({
-			alt: post.content.slice(0, 120),
-			title:
-				attachment.type === "image"
-					? "Photo"
-					: attachment.type === "video"
-						? "Video"
-						: "GIF",
-			subtitle: post.content.slice(0, 80),
-			url: attachment.url,
-			type: attachment.type,
-		}));
-
-		return {
-			id: post.id,
-			authorId: post.author.id,
-			author: {
-				name: post.author.name,
-				handle: post.author.username ? `@${post.author.username}` : "",
-				tone,
-			},
-			createdAt: post.createdAt,
-			time: relativeTime(post.createdAt),
-			body: post.content,
-			reactions: (post.likedBy ?? []).map((id) => ({
-				id,
-				emoji: "❤️",
-				tone: toneForId(id),
-			})),
-			reactionCount: String(post.likesCount),
-			commentCount: `${post.commentsCount} Comments`,
-			mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
-		};
-	});
-
 	return (
 		<div className="spotlight-feed flex flex-col overflow-hidden">
 			<AuthTopBar viewer={viewer} />
@@ -179,7 +181,12 @@ export function Feed() {
 					<ComposerCard viewer={viewer} />
 
 					{posts.map((post) => (
-						<PostCard key={post.id} post={post} viewerId={viewer.id} />
+						<PostCard
+							key={post.id}
+							post={post}
+							viewerId={viewer.id}
+							session={session}
+						/>
 					))}
 				</div>
 

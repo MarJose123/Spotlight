@@ -21,6 +21,7 @@ import { authorizationHeaders } from "#/lib/session";
 export function useAttachmentUrl(url: string): string | undefined {
 	const [blobUrl, setBlobUrl] = useState<string | undefined>();
 	const unmountedRef = useRef(false);
+	const prevBlobUrlRef = useRef<string | undefined>(undefined);
 
 	useEffect(() => {
 		unmountedRef.current = false;
@@ -65,7 +66,15 @@ export function useAttachmentUrl(url: string): string | undefined {
 		};
 	}, [url]);
 
-	// Clean up blob URL on unmount
+	// Revoke the previous blob URL whenever a new one is set.
+	if (prevBlobUrlRef.current !== blobUrl) {
+		if (prevBlobUrlRef.current?.startsWith("blob:")) {
+			URL.revokeObjectURL(prevBlobUrlRef.current);
+		}
+		prevBlobUrlRef.current = blobUrl;
+	}
+
+	// Revoke the current blob URL on unmount.
 	useEffect(() => {
 		return () => {
 			if (blobUrl?.startsWith("blob:")) {

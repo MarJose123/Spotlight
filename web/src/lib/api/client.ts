@@ -13,6 +13,26 @@ import {
 	saveSession,
 } from "../session";
 
+/**
+ * Merge base headers with optional override headers, handling plain records,
+ * Headers objects, and undefined values correctly.
+ */
+function mergeHeaders(
+	base: Record<string, string>,
+	override: HeadersInit | undefined,
+): Record<string, string> {
+	const result = { ...base };
+	if (!override) return result;
+	if (override instanceof Headers) {
+		for (const [key, value] of override) {
+			result[key] = value;
+		}
+	} else if (typeof override === "object") {
+		Object.assign(result, override);
+	}
+	return result;
+}
+
 /** Empty means same-origin, which the dev proxy and a reverse proxy both expect. */
 const PUBLIC_API_ORIGIN = (import.meta.env.VITE_API_URL ?? "").replace(
 	/\/+$/,
@@ -110,7 +130,7 @@ export async function requestJsonAuth<T>(
 	path: string,
 	init: RequestInit,
 ): Promise<T> {
-	const headers = { ...authorizationHeaders(), ...init.headers };
+	const headers = mergeHeaders(authorizationHeaders(), init.headers);
 
 	let response: Response;
 
@@ -137,7 +157,7 @@ export async function requestJsonAuth<T>(
 		}
 
 		// Retry with the new (or same) headers.
-		const retryHeaders = { ...authorizationHeaders(), ...init.headers };
+		const retryHeaders = mergeHeaders(authorizationHeaders(), init.headers);
 		try {
 			response = await fetch(`${API_ORIGIN}${API_PREFIX}${path}`, {
 				...init,
@@ -164,38 +184,66 @@ export async function requestJsonAuth<T>(
 
 import type { AuthTokens } from "../session";
 
+/**
+ * Shared promise so concurrent 401s trigger only one refresh call. Callers
+ * await this promise and then retry with the updated session.
+ */
+let refreshPromise: Promise<void> | null = null;
+
 async function refreshAccessTokenInternal(): Promise<Session> {
+	// If another request is already refreshing, wait for it and return the
+	// updated session without sending a second POST.
+	if (refreshPromise !== null) {
+		await refreshPromise;
+		const updatedSession = readSession();
+		if (!updatedSession) {
+			throw new ApiError("Session cleared during refresh.", 401);
+		}
+		return updatedSession;
+	}
+
 	const session = readSession();
 	if (!session || session.refreshToken === "") {
 		throw new ApiError("No refresh token available.", 401);
 	}
 
-	let response: Response;
+	refreshPromise = (async () => {
+		let response: Response;
 
-	try {
-		response = await fetch(`${API_ORIGIN}${API_PREFIX}/auth/refresh`, {
-			method: "POST",
-			headers: {
-				"content-type": "application/json",
-				accept: "application/json",
-			},
-			body: JSON.stringify({ refresh_token: session.refreshToken }),
-		});
-	} catch {
-		throw new ApiError(
-			"Spotlight could not be reached. Check your connection and try again.",
-			0,
-		);
+		try {
+			response = await fetch(`${API_ORIGIN}${API_PREFIX}/auth/refresh`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					accept: "application/json",
+				},
+				body: JSON.stringify({ refresh_token: session.refreshToken }),
+			});
+		} catch {
+			throw new ApiError(
+				"Spotlight could not be reached. Check your connection and try again.",
+				0,
+			);
+		}
+
+		if (!response.ok) {
+			clearSession();
+			window.location.assign("/signin");
+			throw new ApiError("Session expired.", response.status);
+		}
+
+		const tokens = (await response.json().catch(() => null)) as AuthTokens;
+		saveSession(tokens);
+	})().finally(() => {
+		refreshPromise = null;
+	});
+
+	await refreshPromise;
+	const updatedSession = readSession();
+	if (!updatedSession) {
+		throw new ApiError("Session cleared during refresh.", 401);
 	}
-
-	if (!response.ok) {
-		clearSession();
-		window.location.assign("/signin");
-		throw new ApiError("Session expired.", response.status);
-	}
-
-	const tokens = (await response.json().catch(() => null)) as AuthTokens;
-	return saveSession(tokens);
+	return updatedSession;
 }
 
 /**

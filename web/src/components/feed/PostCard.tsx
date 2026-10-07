@@ -6,7 +6,16 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button, Menu, Modal, Textarea } from "@mantine/core";
+import {
+	Button,
+	Group,
+	Menu,
+	Modal,
+	Skeleton,
+	Stack,
+	Text,
+	Textarea,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
@@ -31,7 +40,7 @@ import {
 	useUpdateComment,
 	useUpdatePost,
 } from "#/lib/api-queries";
-import { readSession } from "#/lib/session";
+import type { Session } from "#/lib/session";
 import type { AvatarTone, FeedPost } from "../../lib/feed-data";
 import { Avatar, MediaGrid, toneGradient } from "./media";
 
@@ -76,9 +85,11 @@ function formatRelativeTime(iso: string): string {
 export function PostCard({
 	post,
 	viewerId,
+	session,
 }: {
 	post: FeedPost;
 	viewerId: string;
+	session: Session | null;
 }) {
 	const [commentOpen, setCommentOpen] = useState(false);
 	const [commentText, setCommentText] = useState("");
@@ -97,9 +108,11 @@ export function PostCard({
 	const updatePostMutation = useUpdatePost();
 	const deletePostMutation = useDeletePost();
 	const { data: comments } = useComments(post.id);
-	const { data: likers, isLoading: likersLoading } = usePostLikes(post.id);
+	// Defer loading likers until the modal opens — avoids one query per post on feed load.
+	const { data: likers, isLoading: likersLoading } = usePostLikes(post.id, {
+		enabled: likesModalOpen,
+	});
 
-	const session = readSession();
 	const isLiked = post.reactions.some((r) => r.id === viewerId);
 	const likeCount = parseInt(post.reactionCount, 10) || 0;
 	const commentCount = parseInt(post.commentCount, 10) || 0;
@@ -245,33 +258,95 @@ export function PostCard({
 			<Modal
 				opened={likesModalOpen}
 				onClose={() => setLikesModalOpen(false)}
-				title={`${likeCount} ${likeCount === 1 ? "Like" : "Likes"}`}
 				size="sm"
 				centered
+				withCloseButton
+				title={
+					<Group gap="xs">
+						<Heart
+							size={16}
+							style={{ color: "#e0245e" }}
+							fill="#e0245e"
+							aria-hidden="true"
+						/>
+						<Text size="sm" fw={600} className="text-[var(--feed-ink)]">
+							{likeCount} {likeCount === 1 ? "Like" : "Likes"}
+						</Text>
+					</Group>
+				}
 			>
 				{likersLoading ? (
-					<p className="text-[13px] text-[var(--feed-ink-dim)]">Loading...</p>
-				) : likers && likers.length > 0 ? (
-					<div className="space-y-2">
-						{likers.map((liker) => (
-							<div key={liker.id} className="flex items-center gap-3">
-								<Avatar
-									name={liker.name}
-									tone={toneForId(liker.id)}
-									size={32}
-								/>
-								<div className="min-w-0 flex-1">
-									<span className="block truncate text-[13px] font-semibold text-[var(--feed-ink)]">
-										{liker.name}
-									</span>
+					<Stack gap="sm">
+						{[0, 1, 2].map((i) => (
+							<div key={i} className="flex items-center gap-3">
+								<Skeleton height={32} width={32} circle />
+								<div className="min-w-0 flex-1 space-y-1.5">
+									<Skeleton height={14} width="70%" />
 								</div>
 							</div>
 						))}
-					</div>
+					</Stack>
+				) : likers && likers.length > 0 ? (
+					<Stack gap="xs" className="max-h-[60vh] overflow-y-auto">
+						{likers.map((liker) => {
+							const isCurrentUser = liker.id === viewerId;
+							return (
+								<div
+									key={liker.id}
+									className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
+										isCurrentUser
+											? "bg-[var(--feed-inset)]"
+											: "hover:bg-[var(--feed-hover)]"
+									}`}
+								>
+									<Avatar
+										name={liker.name}
+										tone={toneForId(liker.id)}
+										size={36}
+									/>
+									<div className="min-w-0 flex-1">
+										<span className="block truncate text-[13px] font-semibold text-[var(--feed-ink)]">
+											{liker.name}
+										</span>
+										{isCurrentUser && (
+											<span className="text-[11px] text-[var(--feed-ink-dim)]">
+												You
+											</span>
+										)}
+									</div>
+									<Heart
+										size={14}
+										style={{ color: "#e0245e" }}
+										fill="#e0245e"
+										aria-hidden="true"
+									/>
+								</div>
+							);
+						})}
+					</Stack>
 				) : (
-					<p className="text-[13px] text-[var(--feed-ink-dim)]">
-						No likes yet.
-					</p>
+					<div className="py-6 text-center">
+						<Heart
+							size={32}
+							className="mx-auto mb-2 opacity-30"
+							style={{ color: "var(--feed-ink-dim)" }}
+							aria-hidden="true"
+						/>
+						<Text
+							size="sm"
+							c="var(--feed-ink-dim)"
+							className="text-[var(--feed-ink-dim)]"
+						>
+							No likes yet.
+						</Text>
+						<Text
+							size="xs"
+							c="var(--feed-ink-dim)"
+							className="text-[var(--feed-ink-dim)]"
+						>
+							Be the first to like this post.
+						</Text>
+					</div>
 				)}
 			</Modal>
 
@@ -303,12 +378,14 @@ export function PostCard({
 								}
 							}
 						}}
-						autoResize
+						autosize
 						minRows={1}
 						maxRows={6}
-						inputProps={{
-							className:
-								"bg-[var(--feed-inset)] text-[13px] leading-6 text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+						styles={{
+							input: {
+								className:
+									"bg-[var(--feed-inset)] text-[13px] leading-6 text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+							},
 						}}
 					/>
 					<div className="flex gap-2">
@@ -379,10 +456,18 @@ export function PostCard({
 								))}
 							</div>
 
+							{/* biome-ignore lint/a11y/useSemanticElements: span used to avoid native button font-size defaults */}
 							<span
-								role={"button"}
+								role="button"
+								tabIndex={0}
 								onClick={() => setLikesModalOpen(true)}
-								className="text-[12px] text-[var(--feed-ink-soft)] hover:underline cursor-pointer"
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										setLikesModalOpen(true);
+									}
+								}}
+								className="text-[12px] text-[var(--feed-ink-soft)] hover:underline cursor-pointer bg-transparent border-none p-0 m-0 font-inherit leading-inherit"
 							>
 								{likeCount} {likeCount === 1 ? "Like" : "Likes"}
 							</span>
@@ -442,13 +527,15 @@ export function PostCard({
 										handleComment();
 									}
 								}}
-								autoResize
+								autosize
 								minRows={1}
 								maxRows={4}
 								className="flex-1"
-								inputProps={{
-									className:
-										"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+								styles={{
+									input: {
+										className:
+											"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+									},
 								}}
 							/>
 							<Button
@@ -604,13 +691,15 @@ export function PostCard({
 															}
 														}
 													}}
-													autoResize
+													autosize
 													minRows={1}
 													maxRows={3}
 													className="mt-1"
-													inputProps={{
-														className:
-															"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+													styles={{
+														input: {
+															className:
+																"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
+														},
 													}}
 												/>
 											) : (

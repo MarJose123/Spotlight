@@ -15,7 +15,7 @@ function TopBarSkeleton() {
 			<div className="mx-auto flex w-full max-w-[1360px] flex-wrap items-center gap-3 px-3 py-3.5 sm:px-5">
 				<div className="flex min-w-0 items-center gap-3">
 					<Skeleton circle={true} height={22} width={22} />
-					<Skeleton height={38} width={{ base: 160, sm: 228 }} radius="full" />
+					<Skeleton height={38} width={228} radius="full" />
 				</div>
 				<div className="ml-auto flex items-center gap-2">
 					<Skeleton

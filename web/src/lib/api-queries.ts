@@ -200,11 +200,11 @@ export function useToggleLike() {
 
 // ── Post likes query ─────────────────────────────────────────────────────────
 
-export function usePostLikes(postId: string) {
+export function usePostLikes(postId: string, options?: { enabled?: boolean }) {
 	return useQuery<ApiPostLiker[]>({
 		queryKey: queryKeys.postLikes(postId),
 		queryFn: () => fetchPostLikes(postId),
-		enabled: !!postId,
+		enabled: !!postId && (options?.enabled ?? true),
 	});
 }
 
@@ -374,7 +374,7 @@ export function useLeaderboard() {
 	return useQuery<ApiLeaderboardEntry[]>({
 		queryKey: queryKeys.leaderboard,
 		queryFn: fetchLeaderboard,
-		staleTime: 60_000,
+		staleTime: 10 * 60 * 1000,
 	});
 }
 
@@ -413,6 +413,7 @@ export function useTrendingGifsInfinite(options?: { enabled?: boolean }) {
 			return lastPageParam + 1;
 		},
 		staleTime: 120_000,
+		maxPages: 10,
 	});
 }
 
