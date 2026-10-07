@@ -39,10 +39,10 @@ export class GifService {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('giphy.apiKey') ?? '';
-    this.logger.log(`Giphy API key: ${this.apiKey}`);
     if (!this.apiKey) {
       throw new UnauthorizedException('Giphy API key is not configured.');
     }
+    this.logger.log(`Giphy API key configured: ${this.apiKey.slice(0, 4)}***`);
   }
 
   async searchGifs(queryDto: SearchGifQueryDto): Promise<SearchGifResponseDto> {
