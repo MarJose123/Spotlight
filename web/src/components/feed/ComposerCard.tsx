@@ -8,6 +8,7 @@
 
 import { Button } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
 import { Film, Image, Send, Video, X } from "lucide-react";
 import {
 	Fragment,
@@ -17,12 +18,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import Lightbox, {
-	type SlideImage,
-	type SlideVideo,
-} from "yet-another-react-lightbox";
-import video from "yet-another-react-lightbox/plugins/video";
-import "yet-another-react-lightbox/styles.css";
 import type { GiphyGif } from "#/lib/api/gif";
 import { useCreatePost } from "#/lib/api-queries";
 import type { FeedViewer } from "#/lib/feed-data";
@@ -264,19 +259,10 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	// The key includes all preview URLs so the lightbox remounts with fresh slides
 	// when any media is added or removed (revoking the old object URLs).
 	const slidesKey = `${photos.length}-${videos.length}-${selectedGif?.id ?? ""}-${photos.map((p) => p.preview).join(",")}-${videos.map((v) => v.preview).join(",")}`;
-	const slides: Array<SlideImage | SlideVideo> = [
-		...photos.map(
-			(photo): SlideImage => ({ type: "image", src: photo.preview }),
-		),
-		...videos.map(
-			(v): SlideVideo => ({
-				type: "video",
-				sources: [{ src: v.preview, type: v.file.type }],
-			}),
-		),
-		...(selectedGif !== null
-			? [{ type: "image", src: selectedGif.url } satisfies SlideImage]
-			: []),
+	const slides: LightboxSlideData[] = [
+		...photos.map((photo) => ({ src: photo.preview })),
+		...videos.map((v) => ({ type: "video" as const, src: v.preview })),
+		...(selectedGif !== null ? [{ src: selectedGif.url }] : []),
 	];
 
 	// Close the lightbox if the selected index is out of bounds — e.g., when all
@@ -482,22 +468,11 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 			</section>
 			<Lightbox
 				key={slidesKey}
-				open={selectedMediaIndex !== null}
-				close={() => setSelectedMediaIndex(null)}
+				opened={selectedMediaIndex !== null}
+				onClose={() => setSelectedMediaIndex(null)}
 				slides={slides}
-				index={selectedMediaIndex ?? 0}
-				plugins={[video]}
-				controller={{
-					disableSwipeNavigation: slides.length <= 1,
-				}}
-				render={
-					slides.length <= 1
-						? {
-								buttonPrev: () => null,
-								buttonNext: () => null,
-							}
-						: undefined
-				}
+				currentIndex={selectedMediaIndex ?? 0}
+				onIndexChange={(index) => setSelectedMediaIndex(index)}
 			/>
 			<GifPicker
 				opened={gifOpened}

@@ -7,14 +7,9 @@
  */
 
 import { Image } from "@mantine/core";
+import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
 import { useCallback, useId, useState } from "react";
-import Lightbox from "yet-another-react-lightbox";
-import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
-import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import type { AvatarTone, FeedMediaItem } from "../../lib/feed-data";
-import "yet-another-react-lightbox/styles.css";
-import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useAttachmentUrl } from "./AuthenticatedMedia";
 
 /**
@@ -410,11 +405,9 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 
 	const images = items.filter((item) => item.type === "image");
 	const nonImages = items.filter((item) => item.type !== "image");
-	const slides = images.map((item) => ({
-		src: item.url,
+	const slides: LightboxSlideData[] = images.map((item) => ({
+		src: item.url ?? "",
 		alt: item.alt,
-		width: 1200,
-		height: 800,
 	}));
 
 	const renderMedia = (item: FeedMediaItem, index: number) => (
@@ -460,12 +453,11 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 				</div>
 				{renderNonImages()}
 				<Lightbox
-					open={openIndex >= 0}
-					slides={slides}
-					index={openIndex}
-					close={onClose}
+					opened={openIndex >= 0}
 					onClose={onClose}
-					plugins={[Thumbnails, Fullscreen, Zoom]}
+					slides={slides}
+					currentIndex={openIndex}
+					onIndexChange={setOpenIndex}
 				/>
 			</>
 		);
@@ -480,12 +472,11 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 				</div>
 				{renderNonImages()}
 				<Lightbox
-					open={openIndex >= 0}
-					slides={slides}
-					index={openIndex}
-					close={onClose}
+					opened={openIndex >= 0}
 					onClose={onClose}
-					plugins={[Thumbnails, Fullscreen, Zoom]}
+					slides={slides}
+					currentIndex={openIndex}
+					onIndexChange={setOpenIndex}
 				/>
 			</>
 		);
@@ -501,12 +492,11 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 				</div>
 				{renderNonImages()}
 				<Lightbox
-					open={openIndex >= 0}
-					slides={slides}
-					index={openIndex}
-					close={onClose}
+					opened={openIndex >= 0}
 					onClose={onClose}
-					plugins={[Thumbnails, Fullscreen, Zoom]}
+					slides={slides}
+					currentIndex={openIndex}
+					onIndexChange={setOpenIndex}
 				/>
 			</>
 		);
@@ -521,12 +511,11 @@ export function MediaGrid({ items }: { items: FeedMediaItem[] }) {
 			</div>
 			{renderNonImages()}
 			<Lightbox
-				open={openIndex >= 0}
-				slides={slides}
-				index={openIndex}
-				close={onClose}
+				opened={openIndex >= 0}
 				onClose={onClose}
-				plugins={[Thumbnails, Fullscreen, Zoom]}
+				slides={slides}
+				currentIndex={openIndex}
+				onIndexChange={setOpenIndex}
 			/>
 		</>
 	);
