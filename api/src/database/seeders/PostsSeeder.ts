@@ -37,7 +37,7 @@ export class PostsSeeder extends Seeder {
   async run(em: EntityManager, context: Dictionary<User[]>): Promise<void> {
     const gifUrl = await fetchRandomGif();
     const factory = new PostsFactory(em);
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 200; i++) {
       factory.make(1, {
         user: faker.helpers.arrayElement(context.user),
         attachments: [{ url: gifUrl, type: AttachmentType.GIF }],
