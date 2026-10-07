@@ -6,7 +6,6 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { EntityManager } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import type { EntityRepository } from '@mikro-orm/core';
@@ -50,15 +49,11 @@ export class LeaderboardService {
     const startOfMonth = dayjs().startOf('month').toDate();
     const endOfMonth = dayjs().endOf('month').toDate();
 
-    // Find all posts created this month with their like counts
-    const posts = await this.postsRepository.find(
-      {
-        createdAt: { $gte: startOfMonth, $lte: endOfMonth },
-      },
-      {
-        populate: ['user'],
-      },
-    );
+    // Find all posts created this month — no need to populate user;
+    // the FK (user.id) is available on the unpopulated reference.
+    const posts = await this.postsRepository.find({
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+    });
 
     // Aggregate likes count per user using the denormalized likesCount field
     const userLikesMap = new Map<string, number>();
@@ -86,68 +81,32 @@ export class LeaderboardService {
   }
 
   /**
-   * Compute the current month's leaderboard on the fly from posts and their
-   * like counts, ranked by accumulated likes descending.
+   * Read the current month's leaderboard. Recalculates scores from the likes
+   * table on each call.
    */
   async getLeaderboard(): Promise<LeaderboardEntryDto[]> {
-    const startOfMonth = dayjs().startOf('month').toDate();
-    const endOfMonth = dayjs().endOf('month').toDate();
+    await this.recalculateScores();
 
-    const posts = await this.postsRepository.find(
-      { createdAt: { $gte: startOfMonth, $lte: endOfMonth } },
-      { populate: ['user'] },
+    const month = this.currentMonth();
+
+    const scores = await this.scoreRepository.find(
+      { month },
+      {
+        populate: ['user'],
+        orderBy: { likesCount: 'desc' },
+        limit: 10,
+      },
     );
 
-    const userLikesMap = new Map<
-      string,
-      { userId: string; likesCount: number }
-    >();
-    for (const post of posts) {
-      const userId = post.user.id;
-      const entry = userLikesMap.get(userId);
-      if (entry) {
-        entry.likesCount += post.likesCount;
-      } else {
-        userLikesMap.set(userId, { userId, likesCount: post.likesCount });
-      }
-    }
-
-    const ranked = [...userLikesMap.values()]
-      .filter((e) => e.likesCount > 0)
-      .sort((a, b) => b.likesCount - a.likesCount)
-      .slice(0, 10);
-
-    const users = await this.em.find(User, {
-      id: { $in: ranked.map((e) => e.userId) },
-    });
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const mapped = ranked.map((entry, index) => ({
+    const mapped = scores.map((score, index) => ({
       rank: index + 1,
-      user: this.userMapper.toResponse(userMap.get(entry.userId)),
-      likesCount: entry.likesCount,
+      user: this.userMapper.toResponse(score.user),
+      likesCount: score.likesCount,
     }));
-    return mapped.filter(
+    const result = mapped.filter(
       (entry): entry is LeaderboardEntryDto => entry.user !== null,
     );
-  }
 
-  /**
-   * Reset all current month scores. Called by the cron job on the 1st of each
-   * month at 1:00 AM.
-   */
-  async resetCurrentMonth(): Promise<void> {
-    const month = this.currentMonth();
-    this.logger.log(`Resetting leaderboard for ${month}`);
-    const deleted = await this.scoreRepository.nativeDelete({ month });
-    this.logger.warn(`Removed ${deleted} leaderboard entries for ${month}`);
-  }
-
-  /**
-   * Cron: reset leaderboard every 1st day of the month at 1:00 AM.
-   */
-  @Cron('0 1 1 * *')
-  async resetMonthlyLeaderboard(): Promise<void> {
-    await this.resetCurrentMonth();
+    return result;
   }
 }
