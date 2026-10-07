@@ -57,6 +57,21 @@ export function usePosts(params: FetchPostsParams = {}) {
 	});
 }
 
+export function usePostsInfinite() {
+	return useInfiniteQuery({
+		queryKey: queryKeys.posts,
+		queryFn: ({ pageParam }) =>
+			fetchPosts({ page: pageParam as number, limit: 10 }),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) => {
+			if (!lastPage.meta.hasNextPage) return undefined;
+			return lastPage.meta.currentPage + 1;
+		},
+		staleTime: 30_000,
+		maxPages: 20,
+	});
+}
+
 // ── Current user query ───────────────────────────────────────────────────────
 
 export function useCurrentUser() {

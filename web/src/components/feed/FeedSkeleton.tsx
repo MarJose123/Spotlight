@@ -72,7 +72,7 @@ function ComposerCardSkeleton() {
 }
 
 /** Skeleton placeholder for a single PostCard. */
-function PostCardSkeleton() {
+export function PostCardSkeleton() {
 	return (
 		<article className="rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-4">
 			<header className="flex items-start gap-3">

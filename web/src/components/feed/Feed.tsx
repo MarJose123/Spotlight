@@ -9,14 +9,15 @@
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import { RefreshCw, WifiOff } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { usePosts, useUserProfileStats } from "#/lib/api-queries";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ApiPost } from "#/lib/api";
+import { usePostsInfinite, useUserProfileStats } from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
 import { VIEWER } from "#/lib/feed-data";
 import { readSession, type Session } from "#/lib/session";
 import { AuthTopBar } from "../AuthTopBar";
 import { ComposerCard } from "./ComposerCard";
-import { FeedSkeleton } from "./FeedSkeleton";
+import { FeedSkeleton, PostCardSkeleton } from "./FeedSkeleton";
 import { Leaderboard } from "./Leaderboard";
 import { PostCard } from "./PostCard";
 import { ProfileCard } from "./ProfileCard";
@@ -68,53 +69,104 @@ function formatRelativeTime(iso: string): string {
 
 const APP_VERSION = import.meta.env.APP_VERSION;
 
+/** Convert a raw API post into the shape PostCard expects. */
+function mapPost(post: ApiPost) {
+	const tone = toneForId(post.author.id);
+	const mediaItems = post.attachments.map((attachment) => ({
+		alt: post.content.slice(0, 120),
+		title:
+			attachment.type === "image"
+				? "Photo"
+				: attachment.type === "video"
+					? "Video"
+					: "GIF",
+		subtitle: post.content.slice(0, 80),
+		url: attachment.url,
+		type: (attachment.type === "video" || attachment.type === "image"
+			? attachment.type
+			: "gif") as "image" | "video" | "gif",
+	}));
+
+	return {
+		id: post.id,
+		authorId: post.author.id,
+		author: {
+			name: post.author.name,
+			handle: post.author.username ? `@${post.author.username}` : "",
+			tone,
+		},
+		createdAt: post.createdAt,
+		time: formatRelativeTime(post.createdAt),
+		body: post.content,
+		reactions: (post.likedBy ?? []).map((id) => ({
+			id,
+			emoji: "❤️",
+			tone: toneForId(id),
+		})),
+		reactionCount: String(post.likesCount),
+		commentCount: `${post.commentsCount} Comments`,
+		mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
+	};
+}
+
 export function Feed() {
-	const { data, isLoading, isError } = usePosts();
+	const {
+		data,
+		fetchNextPage,
+		hasNextPage,
+		isLoading,
+		isFetchingNextPage,
+		isError,
+	} = usePostsInfinite();
 	const session = useSession();
 	const sessionUser = session?.user;
 
-	// Map API posts to the feed shape PostCard expects — memoized to avoid
-	// reallocating the entire array on every render. Must be before early returns.
-	const posts = useMemo(() => {
-		return (data?.data ?? []).map((post) => {
-			const tone = toneForId(post.author.id);
-			const mediaItems = post.attachments.map((attachment) => ({
-				alt: post.content.slice(0, 120),
-				title:
-					attachment.type === "image"
-						? "Photo"
-						: attachment.type === "video"
-							? "Video"
-							: "GIF",
-				subtitle: post.content.slice(0, 80),
-				url: attachment.url,
-				type: (attachment.type === "video" || attachment.type === "image"
-					? attachment.type
-					: "gif") as "image" | "video" | "gif",
-			}));
+	// Flatten all pages of posts and map to the feed shape — memoized to avoid
+	// reallocating the entire array on every render.
+	const posts = useMemo(
+		() => data?.pages.flatMap((page) => page.data.map(mapPost)) ?? [],
+		[data],
+	);
 
-			return {
-				id: post.id,
-				authorId: post.author.id,
-				author: {
-					name: post.author.name,
-					handle: post.author.username ? `@${post.author.username}` : "",
-					tone,
-				},
-				createdAt: post.createdAt,
-				time: formatRelativeTime(post.createdAt),
-				body: post.content,
-				reactions: (post.likedBy ?? []).map((id) => ({
-					id,
-					emoji: "❤️",
-					tone: toneForId(id),
-				})),
-				reactionCount: String(post.likesCount),
-				commentCount: `${post.commentsCount} Comments`,
-				mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
-			};
-		});
-	}, [data]);
+	// Sentinel at the bottom of the feed triggers the next page load when it
+	// becomes visible. Held in state so the observer stays connected across
+	// renders — a plain ref would lose the element reference.
+	const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const paginationRef = useRef({
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	});
+
+	useEffect(() => {
+		paginationRef.current = { hasNextPage, isFetchingNextPage, fetchNextPage };
+	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+	useEffect(() => {
+		if (!sentinel) return;
+
+		const el = sentinel;
+		const scrollContainer = scrollContainerRef.current;
+		if (!scrollContainer) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				const pagination = paginationRef.current;
+				if (
+					entry.isIntersecting &&
+					pagination.hasNextPage &&
+					!pagination.isFetchingNextPage
+				) {
+					pagination.fetchNextPage();
+				}
+			},
+			{ root: scrollContainer, rootMargin: "64px" },
+		);
+
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [sentinel]);
 
 	// Build viewer from session, falling back to static placeholder.
 	const viewerId = sessionUser?.id;
@@ -177,7 +229,10 @@ export function Feed() {
 					</p>
 				</aside>
 
-				<div className="spotlight-feed-column flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pb-4">
+				<div
+					ref={scrollContainerRef}
+					className="spotlight-feed-column flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto pb-4"
+				>
 					<ComposerCard viewer={viewer} />
 
 					{posts.map((post) => (
@@ -188,6 +243,16 @@ export function Feed() {
 							session={session}
 						/>
 					))}
+
+					{isFetchingNextPage && (
+						<>
+							<PostCardSkeleton />
+							<PostCardSkeleton />
+						</>
+					)}
+
+					{/* Infinite scroll sentinel — always mounted so observer stays connected */}
+					<div ref={setSentinel} className="h-1" />
 				</div>
 
 				<aside className="spotlight-feed-column hidden min-h-0 overflow-y-auto pb-4 xl:block">
