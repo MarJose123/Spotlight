@@ -6,13 +6,41 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { Bell, Home, LayoutGrid, Search, Spotlight } from "lucide-react";
+import { useInvalidatePosts } from "#/lib/api-queries.ts";
 import type { FeedViewer } from "#/lib/feed-data.ts";
 import { AuthThemeToggle } from "./AuthThemeToggle";
 import { UserMenu } from "./feed/UserMenu";
 import { TopBarAction } from "./TopBarAction";
 
 export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
+	const router = useRouter();
+	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const invalidatePosts = useInvalidatePosts();
+
+	const isFeedPage = pathname === "/feed";
+
+	const handleHomeClick = () => {
+		if (!isFeedPage) {
+			router.navigate({ to: "/feed" });
+			return;
+		}
+
+		const feedColumn = document.querySelector(
+			".spotlight-feed-column:nth-child(2)",
+		) as HTMLElement | null;
+		if (!feedColumn) {
+			invalidatePosts();
+			return;
+		}
+
+		if (feedColumn.scrollTop > 0) {
+			feedColumn.scrollTo({ top: 0, behavior: "smooth" });
+		} else {
+			invalidatePosts();
+		}
+	};
 	return (
 		<header className="sticky top-0 z-30 shrink-0 border-b border-[var(--feed-line-soft)] bg-[var(--feed-panel)]">
 			<div className="mx-auto flex w-full max-w-[1360px] flex-wrap items-center gap-3 px-3 py-3.5 sm:px-5">
@@ -44,7 +72,7 @@ export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 						<TopBarAction label="Explore">
 							<LayoutGrid size={15} aria-hidden="true" />
 						</TopBarAction>
-						<TopBarAction label="Feed">
+						<TopBarAction label="Feed" onClick={handleHomeClick}>
 							<Home size={15} aria-hidden="true" />
 						</TopBarAction>
 						<TopBarAction label="Notifications" badge="1">
