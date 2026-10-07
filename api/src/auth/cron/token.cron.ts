@@ -18,10 +18,10 @@ export class TokenCron {
 
   @Cron(CronExpression.EVERY_HOUR)
   async removeExpiredRefreshToken() {
-    this.logger.log('Removing expired refresh tokens');
+    this.logger.log('Removing expired and revoked refresh tokens');
     const deleted = await this.em.nativeDelete(RefreshToken, {
-      expiresAt: { $lt: new Date() },
+      $or: [{ expiresAt: { $lt: new Date() } }, { revokedAt: { $ne: null } }],
     });
-    this.logger.warn(`Removed ${deleted} expired refresh tokens`);
+    this.logger.warn(`Removed ${deleted} expired/revoked refresh tokens`);
   }
 }
