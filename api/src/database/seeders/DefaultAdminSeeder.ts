@@ -11,6 +11,7 @@ import { Seeder } from '@mikro-orm/seeder';
 import { User } from '#/users/entities/user.entity.js';
 import { UserRole } from '#/users/enums/role.enum.js';
 import { UserStatus } from '#/users/enums/status.enum.js';
+import bcrypt from 'bcrypt';
 
 export class DefaultAdminSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
@@ -19,7 +20,7 @@ export class DefaultAdminSeeder extends Seeder {
       username: 'spotlight-admin',
       name: 'Default Admin',
       email: 'admin@spotlight.local',
-      password: 'adminspotlight',
+      password: bcrypt.hashSync('adminspotlight', 12),
       type: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
       createdAt: new Date(),
