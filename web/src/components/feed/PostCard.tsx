@@ -67,9 +67,9 @@ function toneForId(id: string): AvatarTone {
 
 dayjs.extend(relativeTime);
 
-/** Format an ISO timestamp as a short relative string ("3m", "2h", "5d"). */
+/** Format an ISO timestamp as a relative string ("3 minutes ago", "2 hours ago"). */
 function formatRelativeTime(iso: string): string {
-	return dayjs(iso).fromNow(true);
+	return dayjs(iso).fromNow();
 }
 
 export function PostCard({
