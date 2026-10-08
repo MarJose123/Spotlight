@@ -11,24 +11,10 @@ import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto
 import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 import { SearchGifQueryDto } from '#/gif/dto/search-gif-query.dto.js';
 import { GifUrlDto, SearchGifResponseDto } from '#/gif/dto/gif-response.dto.js';
-
-interface GiphySearchResult {
-  id: string;
-  title: string;
-  images: {
-    fixed_height: {
-      url: string;
-    };
-  };
-}
-
-interface GiphyApiResponse {
-  data: GiphySearchResult[];
-  meta: {
-    status: number;
-    msg: string;
-  };
-}
+import type {
+  IGiphyApiResponse,
+  IGiphySearchResult,
+} from '#/gif/interface/index.js';
 
 @Injectable()
 export class GifService {
@@ -61,14 +47,14 @@ export class GifService {
       throw new Error('Failed to fetch GIFs from Giphy.');
     }
 
-    const json: GiphyApiResponse = await response.json();
+    const json: IGiphyApiResponse = await response.json();
 
     if (json.meta.status !== 200) {
       this.logger.error(`Giphy API error: ${json.meta.msg}`);
       throw new Error('Giphy API returned an error.');
     }
 
-    const data: GifUrlDto[] = json.data.map((result: GiphySearchResult) => ({
+    const data: GifUrlDto[] = json.data.map((result: IGiphySearchResult) => ({
       url: result.images.fixed_height.url,
       id: result.id,
       title: result.title,
@@ -98,14 +84,14 @@ export class GifService {
       throw new Error('Failed to fetch trending GIFs from Giphy.');
     }
 
-    const json: GiphyApiResponse = await response.json();
+    const json: IGiphyApiResponse = await response.json();
 
     if (json.meta.status !== 200) {
       this.logger.error(`Giphy API error: ${json.meta.msg}`);
       throw new Error('Giphy API returned an error.');
     }
 
-    const data: GifUrlDto[] = json.data.map((result: GiphySearchResult) => ({
+    const data: GifUrlDto[] = json.data.map((result: IGiphySearchResult) => ({
       url: result.images.fixed_height.url,
       id: result.id,
       title: result.title,
