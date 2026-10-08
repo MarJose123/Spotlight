@@ -6,16 +6,9 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { requestJsonAuth } from "./client";
+import type { ApiComment } from "./types/comments";
 
-export interface ApiComment {
-	id: string;
-	content: string;
-	author: {
-		id: string;
-		name: string;
-	};
-	createdAt: string;
-}
+export type { ApiComment } from "./types/comments";
 
 export function fetchComments(postId: string): Promise<ApiComment[]> {
 	return requestJsonAuth<ApiComment[]>(

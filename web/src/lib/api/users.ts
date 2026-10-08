@@ -8,37 +8,18 @@
 import { requestJsonAuth } from "./client";
 import { fetchLeaderboard } from "./leaderboard";
 import { fetchUserPostsCount } from "./posts";
+import type { ApiAuthenticatedUser, UserProfileStats } from "./types/users";
 
-export interface ApiUser {
-	id: string;
-	avatarUrl?: string;
-	email: string;
-	name: string;
-	username?: string;
-	displayName: string;
-	status: string;
-	role: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface ApiAuthenticatedUser {
-	user: ApiUser;
-	sub: string;
-	iat: number;
-	exp: number;
-}
+export type {
+	ApiAuthenticatedUser,
+	ApiUser,
+	UserProfileStats,
+} from "./types/users";
 
 export async function fetchCurrentUser(): Promise<ApiAuthenticatedUser> {
 	return requestJsonAuth<ApiAuthenticatedUser>("/users/me", {
 		headers: { accept: "application/json" },
 	});
-}
-
-/** Profile stats for the current user: post count and accumulated likes. */
-export interface UserProfileStats {
-	postsCount: number;
-	likesCount: number;
 }
 
 export async function fetchUserProfileStats(

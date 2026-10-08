@@ -7,18 +7,9 @@
  */
 
 import { requestJsonAuth } from "./client";
-import type { ApiPost } from "./posts";
+import type { ApiPostLikeResponse, ApiPostLiker } from "./types/likes";
 
-export interface ApiPostLikeResponse {
-	like: boolean;
-	post: ApiPost;
-}
-
-export interface ApiPostLiker {
-	id: string;
-	name: string;
-	avatarUrl: string | undefined;
-}
+export type { ApiPostLikeResponse, ApiPostLiker } from "./types/likes";
 
 export function toggleLikePost(
 	postId: string,

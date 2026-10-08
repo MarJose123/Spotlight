@@ -14,9 +14,34 @@ export {
 	requestJsonAuth,
 } from "./client";
 
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type {
+	ApiAttachment,
+	ApiAuthenticatedUser,
+	ApiComment,
+	ApiLeaderboardEntry,
+	ApiLeaderboardUser,
+	ApiPaginatedPosts,
+	ApiPaginationMeta,
+	ApiPost,
+	ApiPostAuthor,
+	ApiPostLikeResponse,
+	ApiPostLiker,
+	ApiUser,
+	CreatePostRequest,
+	EnabledProviders,
+	FetchPostsParams,
+	GifPaginationMeta,
+	GifSearchResponse,
+	GifTrendingResponse,
+	GiphyGif,
+	UpdatePostRequest,
+	UserProfileStats,
+} from "./types";
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
-export type { EnabledProviders } from "./auth";
 export {
 	exchangeAuthorizationCode,
 	fetchAuthorizeUrl,
@@ -27,16 +52,6 @@ export {
 
 // ── Posts ────────────────────────────────────────────────────────────────────
 
-export type {
-	ApiAttachment,
-	ApiPaginatedPosts,
-	ApiPaginationMeta,
-	ApiPost,
-	ApiPostAuthor,
-	CreatePostRequest,
-	FetchPostsParams,
-	UpdatePostRequest,
-} from "./posts";
 export {
 	createPost,
 	deletePost,
@@ -47,21 +62,14 @@ export {
 
 // ── Users ────────────────────────────────────────────────────────────────────
 
-export type {
-	ApiAuthenticatedUser,
-	ApiUser,
-	UserProfileStats,
-} from "./users";
 export { fetchCurrentUser, fetchUserProfileStats } from "./users";
 
 // ── Likes ────────────────────────────────────────────────────────────────────
 
-export type { ApiPostLikeResponse, ApiPostLiker } from "./likes";
 export { fetchPostLikes, toggleLikePost } from "./likes";
 
 // ── Comments ─────────────────────────────────────────────────────────────────
 
-export type { ApiComment } from "./comments";
 export {
 	createComment,
 	deleteComment,
@@ -71,5 +79,4 @@ export {
 
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 
-export type { ApiLeaderboardEntry, ApiLeaderboardUser } from "./leaderboard";
 export { fetchLeaderboard } from "./leaderboard";

@@ -6,27 +6,12 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { requestJsonAuth } from "./client";
+import type { ApiLeaderboardEntry } from "./types/leaderboard";
 
-/** A user embedded in a leaderboard entry, matching UserResponseDto from the API. */
-export interface ApiLeaderboardUser {
-	id: string;
-	avatarUrl?: string;
-	email: string;
-	name: string;
-	username: string | undefined;
-	displayName: string;
-	status: string;
-	role: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
-/** One ranked row from the monthly leaderboard. */
-export interface ApiLeaderboardEntry {
-	rank: number;
-	user: ApiLeaderboardUser;
-	likesCount: number;
-}
+export type {
+	ApiLeaderboardEntry,
+	ApiLeaderboardUser,
+} from "./types/leaderboard";
 
 export async function fetchLeaderboard(): Promise<ApiLeaderboardEntry[]> {
 	return requestJsonAuth<ApiLeaderboardEntry[]>("/leaderboard", {

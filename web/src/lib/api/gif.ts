@@ -7,27 +7,18 @@
  */
 
 import { requestJsonAuth } from "./client";
+import type {
+	GifSearchResponse,
+	GifTrendingResponse,
+	GiphyGif,
+} from "./types/gif";
 
-/** Single GIF returned by the backend, proxied from GIPHY. */
-export interface GiphyGif {
-	id: string;
-	title: string;
-	/** Fixed-height GIF URL ready for display. */
-	url: string;
-}
-
-export interface GifSearchResponse {
-	data: GiphyGif[];
-}
-
-export interface GifPaginationMeta {
-	hasNextPage: boolean;
-}
-
-export interface GifTrendingResponse {
-	data: GiphyGif[];
-	meta: GifPaginationMeta;
-}
+export type {
+	GifPaginationMeta,
+	GifSearchResponse,
+	GifTrendingResponse,
+	GiphyGif,
+} from "./types/gif";
 
 /** Fetch trending GIFs from the backend with pagination. */
 export async function fetchTrendingGifs(

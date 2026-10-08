@@ -8,12 +8,9 @@
 import type { SignInValues } from "../schemas/auth";
 import type { AuthTokens } from "../session";
 import { ApiError, requestJson } from "./client";
+import type { EnabledProviders } from "./types/auth";
 
-export interface EnabledProviders {
-	ids: string[];
-	/** `false` when the API could not be reached at all. */
-	reachable: boolean;
-}
+export type { EnabledProviders } from "./types/auth";
 
 /** Empty means same-origin, which the dev proxy and a reverse proxy both expect. */
 const PUBLIC_API_ORIGIN = (import.meta.env.VITE_API_URL ?? "").replace(
