@@ -34,24 +34,26 @@ import {
 	updateComment,
 	updatePost,
 } from "./api";
+import type { GiphyGif } from "./api/gif";
+import { fetchTrendingGifs, searchGifs } from "./api/gif";
+import {
+	comments,
+	currentUser,
+	gifsSearch,
+	gifsTrending,
+	leaderboard,
+	postLikes,
+	posts,
+	profileStats,
+	profileStatsAll,
+} from "./query-keys";
 import { readSession } from "./session";
-
-// ── Query keys ───────────────────────────────────────────────────────────────
-
-export const queryKeys = {
-	posts: ["posts"],
-	currentUser: ["currentUser"],
-	comments: (postId: string) => ["comments", postId],
-	postLikes: (postId: string) => ["postLikes", postId],
-	leaderboard: ["leaderboard"],
-	profileStats: (userId: string) => ["profileStats", userId],
-} as const;
 
 // ── Posts queries ────────────────────────────────────────────────────────────
 
 export function usePosts(params: FetchPostsParams = {}) {
 	return useQuery({
-		queryKey: [...queryKeys.posts, params],
+		queryKey: [...posts(), params],
 		queryFn: () => fetchPosts(params),
 		staleTime: 30_000,
 	});
@@ -59,7 +61,7 @@ export function usePosts(params: FetchPostsParams = {}) {
 
 export function usePostsInfinite() {
 	return useInfiniteQuery({
-		queryKey: queryKeys.posts,
+		queryKey: posts(),
 		queryFn: ({ pageParam }) =>
 			fetchPosts({ page: pageParam as number, limit: 20 }),
 		initialPageParam: 1,
@@ -76,7 +78,7 @@ export function usePostsInfinite() {
 
 export function useCurrentUser() {
 	return useQuery({
-		queryKey: queryKeys.currentUser,
+		queryKey: currentUser(),
 		queryFn: fetchCurrentUser,
 	});
 }
@@ -88,9 +90,9 @@ export function useCreatePost() {
 	return useMutation({
 		mutationFn: (params: CreatePostRequest) => createPost(params),
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+			queryClient.invalidateQueries({ queryKey: posts() });
 			queryClient.invalidateQueries({
-				queryKey: ["profileStats"],
+				queryKey: profileStatsAll(),
 				exact: false,
 			});
 		},
@@ -105,7 +107,7 @@ export function useUpdatePost() {
 		mutationFn: (params: { postId: string; content: string }) =>
 			updatePost(params.postId, { content: params.content }),
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
+			queryClient.invalidateQueries({ queryKey: posts() });
 		},
 	});
 }
@@ -117,9 +119,9 @@ export function useDeletePost() {
 	return useMutation({
 		mutationFn: (postId: string) => deletePost(postId),
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
-			queryClient.invalidateQueries({
-				queryKey: ["profileStats"],
+			void queryClient.invalidateQueries({ queryKey: posts() });
+			void queryClient.invalidateQueries({
+				queryKey: profileStatsAll(),
 				exact: false,
 			});
 		},
@@ -130,21 +132,19 @@ export function useDeletePost() {
 
 export function useInvalidatePosts() {
 	const queryClient = useQueryClient();
-	return () =>
-		queryClient.resetQueries({ queryKey: queryKeys.posts, exact: true });
+	return () => queryClient.resetQueries({ queryKey: posts(), exact: true });
 }
 
 export function useInvalidateCurrentUser() {
 	const queryClient = useQueryClient();
-	return () =>
-		queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
+	return () => queryClient.invalidateQueries({ queryKey: currentUser() });
 }
 
 // ── Comments queries ─────────────────────────────────────────────────────────
 
 export function useComments(postId: string) {
 	return useQuery({
-		queryKey: queryKeys.comments(postId),
+		queryKey: comments(postId),
 		queryFn: () => fetchComments(postId),
 		enabled: !!postId,
 	});
@@ -158,9 +158,9 @@ export function useToggleLike() {
 		mutationFn: (params: { postId: string; userId: string }) =>
 			toggleLikePost(params.postId, params.userId),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.posts });
-			queryClient.invalidateQueries({
-				queryKey: ["profileStats"],
+			void queryClient.invalidateQueries({ queryKey: posts() });
+			void queryClient.invalidateQueries({
+				queryKey: profileStatsAll(),
 				exact: false,
 			});
 		},
@@ -171,7 +171,7 @@ export function useToggleLike() {
 
 export function usePostLikes(postId: string, options?: { enabled?: boolean }) {
 	return useQuery<ApiPostLiker[]>({
-		queryKey: queryKeys.postLikes(postId),
+		queryKey: postLikes(postId),
 		queryFn: () => fetchPostLikes(postId),
 		enabled: !!postId && (options?.enabled ?? true),
 	});
@@ -197,7 +197,7 @@ export function useCreateComment() {
 			};
 			// Optimistically add the comment to the cache.
 			queryClient.setQueryData(
-				queryKeys.comments(postId),
+				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return [optimisticComment];
 					return [optimisticComment, ...old];
@@ -205,7 +205,7 @@ export function useCreateComment() {
 			);
 			// Also bump the comment count in all posts queries.
 			queryClient.setQueriesData(
-				{ queryKey: queryKeys.posts, exact: false },
+				{ queryKey: posts(), exact: false },
 				(old: unknown) => {
 					if (!old || typeof old !== "object") return old;
 					const payload = old as {
@@ -226,7 +226,7 @@ export function useCreateComment() {
 		onError: (_error, { postId, content }) => {
 			// Revert optimistic comment on failure.
 			queryClient.setQueryData(
-				queryKeys.comments(postId),
+				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return [];
 					return old.filter(
@@ -236,7 +236,7 @@ export function useCreateComment() {
 			);
 			// Revert the comment count bump in all posts queries.
 			queryClient.setQueriesData(
-				{ queryKey: queryKeys.posts, exact: false },
+				{ queryKey: posts(), exact: false },
 				(old: unknown) => {
 					if (!old || typeof old !== "object") return old;
 					const payload = old as {
@@ -256,7 +256,7 @@ export function useCreateComment() {
 		},
 		onSuccess: (_data, { postId }) => {
 			// Refetch comments so the optimistic placeholder is replaced with server data.
-			queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+			void queryClient.invalidateQueries({ queryKey: comments(postId) });
 		},
 	});
 }
@@ -274,7 +274,7 @@ export function useUpdateComment() {
 		onMutate: ({ postId, commentId, content }) => {
 			// Optimistically update the comment in the cache.
 			queryClient.setQueryData(
-				queryKeys.comments(postId),
+				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return old;
 					return old.map((c) => (c.id === commentId ? { ...c, content } : c));
@@ -283,10 +283,10 @@ export function useUpdateComment() {
 		},
 		onError: (_error, { postId }) => {
 			// Revert on failure by refetching.
-			queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+			void queryClient.invalidateQueries({ queryKey: comments(postId) });
 		},
 		onSuccess: (_data, { postId }) => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+			void queryClient.invalidateQueries({ queryKey: comments(postId) });
 		},
 	});
 }
@@ -301,7 +301,7 @@ export function useDeleteComment() {
 		onMutate: ({ postId, commentId }) => {
 			// Optimistically remove the comment from the cache.
 			queryClient.setQueryData(
-				queryKeys.comments(postId),
+				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return old;
 					return old.filter((c) => c.id !== commentId);
@@ -309,7 +309,7 @@ export function useDeleteComment() {
 			);
 			// Decrement the comment count in all posts queries.
 			queryClient.setQueriesData(
-				{ queryKey: queryKeys.posts, exact: false },
+				{ queryKey: posts(), exact: false },
 				(old: unknown) => {
 					if (!old || typeof old !== "object") return old;
 					const payload = old as {
@@ -329,10 +329,10 @@ export function useDeleteComment() {
 		},
 		onError: (_error, { postId }) => {
 			// Revert on failure by refetching.
-			queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+			void queryClient.invalidateQueries({ queryKey: comments(postId) });
 		},
 		onSuccess: (_data, { postId }) => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+			void queryClient.invalidateQueries({ queryKey: comments(postId) });
 		},
 	});
 }
@@ -341,7 +341,7 @@ export function useDeleteComment() {
 
 export function useLeaderboard() {
 	return useQuery<ApiLeaderboardEntry[]>({
-		queryKey: queryKeys.leaderboard,
+		queryKey: leaderboard(),
 		queryFn: fetchLeaderboard,
 		staleTime: 5 * 60 * 1000,
 		refetchInterval: 5 * 60 * 1000,
@@ -352,7 +352,7 @@ export function useLeaderboard() {
 
 export function useUserProfileStats(userId: string | undefined) {
 	return useQuery<UserProfileStats>({
-		queryKey: userId ? queryKeys.profileStats(userId) : [],
+		queryKey: userId ? profileStats(userId) : [],
 		queryFn: () => {
 			if (!userId) throw new Error("No user id");
 			return fetchUserProfileStats(userId);
@@ -364,17 +364,9 @@ export function useUserProfileStats(userId: string | undefined) {
 
 // ── GIF queries ──────────────────────────────────────────────────────────────
 
-import type { GiphyGif } from "./api/gif";
-import { fetchTrendingGifs, searchGifs } from "./api/gif";
-
-export const gifQueryKeys = {
-	trending: ["gifs", "trending"],
-	search: (query: string) => ["gifs", "search", query],
-} as const;
-
 export function useTrendingGifsInfinite(options?: { enabled?: boolean }) {
 	return useInfiniteQuery({
-		queryKey: gifQueryKeys.trending,
+		queryKey: gifsTrending(),
 		queryFn: ({ pageParam }) => fetchTrendingGifs(pageParam),
 		initialPageParam: 1,
 		enabled: options?.enabled ?? true,
@@ -389,7 +381,7 @@ export function useTrendingGifsInfinite(options?: { enabled?: boolean }) {
 
 export function useSearchGifs(query: string) {
 	return useQuery<GiphyGif[]>({
-		queryKey: gifQueryKeys.search(query),
+		queryKey: gifsSearch(query),
 		queryFn: () => searchGifs(query),
 		enabled: query.trim().length > 0,
 		staleTime: 60_000,
