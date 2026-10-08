@@ -62,7 +62,7 @@ export {
 
 // ── Users ────────────────────────────────────────────────────────────────────
 
-export { fetchCurrentUser, fetchUserProfileStats } from "./users";
+export { fetchCurrentUser, fetchUserProfileStats, fetchUsers } from "./users";
 
 // ── Likes ────────────────────────────────────────────────────────────────────
 

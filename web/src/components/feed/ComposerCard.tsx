@@ -6,23 +6,33 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button } from "@mantine/core";
+import { Button, ScrollArea } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
 import { notifications } from "@mantine/notifications";
-import { Film, Image, Send, Video, X } from "lucide-react";
+import { RichTextEditor } from "@mantine/tiptap";
+import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji";
+import Mention from "@tiptap/extension-mention";
+import Placeholder from "@tiptap/extension-placeholder";
+import { ReactRenderer, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import type { SuggestionOptions } from "@tiptap/suggestion";
+import { exitSuggestion } from "@tiptap/suggestion";
+import { Film, Image, Send, X } from "lucide-react";
 import {
 	Fragment,
+	forwardRef,
 	useCallback,
 	useEffect,
 	useId,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
 import { ApiError } from "#/lib/api/client";
 import type { GiphyGif } from "#/lib/api/gif";
-import { useCreatePost } from "#/lib/api-queries";
-import type { FeedViewer } from "#/lib/feed-data";
+import { useCreatePost, useUsers } from "#/lib/api-queries";
+import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
 import { COMPOSER_ACTIONS } from "#/lib/feed-data";
 import { readSession } from "#/lib/session";
 import { GifPicker } from "./GifPicker";
@@ -31,22 +41,12 @@ import { Avatar, ComposerPhotoPreview, ComposerVideoPreview } from "./media";
 /** Longest commendation a single post accepts. */
 const MAX_LENGTH = 250;
 
-/**
- * Focused-but-empty height: about three text lines plus the field's padding, so
- * the box opens up instead of hugging a single row while the writer gets going.
- * `--mantine-line-height` drives the row height here (see the note on `resize`).
- */
-const EXPANDED_HEIGHT = 86;
-
-/** Past this the field scrolls instead of pushing the feed down. */
-const MAX_HEIGHT = 240;
-
 /** Warn once the writer is this close to the cap. */
 const WARN_REMAINING = 20;
 
 const ACTION_ICONS = {
 	photo: { Icon: Image, color: "#22c55e" },
-	video: { Icon: Video, color: "#3b82f6" },
+	video: { Icon: Film, color: "#3b82f6" },
 	gif: { Icon: Film, color: "#6366f1" },
 } as const;
 
@@ -62,13 +62,238 @@ const IMAGE_MIME_TYPES = "image/jpeg,image/png,image/webp";
 /** Video MIME types the composer accepts. */
 const VIDEO_MIME_TYPES = "video/mp4,video/webm,video/quicktime";
 
+/**
+ * Extract plain text from a Tiptap editor, converting mention nodes into
+ * `@username` (or `@name`) text so the existing API contract stays intact.
+ */
+function extractPlainText(editor: ReturnType<typeof useEditor> | null): string {
+	if (!editor) return "";
+	const { doc } = editor.state;
+	const parts: string[] = [];
+
+	doc.descendants((node) => {
+		if (node.type.name === "mention") {
+			const label = node.attrs.label ?? node.attrs.id ?? "";
+			parts.push(`@${label}`);
+		} else if (node.type.name === "emoji") {
+			parts.push(node.attrs.name ?? "");
+		} else if (node.isText) {
+			parts.push(node.text ?? "");
+		}
+	});
+	return parts.join("");
+}
+
+/**
+ * Count characters in the editor content. Each mention counts as 1 character
+ * since it represents a single user reference.
+ */
+function countCharacters(editor: ReturnType<typeof useEditor> | null): number {
+	if (!editor) return 0;
+	const { doc } = editor.state;
+	let count = 0;
+
+	doc.descendants((node) => {
+		if (node.type.name === "mention") {
+			count += 1;
+		} else if (node.type.name === "emoji") {
+			count += (node.attrs.name ?? "").length;
+		} else if (node.isText) {
+			count += (node.text ?? "").length;
+		}
+	});
+	return count;
+}
+
+/** Derive a stable avatar tone from a user id so the same user always renders the same colour. */
+function toneForId(id: string): AvatarTone {
+	const tones: AvatarTone[] = [
+		"lagoon",
+		"violet",
+		"amber",
+		"rose",
+		"mint",
+		"slate",
+		"sky",
+	];
+	let hash = 0;
+	for (let i = 0; i < id.length; i++) {
+		hash = (hash * 31 + id.charCodeAt(i)) | 0;
+	}
+	return tones[Math.abs(hash) % tones.length];
+}
+
+// ── React-based mention suggestion dropdown ──────────────────────────────────
+
+interface MentionItem {
+	id: string | null;
+	label?: string | null;
+	avatarUrl?: string | null;
+}
+
+interface MentionListProps {
+	items: MentionItem[];
+	command: (item: MentionItem) => void;
+	selectedIndex: number;
+	setSelectedIndex: (index: number) => void;
+}
+
+const MentionList = forwardRef<HTMLDivElement, MentionListProps>(
+	({ items, command, selectedIndex, setSelectedIndex }, ref) => {
+		return (
+			<div
+				ref={ref}
+				className="z-[10000] max-w-[280px] min-w-[200px] rounded-lg border border-[var(--feed-line)] bg-[var(--feed-card)] shadow-lg"
+			>
+				<ScrollArea mah={200}>
+					{items.length === 0 ? (
+						<div className="px-3 py-2 text-xs text-[var(--feed-ink-dim)]">
+							No users found
+						</div>
+					) : (
+						items.map((item, index) => (
+							<button
+								key={item.id ?? `mention-${index}`}
+								type="button"
+								className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left ${
+									index === selectedIndex
+										? "bg-[var(--feed-inset)] font-semibold text-[var(--feed-ink)]"
+										: "text-[var(--feed-ink-soft)]"
+								}`}
+								onClick={() => command(item)}
+								onMouseEnter={() => setSelectedIndex(index)}
+							>
+								<Avatar
+									name={item.label ?? item.id ?? "?"}
+									tone={toneForId(item.id ?? "")}
+									size={24}
+								/>
+								<span className="text-xs">{item.label ?? item.id ?? ""}</span>
+							</button>
+						))
+					)}
+				</ScrollArea>
+			</div>
+		);
+	},
+);
+MentionList.displayName = "MentionList";
+
+function buildMentionSuggestion(
+	users: () => MentionItem[],
+): Omit<SuggestionOptions<MentionItem, MentionItem>, "editor"> {
+	return {
+		char: "@",
+		allowedPrefixes: null,
+		command: ({ editor, range, props }) => {
+			editor
+				.chain()
+				.focus()
+				.deleteRange(range)
+				.insertContentAt(range, {
+					type: "mention",
+					attrs: {
+						id: props.id,
+						label: props.label,
+						mentionSuggestionChar: "@",
+					},
+				})
+				.run();
+		},
+		items: ({ query }) => {
+			const list = users();
+			if (!query) return list.slice(0, 5);
+			const q = query.toLowerCase();
+			return list
+				.filter(
+					(u) =>
+						(u.label ?? "").toLowerCase().includes(q) ||
+						(u.id ?? "").toLowerCase().includes(q),
+				)
+				.slice(0, 5);
+		},
+		render: () => {
+			let reactRenderer: ReactRenderer | null = null;
+			let unmount: (() => void) | null = null;
+			let selectedIndex = 0;
+			let currentItems: MentionItem[] = [];
+			let currentCommand: ((item: MentionItem) => void) | null = null;
+
+			const setSelectedIndex = (index: number) => {
+				selectedIndex = index;
+				reactRenderer?.updateProps({ selectedIndex: index });
+			};
+
+			return {
+				onStart: (props) => {
+					selectedIndex = 0;
+					currentItems = props.items;
+					currentCommand = props.command;
+					reactRenderer = new ReactRenderer(MentionList, {
+						props: {
+							items: props.items,
+							command: props.command,
+							selectedIndex,
+							setSelectedIndex,
+						},
+						editor: props.editor,
+					});
+					unmount = props.mount(reactRenderer.element);
+				},
+				onUpdate: (props) => {
+					selectedIndex = 0;
+					currentItems = props.items;
+					currentCommand = props.command;
+					reactRenderer?.updateProps({
+						items: props.items,
+						command: props.command,
+						selectedIndex,
+						setSelectedIndex,
+					});
+				},
+				onExit: () => {
+					unmount?.();
+					reactRenderer?.destroy();
+					unmount = null;
+					reactRenderer = null;
+				},
+				onKeyDown: ({ view, event }) => {
+					if (event.key === "Escape") {
+						exitSuggestion(view);
+						return true;
+					}
+					if (
+						event.key === "Enter" &&
+						currentItems.length > 0 &&
+						currentCommand
+					) {
+						currentCommand(currentItems[selectedIndex]);
+						return true;
+					}
+					if (event.key === "ArrowDown" && currentItems.length > 0) {
+						event.preventDefault();
+						const nextIndex = (selectedIndex + 1) % currentItems.length;
+						setSelectedIndex(nextIndex);
+						return true;
+					}
+					if (event.key === "ArrowUp" && currentItems.length > 0) {
+						event.preventDefault();
+						const prevIndex =
+							(selectedIndex - 1 + currentItems.length) % currentItems.length;
+						setSelectedIndex(prevIndex);
+						return true;
+					}
+					return false;
+				},
+			};
+		},
+	};
+}
+
 export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
-	const [value, setValue] = useState("");
-	const [focused, setFocused] = useState(false);
 	const [photos, setPhotos] = useState<
 		Array<{ id: string; file: File; preview: string }>
 	>([]);
-	// Combined index into photos + videos + gif for the lightbox.
 	const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(
 		null,
 	);
@@ -81,6 +306,80 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const videoInputRef = useRef<HTMLInputElement>(null);
 	const { mutate: createPost, isPending } = useCreatePost();
+	const { data: allUsers = [] } = useUsers();
+
+	// Convert API users to mention-compatible format
+	const mentionUsers: MentionItem[] = useMemo(
+		() =>
+			allUsers
+				.filter((u) => u.id !== viewer.id)
+				.map((u) => ({
+					id: u.id,
+					label: u.displayName ?? u.username ?? u.name,
+					avatarUrl: u.avatarUrl ?? null,
+				})),
+		[allUsers, viewer.id],
+	);
+
+	// Ref to access mentionUsers in the suggestion callback
+	const mentionUsersRef = useRef(mentionUsers);
+	mentionUsersRef.current = mentionUsers;
+
+	// Build the Tiptap editor with Mention extension
+	const editor = useEditor({
+		content: "",
+		extensions: [
+			StarterKit.configure({
+				bulletList: false,
+				orderedList: false,
+				blockquote: false,
+				horizontalRule: false,
+				codeBlock: false,
+				code: false,
+				hardBreak: false,
+			}),
+			Placeholder.configure({
+				placeholder: "Recognize someone today...",
+			}),
+			Mention.configure({
+				HTMLAttributes: {
+					class: "mention",
+				},
+				renderText: (props) =>
+					`@${props.node.attrs.label ?? props.node.attrs.id ?? ""}`,
+				suggestion: buildMentionSuggestion(() => mentionUsersRef.current),
+			}),
+			Emoji.configure({
+				enableEmoticons: true,
+				emojis: gitHubEmojis,
+				forceFallbackImages: true,
+			}),
+		],
+		editorProps: {
+			attributes: {
+				class:
+					"block w-full resize-none bg-transparent pt-2 pb-1 text-[12px] leading-[1.35] text-[var(--feed-ink)] outline-none [overflow-wrap:anywhere]",
+			},
+		},
+	});
+
+	// Track character count — re-compute on every editor update so React
+	// re-renders and the composer actions appear when typing.
+	const [charCount, setCharCount] = useState(0);
+	useEffect(() => {
+		if (!editor) return;
+		const handler = () => setCharCount(countCharacters(editor));
+		setCharCount(countCharacters(editor));
+		editor.on("update", handler);
+		return () => {
+			editor.off("update", handler);
+		};
+	}, [editor]);
+	const remaining = MAX_LENGTH - charCount;
+
+	const getEditorContent = useCallback(() => {
+		return extractPlainText(editor);
+	}, [editor]);
 
 	const handleSubmit = useCallback(() => {
 		const session = readSession();
@@ -88,6 +387,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 			return;
 		}
 
+		const content = getEditorContent();
 		const hasFiles = photos.length > 0 || videos.length > 0;
 		const attachmentType =
 			videos.length > 0
@@ -100,7 +400,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 		createPost(
 			{
-				content: value,
+				content,
 				attachmentType,
 				files: hasFiles
 					? [...photos.map((p) => p.file), ...videos.map((v) => v.file)]
@@ -109,11 +409,10 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 			},
 			{
 				onSuccess: () => {
-					setValue("");
+					editor?.commands.clearContent();
 					setPhotos([]);
 					setVideos([]);
 					setSelectedGif(null);
-					setFocused(false);
 				},
 				onError: (error) => {
 					const message =
@@ -129,44 +428,13 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				},
 			},
 		);
-	}, [value, photos, videos, selectedGif, createPost]);
+	}, [getEditorContent, photos, videos, selectedGif, createPost, editor]);
 
-	const remaining = MAX_LENGTH - value.length;
-	// The counter and the extra rows only appear once the writer engages, so the
-	// resting card keeps its original one-line look. Staying active when attachments
-	// are present lets the user remove them even after the field blurs.
 	const active =
-		focused ||
-		value.length > 0 ||
+		charCount > 0 ||
 		photos.length > 0 ||
 		videos.length > 0 ||
 		selectedGif !== null;
-
-	/**
-	 * Fit the field to its content. The DOM holds the truth here (the browser
-	 * measures the wrapped text), so this runs from the events that change it
-	 * rather than from an effect watching state. At rest the field keeps its
-	 * natural `rows={1}` height, so nothing can go stale if CSS lands late.
-	 */
-	const resize = useCallback(
-		(element: HTMLTextAreaElement | null, isActive: boolean) => {
-			if (!element) {
-				return;
-			}
-
-			if (!isActive) {
-				element.style.removeProperty("height");
-				element.style.removeProperty("overflow-y");
-				return;
-			}
-
-			element.style.height = "auto";
-			const needed = Math.max(element.scrollHeight, EXPANDED_HEIGHT);
-			element.style.height = `${Math.min(needed, MAX_HEIGHT)}px`;
-			element.style.overflowY = needed > MAX_HEIGHT ? "auto" : "hidden";
-		},
-		[],
-	);
 
 	const counterTone =
 		remaining <= 0
@@ -175,9 +443,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				? "text-[var(--feed-warn)]"
 				: "text-[var(--feed-ink-dim)]";
 
-	// Revoke object URLs that were removed since the last render, after React
-	// has committed the DOM update so the lightbox doesn't try to load a revoked
-	// URL during the transition frame.
+	// Revoke object URLs that were removed since the last render.
 	const prevPhotosRef = useRef(photos);
 	const prevVideosRef = useRef(videos);
 	useEffect(() => {
@@ -202,8 +468,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 			const files = event.target.files;
 			if (!files || files.length === 0) return;
 
-			// Capture the files array immediately — the FileList is a live reference
-			// to the input, which becomes empty once we reset the value below.
 			const fileArray = Array.from(files);
 
 			setPhotos((current) => {
@@ -218,7 +482,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				return [...current, ...newPhotos];
 			});
 
-			// Reset input so the same file can be selected again after removal.
 			if (fileInputRef.current) {
 				fileInputRef.current.value = "";
 			}
@@ -228,8 +491,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 	const removePhoto = useCallback((id: string) => {
 		setPhotos((current) => current.filter((p) => p.id !== id));
-		// Closing the lightbox when any media is removed avoids showing a
-		// revoked object URL for a frame before the index shifts.
 		setSelectedMediaIndex(null);
 	}, []);
 
@@ -238,8 +499,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 			const files = event.target.files;
 			if (!files || files.length === 0) return;
 
-			// Capture the files array immediately — the FileList is a live reference
-			// to the input, which becomes empty once we reset the value below.
 			const fileArray = Array.from(files);
 
 			setVideos((current) => {
@@ -254,7 +513,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				return [...current, ...newVideos];
 			});
 
-			// Reset input so the same file can be selected again after removal.
 			if (videoInputRef.current) {
 				videoInputRef.current.value = "";
 			}
@@ -264,14 +522,9 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 	const removeVideo = useCallback((id: string) => {
 		setVideos((current) => current.filter((v) => v.id !== id));
-		// Closing the lightbox when any media is removed avoids showing a
-		// revoked object URL for a frame before the index shifts.
 		setSelectedMediaIndex(null);
 	}, []);
 
-	// Build a combined slides array: photos come first, then videos, then GIF.
-	// The key includes all preview URLs so the lightbox remounts with fresh slides
-	// when any media is added or removed (revoking the old object URLs).
 	const slidesKey = `${photos.length}-${videos.length}-${selectedGif?.id ?? ""}-${photos.map((p) => p.preview).join(",")}-${videos.map((v) => v.preview).join(",")}`;
 	const slides: LightboxSlideData[] = [
 		...photos.map((photo) => ({ src: photo.preview })),
@@ -279,8 +532,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 		...(selectedGif !== null ? [{ src: selectedGif.url }] : []),
 	];
 
-	// Close the lightbox if the selected index is out of bounds — e.g., when all
-	// remaining media are removed while the preview is open.
 	useEffect(() => {
 		if (
 			selectedMediaIndex !== null &&
@@ -297,28 +548,11 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 					<Avatar name={viewer.name} tone={viewer.tone} size={38} />
 
 					<div className="min-w-0 flex-1">
-						<textarea
-							aria-label="Recognize someone today"
-							aria-describedby={active ? counterId : undefined}
-							placeholder="Recognize someone today..."
-							maxLength={MAX_LENGTH}
-							rows={1}
-							value={value}
-							onChange={(event) => {
-								setValue(event.target.value);
-								resize(event.currentTarget, true);
-							}}
-							onFocus={(event) => {
-								setFocused(true);
-								resize(event.currentTarget, true);
-							}}
-							onBlur={(event) => {
-								setFocused(false);
-								// Keep the room the writer already used; only collapse an empty field.
-								resize(event.currentTarget, event.currentTarget.value !== "");
-							}}
-							className="block w-full resize-none overflow-hidden bg-transparent pt-2 pb-1 text-[13px] leading-[1.35] text-[var(--feed-ink)] outline-none [overflow-wrap:anywhere] placeholder:text-[var(--feed-ink-dim)]"
-						/>
+						{editor && (
+							<RichTextEditor editor={editor} style={{ border: "none" }}>
+								<RichTextEditor.Content />
+							</RichTextEditor>
+						)}
 
 						{active && (
 							<>
@@ -388,7 +622,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 									{COMPOSER_ACTIONS.map((action) => {
 										const { Icon, color } = ACTION_ICONS[action.id];
-										const hasInput = value.trim().length > 0;
+										const hasInput = charCount > 0;
 										const photosInUse = photos.length > 0;
 										const videosInUse = videos.length > 0;
 										const gifsInUse = selectedGif !== null;
@@ -398,7 +632,6 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 											action.id === "video" && videos.length >= MAX_VIDEOS;
 										const isGifFull =
 											action.id === "gif" && selectedGif !== null;
-										// When one action is in use, disable the others.
 										const isOtherActionInUse =
 											(photosInUse && action.id !== "photo") ||
 											(videosInUse && action.id !== "video") ||
@@ -461,7 +694,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 											rightSection={<Send size={14} aria-hidden="true" />}
 											loading={isPending}
 											disabled={
-												(!value &&
+												(charCount === 0 &&
 													photos.length === 0 &&
 													videos.length === 0 &&
 													selectedGif === null) ||

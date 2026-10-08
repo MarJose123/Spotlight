@@ -48,3 +48,7 @@ export function gifsTrending() {
 export function gifsSearch(query: string) {
 	return ["gifs", "search", query] as const;
 }
+
+export function users() {
+	return ["users"] as const;
+}

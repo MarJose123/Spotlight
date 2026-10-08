@@ -15,6 +15,7 @@ import type {
 	ApiComment,
 	ApiLeaderboardEntry,
 	ApiPostLiker,
+	ApiUser,
 	CreatePostRequest,
 	FetchPostsParams,
 	UserProfileStats,
@@ -30,6 +31,7 @@ import {
 	fetchPostLikes,
 	fetchPosts,
 	fetchUserProfileStats,
+	fetchUsers,
 	toggleLikePost,
 	updateComment,
 	updatePost,
@@ -46,6 +48,7 @@ import {
 	posts,
 	profileStats,
 	profileStatsAll,
+	users,
 } from "./query-keys";
 import { readSession } from "./session";
 
@@ -385,5 +388,15 @@ export function useSearchGifs(query: string) {
 		queryFn: () => searchGifs(query),
 		enabled: query.trim().length > 0,
 		staleTime: 60_000,
+	});
+}
+
+// ── Users query (for mention dropdown) ───────────────────────────────────────
+
+export function useUsers() {
+	return useQuery<ApiUser[]>({
+		queryKey: users(),
+		queryFn: () => fetchUsers(1, 100).then((res) => res.data),
+		staleTime: 5 * 60 * 1000,
 	});
 }

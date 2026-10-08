@@ -8,7 +8,11 @@
 import { requestJsonAuth } from "./client";
 import { fetchLeaderboard } from "./leaderboard";
 import { fetchUserPostsCount } from "./posts";
-import type { ApiAuthenticatedUser, UserProfileStats } from "./types/users";
+import type {
+	ApiAuthenticatedUser,
+	ApiUser,
+	UserProfileStats,
+} from "./types/users";
 
 export type {
 	ApiAuthenticatedUser,
@@ -32,4 +36,15 @@ export async function fetchUserProfileStats(
 	const likesCount =
 		leaderboard.find((entry) => entry.user.id === userId)?.likesCount ?? 0;
 	return { postsCount, likesCount };
+}
+
+/** Fetch a page of users for the mention dropdown. */
+export async function fetchUsers(
+	page = 1,
+	limit = 100,
+): Promise<{ data: ApiUser[]; meta: { total: number } }> {
+	return requestJsonAuth<{ data: ApiUser[]; meta: { total: number } }>(
+		`/users?page=${page}&limit=${limit}`,
+		{},
+	);
 }

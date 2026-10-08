@@ -14,6 +14,7 @@
 @import "tailwindcss";
 @import '@mantine/core/styles.css';
 @import '@mantine/lightbox/styles.css';
+@import '@mantine/tiptap/styles.css';
 @plugin "@tailwindcss/typography";
 
 @theme {
@@ -21,6 +22,22 @@
 }
 
 :root {
+  --feed-panel: #f3f6f9;
+  --feed-card: #ffffff;
+  --feed-card-hover: #f1f5f8;
+  --feed-inset: #eef2f6;
+  --feed-line: #e0e7ee;
+  --feed-line-soft: #eaf0f4;
+  --feed-ink: #14313a;
+  --feed-ink-soft: #4c6874;
+  --feed-ink-dim: #7a8e99;
+  --feed-accent: #0b7ec4;
+  --feed-chip: #14313a;
+  --feed-chip-ink: #ffffff;
+  --feed-warn: #b45309;
+  --feed-danger: #dc2626;
+  --feed-hover: rgba(20, 49, 58, 0.05);
+  --feed-avatar-ring: rgba(20, 49, 58, 0.1);
   --sea-ink: #173a40;
   --sea-ink-soft: #416166;
   --lagoon: #4fb8b2;
@@ -42,7 +59,24 @@
   --hero-b: rgba(47, 106, 74, 0.2);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+:root[data-mantine-color-scheme="dark"] {
+  --feed-panel: #0b0f15;
+  --feed-card: #111720;
+  --feed-card-hover: #151d27;
+  --feed-inset: #19212b;
+  --feed-line: #222b37;
+  --feed-line-soft: #1a222c;
+  --feed-ink: #e9eef4;
+  --feed-ink-soft: #9aa6b4;
+  --feed-ink-dim: #6d7886;
+  --feed-accent: #1d9bf0;
+  --feed-chip: #eef2f6;
+  --feed-chip-ink: #0b0f15;
+  --feed-warn: #fbbf24;
+  --feed-danger: #f87171;
+  --feed-hover: rgba(255, 255, 255, 0.06);
+  --feed-avatar-ring: rgba(255, 255, 255, 0.12);
   --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
@@ -65,7 +99,24 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]),
+  :root:not([data-mantine-color-scheme="light"]) {
+    --feed-panel: #0b0f15;
+    --feed-card: #111720;
+    --feed-card-hover: #151d27;
+    --feed-inset: #19212b;
+    --feed-line: #222b37;
+    --feed-line-soft: #1a222c;
+    --feed-ink: #e9eef4;
+    --feed-ink-soft: #9aa6b4;
+    --feed-ink-dim: #6d7886;
+    --feed-accent: #1d9bf0;
+    --feed-chip: #eef2f6;
+    --feed-chip-ink: #0b0f15;
+    --feed-warn: #fbbf24;
+    --feed-danger: #f87171;
+    --feed-hover: rgba(255, 255, 255, 0.06);
+    --feed-avatar-ring: rgba(255, 255, 255, 0.12);
     --sea-ink: #d7ece8;
     --sea-ink-soft: #afcdc8;
     --lagoon: #60d7cf;
@@ -615,5 +666,31 @@ a {
     color: inherit;
   }
 }
+
+/* ── Tiptap mention node styling ─────────────────────────────────────────── */
+
+.ProseMirror .mention {
+  color: var(--lagoon);
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 0 2px;
+  background: color-mix(in oklab, var(--lagoon) 12%, transparent);
+  cursor: default;
+}
+
+/* ── Tiptap emoji node styling ──────────────────────────────────────────── */
+
+.tiptap [data-type="emoji"] {
+  display: inline;
+}
+
+.tiptap [data-type="emoji"] img {
+  height: 1em;
+  width: 1em;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+
 
 
