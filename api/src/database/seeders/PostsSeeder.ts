@@ -8,7 +8,7 @@
 import type { Dictionary, EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
 import { PostsFactory } from '#/database/factories/PostsFactory.js';
-import { faker } from '@faker-js/faker';
+import { fakerEN as faker } from '@faker-js/faker';
 import { User } from '#/users/entities/user.entity.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 

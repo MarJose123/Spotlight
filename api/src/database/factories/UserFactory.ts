@@ -7,7 +7,7 @@
  */
 import { Factory } from '@mikro-orm/seeder';
 import { User } from '#/users/entities/user.entity.js';
-import { faker } from '@faker-js/faker';
+import { fakerEN as faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 
 export class UserFactory extends Factory<User> {

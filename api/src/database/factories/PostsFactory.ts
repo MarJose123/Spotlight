@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Factory } from '@mikro-orm/seeder';
-import { faker } from '@faker-js/faker';
+import { fakerEN as faker } from '@faker-js/faker';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
