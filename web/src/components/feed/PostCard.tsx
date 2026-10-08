@@ -30,6 +30,7 @@ import {
 	X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError } from "#/lib/api/client";
 import {
 	useComments,
 	useCreateComment,
@@ -119,10 +120,26 @@ export function PostCard({
 
 	const handleLike = useCallback(() => {
 		if (!session) return;
-		toggleLike.mutate({
-			postId: post.id,
-			userId: session.user?.id ?? viewerId,
-		});
+		toggleLike.mutate(
+			{
+				postId: post.id,
+				userId: session.user?.id ?? viewerId,
+			},
+			{
+				onError: (error) => {
+					const message =
+						error instanceof ApiError
+							? error.message
+							: "Could not update like. Please try again.";
+					notifications.show({
+						title: "Like failed",
+						message,
+						color: "red",
+						autoClose: 5000,
+					});
+				},
+			},
+		);
 	}, [session, post.id, viewerId, toggleLike]);
 
 	const handleComment = useCallback(() => {
@@ -130,6 +147,18 @@ export function PostCard({
 		createComment.mutate(
 			{ postId: post.id, content: commentText.trim() },
 			{
+				onError: (error) => {
+					const message =
+						error instanceof ApiError
+							? error.message
+							: "Could not post comment. Please try again.";
+					notifications.show({
+						title: "Comment failed",
+						message,
+						color: "red",
+						autoClose: 5000,
+					});
+				},
 				onSettled: () => {
 					setCommentText("");
 					// Reset textarea height after clearing content.
@@ -370,6 +399,18 @@ export function PostCard({
 													autoClose: 3000,
 												});
 											},
+											onError: (error) => {
+												const message =
+													error instanceof ApiError
+														? error.message
+														: "Could not update post. Please try again.";
+												notifications.show({
+													title: "Update failed",
+													message,
+													color: "red",
+													autoClose: 5000,
+												});
+											},
 											onSettled: () => setEditingPost(false),
 										},
 									);
@@ -403,7 +444,29 @@ export function PostCard({
 								if (editPostText.trim() && editPostText.trim() !== post.body) {
 									updatePostMutation.mutate(
 										{ postId: post.id, content: editPostText.trim() },
-										{ onSettled: () => setEditingPost(false) },
+										{
+											onSuccess: () => {
+												notifications.show({
+													title: "Post updated",
+													message: "Your post has been updated.",
+													color: "teal",
+													autoClose: 3000,
+												});
+											},
+											onError: (error) => {
+												const message =
+													error instanceof ApiError
+														? error.message
+														: "Could not update post. Please try again.";
+												notifications.show({
+													title: "Update failed",
+													message,
+													color: "red",
+													autoClose: 5000,
+												});
+											},
+											onSettled: () => setEditingPost(false),
+										},
 									);
 								} else {
 									setEditingPost(false);
@@ -606,6 +669,18 @@ export function PostCard({
 																		content: editCommentText.trim(),
 																	},
 																	{
+																		onError: (error) => {
+																			const message =
+																				error instanceof ApiError
+																					? error.message
+																					: "Could not update comment. Please try again.";
+																			notifications.show({
+																				title: "Update failed",
+																				message,
+																				color: "red",
+																				autoClose: 5000,
+																			});
+																		},
 																		onSettled: () => setEditingCommentId(null),
 																	},
 																);
@@ -656,10 +731,26 @@ export function PostCard({
 																		<Trash2 size={12} aria-hidden="true" />
 																	}
 																	onClick={() => {
-																		deleteComment.mutate({
-																			postId: post.id,
-																			commentId: comment.id,
-																		});
+																		deleteComment.mutate(
+																			{
+																				postId: post.id,
+																				commentId: comment.id,
+																			},
+																			{
+																				onError: (error) => {
+																					const message =
+																						error instanceof ApiError
+																							? error.message
+																							: "Could not delete comment. Please try again.";
+																					notifications.show({
+																						title: "Delete failed",
+																						message,
+																						color: "red",
+																						autoClose: 5000,
+																					});
+																				},
+																			},
+																		);
 																	}}
 																>
 																	Delete
@@ -685,6 +776,18 @@ export function PostCard({
 																		content: editCommentText.trim(),
 																	},
 																	{
+																		onError: (error) => {
+																			const message =
+																				error instanceof ApiError
+																					? error.message
+																					: "Could not update comment. Please try again.";
+																			notifications.show({
+																				title: "Update failed",
+																				message,
+																				color: "red",
+																				autoClose: 5000,
+																			});
+																		},
 																		onSettled: () => setEditingCommentId(null),
 																	},
 																);

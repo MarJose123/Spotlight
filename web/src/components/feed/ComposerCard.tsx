@@ -9,6 +9,7 @@
 import { Button } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
+import { notifications } from "@mantine/notifications";
 import { Film, Image, Send, Video, X } from "lucide-react";
 import {
 	Fragment,
@@ -18,6 +19,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { ApiError } from "#/lib/api/client";
 import type { GiphyGif } from "#/lib/api/gif";
 import { useCreatePost } from "#/lib/api-queries";
 import type { FeedViewer } from "#/lib/feed-data";
@@ -112,6 +114,18 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 					setVideos([]);
 					setSelectedGif(null);
 					setFocused(false);
+				},
+				onError: (error) => {
+					const message =
+						error instanceof ApiError
+							? error.message
+							: "Could not create post. Please try again.";
+					notifications.show({
+						title: "Post failed",
+						message,
+						color: "red",
+						autoClose: 5000,
+					});
 				},
 			},
 		);
