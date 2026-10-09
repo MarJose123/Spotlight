@@ -11,7 +11,7 @@ import { CommentResponseDto } from '#/posts/dto/comment-response.dto.js';
 
 type CommentResponseSource = Pick<
   Comments,
-  'id' | 'user' | 'content' | 'createdAt'
+  'id' | 'user' | 'contentJson' | 'createdAt'
 >;
 
 export class CommentMapper {
@@ -26,7 +26,7 @@ export class CommentMapper {
 
     return {
       id: comment.id,
-      content: comment.content,
+      contentJson: comment.contentJson,
       author: {
         id: comment.user.id,
         name: comment.user.name,

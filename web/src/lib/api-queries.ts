@@ -233,13 +233,13 @@ export function usePostLikes(postId: string, options?: { enabled?: boolean }) {
 export function useCreateComment() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (params: { postId: string; content: string }) =>
-			createComment(params.postId, params.content),
-		onMutate: ({ postId, content }) => {
+		mutationFn: (params: { postId: string; contentJson: string }) =>
+			createComment(params.postId, params.contentJson),
+		onMutate: ({ postId, contentJson }) => {
 			const session = readSession();
 			const optimisticComment: ApiComment = {
 				id: crypto.randomUUID(),
-				content,
+				contentJson,
 				author: {
 					id: session?.user?.id ?? "",
 					name: session?.user?.displayName ?? session?.user?.name ?? "",
@@ -274,14 +274,14 @@ export function useCreateComment() {
 				},
 			);
 		},
-		onError: (_error, { postId, content }) => {
+		onError: (_error, { postId, contentJson }) => {
 			// Revert optimistic comment on failure.
 			queryClient.setQueryData(
 				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return [];
 					return old.filter(
-						(c) => c.content !== content || !c.id.startsWith("temp-"),
+						(c) => c.contentJson !== contentJson || !c.id.startsWith("temp-"),
 					);
 				},
 			);
@@ -320,15 +320,17 @@ export function useUpdateComment() {
 		mutationFn: (params: {
 			postId: string;
 			commentId: string;
-			content: string;
-		}) => updateComment(params.postId, params.commentId, params.content),
-		onMutate: ({ postId, commentId, content }) => {
+			contentJson: string;
+		}) => updateComment(params.postId, params.commentId, params.contentJson),
+		onMutate: ({ postId, commentId, contentJson }) => {
 			// Optimistically update the comment in the cache.
 			queryClient.setQueryData(
 				comments(postId),
 				(old: ApiComment[] | undefined) => {
 					if (!old) return old;
-					return old.map((c) => (c.id === commentId ? { ...c, content } : c));
+					return old.map((c) =>
+						c.id === commentId ? { ...c, contentJson } : c,
+					);
 				},
 			);
 		},

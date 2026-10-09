@@ -21,7 +21,7 @@ export function fetchComments(postId: string): Promise<ApiComment[]> {
 
 export function createComment(
 	postId: string,
-	content: string,
+	contentJson: string,
 ): Promise<ApiComment> {
 	return requestJsonAuth<ApiComment>(
 		`/posts/${encodeURIComponent(postId)}/comments`,
@@ -31,7 +31,7 @@ export function createComment(
 				"content-type": "application/json",
 				accept: "application/json",
 			},
-			body: JSON.stringify({ content }),
+			body: JSON.stringify({ contentJson }),
 		},
 	);
 }
@@ -39,7 +39,7 @@ export function createComment(
 export function updateComment(
 	postId: string,
 	commentId: string,
-	content: string,
+	contentJson: string,
 ): Promise<ApiComment> {
 	return requestJsonAuth<ApiComment>(
 		`/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,
@@ -49,7 +49,7 @@ export function updateComment(
 				"content-type": "application/json",
 				accept: "application/json",
 			},
-			body: JSON.stringify({ content }),
+			body: JSON.stringify({ contentJson }),
 		},
 	);
 }

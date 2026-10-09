@@ -8,7 +8,7 @@
 
 export interface ApiComment {
 	id: string;
-	content: string;
+	contentJson: string;
 	author: {
 		id: string;
 		name: string;

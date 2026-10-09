@@ -10,9 +10,10 @@ import { IsNotEmpty } from 'class-validator';
 
 export class UpdateCommentDto {
   @ApiProperty({
-    description: 'Updated body of the comment.',
-    example: 'Updated comment content.',
+    description: 'Updated Tiptap JSON content of the comment.',
+    example:
+      '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Updated comment"}]}]}',
   })
   @IsNotEmpty()
-  content!: string;
+  contentJson!: string;
 }

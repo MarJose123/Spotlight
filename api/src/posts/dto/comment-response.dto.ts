@@ -21,8 +21,8 @@ export class CommentResponseDto {
   @ApiProperty({ description: 'Comment id.', format: 'uuid' })
   id: string;
 
-  @ApiProperty({ description: 'Body of the comment.' })
-  content: string;
+  @ApiProperty({ description: 'Tiptap JSON content of the comment.' })
+  contentJson: string;
 
   @ApiProperty({
     description: 'Author of the comment.',

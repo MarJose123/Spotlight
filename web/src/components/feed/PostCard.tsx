@@ -14,11 +14,13 @@ import {
 	Skeleton,
 	Stack,
 	Text,
-	Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { RichTextEditor } from "@mantine/tiptap";
+import { InputRule } from "@tiptap/core";
 import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji";
 import Mention from "@tiptap/extension-mention";
+import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import dayjs from "dayjs";
@@ -33,7 +35,7 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "#/lib/api/client";
 import {
 	useComments,
@@ -52,6 +54,100 @@ import { TiptapRenderer } from "./TiptapRenderer";
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
+// Build an emoticon map for quick lookup (emoticon -> emoji name).
+const emoticonMap = (() => {
+	const map = new Map<string, string>();
+	for (const emoji of gitHubEmojis) {
+		if (emoji.emoticons) {
+			for (const emoticon of emoji.emoticons) {
+				map.set(emoticon, emoji.name);
+			}
+		}
+	}
+	return map;
+})();
+
+// Build regex that matches emoticons without requiring a trailing space.
+// Sorted longest-first so "<3" matches before "<" if both existed.
+// Capture the leading space in group 1 and the emoticon in group 2,
+// so the handler can preserve the space.
+const emoticonRegex = (() => {
+	const emoticons = Array.from(emoticonMap.keys()).sort(
+		(a, b) => b.length - a.length,
+	);
+	if (emoticons.length === 0) return null;
+	const escaped = emoticons.map((e) =>
+		e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+	);
+	return new RegExp(`(^|\\s)(${escaped.join("|")})$`);
+})();
+
+const commentEditorExtensions = [
+	StarterKit.configure({
+		bulletList: false,
+		orderedList: false,
+		blockquote: false,
+		horizontalRule: false,
+		codeBlock: false,
+		hardBreak: false,
+	}),
+	Mention.configure({
+		HTMLAttributes: { class: "mention" },
+		renderText: (props) =>
+			`@${props.node.attrs.label ?? props.node.attrs.id ?? ""}`,
+	}),
+	Emoji.configure({
+		emojis: gitHubEmojis,
+		forceFallbackImages: true,
+	}).extend({
+		addInputRules() {
+			const inputRules = [...(this.parent?.() ?? [])];
+
+			// Add a custom input rule that converts emoticons without
+			// requiring a trailing space — the built-in rule needs ` $`
+			// at the end, so typing "<3" and pressing Enter never fires.
+			if (emoticonRegex) {
+				inputRules.push(
+					new InputRule({
+						find: emoticonRegex,
+						handler: ({ range, match, chain }) => {
+							// match[1] is the leading space (or empty at start),
+							// match[2] is the emoticon itself.
+							const prefix = match[1];
+							const emoticon = match[2];
+							const emojiName = emoticonMap.get(emoticon);
+							if (!emojiName) return;
+
+							// Only replace the emoticon portion, preserving the
+							// leading space so "test <3" becomes "test ❤️".
+							const emoticonFrom = range.from + prefix.length;
+							const emoticonTo = range.to;
+
+							chain()
+								.insertContentAt(
+									{ from: emoticonFrom, to: emoticonTo },
+									{
+										type: "emoji",
+										attrs: { name: emojiName },
+									},
+								)
+								.command(({ tr, state }) => {
+									tr.setStoredMarks(
+										state.doc.resolve(state.selection.to - 1).marks(),
+									);
+									return true;
+								})
+								.run();
+						},
+					}),
+				);
+			}
+
+			return inputRules;
+		},
+	}),
+];
+
 function canEditPost(viewerId: string, post: FeedPost): boolean {
 	if (viewerId !== post.authorId) return false;
 	const age = Date.now() - new Date(post.createdAt).getTime();
@@ -61,6 +157,171 @@ function canEditPost(viewerId: string, post: FeedPost): boolean {
 function canEditComment(_authorId: string, createdAt: string): boolean {
 	const age = Date.now() - new Date(createdAt).getTime();
 	return age >= 0 && age <= EDIT_WINDOW_MS;
+}
+
+/** Check if a Tiptap editor has any meaningful content (text, mentions, emojis). */
+function hasContent(editor: ReturnType<typeof useEditor> | null): boolean {
+	if (!editor) return false;
+	const { doc } = editor.state;
+	let hasText = false;
+	doc.descendants((node) => {
+		if (node.isText && node.text?.trim()) hasText = true;
+		if (node.type.name === "mention") hasText = true;
+		if (node.type.name === "emoji") hasText = true;
+	});
+	return hasText;
+}
+
+/** Inline Tiptap editor for creating a new comment. */
+interface NewCommentEditorProps {
+	onSubmit: (contentJson: string) => void;
+	isSubmitting: boolean;
+	user: {
+		id: string;
+		name: string;
+		avatarUrl?: string;
+	};
+}
+
+function NewCommentEditor({
+	onSubmit,
+	isSubmitting,
+	user,
+}: NewCommentEditorProps) {
+	const editor = useEditor({
+		content: "",
+		extensions: [
+			...commentEditorExtensions,
+			Placeholder.configure({
+				placeholder: "Write a comment...",
+			}),
+		],
+		editorProps: {
+			attributes: {
+				class:
+					"block w-full resize-none bg-transparent p-0 text-[11px] leading-[1.1] text-[var(--feed-ink)] outline-none [overflow-wrap:anywhere] min-h-[16px]",
+			},
+		},
+	});
+
+	const [hasText, setHasText] = useState(false);
+	useEffect(() => {
+		if (!editor) return;
+		const handler = () => setHasText(hasContent(editor));
+		setHasText(hasContent(editor));
+		editor.on("update", handler);
+		return () => {
+			editor.off("update", handler);
+		};
+	}, [editor]);
+
+	const handleSubmit = useCallback(() => {
+		if (editor && hasContent(editor)) {
+			onSubmit(JSON.stringify(editor.getJSON()));
+			editor.commands.clearContent();
+		}
+	}, [editor, onSubmit]);
+
+	return (
+		<div className="flex items-center gap-1.5">
+			<Avatar name={user.name} tone={toneForId(user.id)} size={28} />
+			<div className="min-w-0 flex-1">
+				{editor && (
+					<RichTextEditor editor={editor} style={{ padding: 0, margin: 0 }}>
+						<RichTextEditor.Content />
+					</RichTextEditor>
+				)}
+			</div>
+			<Button
+				variant="subtle"
+				size="xs"
+				disabled={!hasText || isSubmitting}
+				loading={isSubmitting}
+				onClick={handleSubmit}
+				className="shrink-0 rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"
+			>
+				<Send size={14} aria-hidden="true" />
+			</Button>
+		</div>
+	);
+}
+
+/** Inline Tiptap editor for editing an existing comment. */
+interface EditCommentEditorProps {
+	contentJson: string;
+	onSave: (contentJson: string) => void;
+	onCancel: () => void;
+	isSaving: boolean;
+}
+
+function EditCommentEditor({
+	contentJson,
+	onSave,
+	onCancel,
+	isSaving,
+}: EditCommentEditorProps) {
+	const originalContent = JSON.parse(contentJson);
+	const [hasChanges, setHasChanges] = useState(false);
+
+	const editor = useEditor({
+		content: originalContent,
+		extensions: commentEditorExtensions,
+		editorProps: {
+			attributes: {
+				class:
+					"block w-full rounded-xl border border-[var(--feed-line)] bg-[var(--feed-inset)] px-3 py-2 text-[12px] leading-[1.35] text-[var(--feed-ink)] focus:border-[var(--feed-ink-soft)] focus:outline-none [overflow-wrap:anywhere]",
+			},
+		},
+	});
+
+	useEffect(() => {
+		if (!editor) return;
+		editor.commands.focus("end");
+		const handler = () => {
+			setHasChanges(
+				JSON.stringify(editor.getJSON()) !== JSON.stringify(originalContent),
+			);
+		};
+		handler();
+		editor.on("update", handler);
+		return () => {
+			editor.off("update", handler);
+		};
+	}, [editor, originalContent]);
+
+	const handleSave = useCallback(() => {
+		if (editor && hasChanges) {
+			onSave(JSON.stringify(editor.getJSON()));
+		}
+	}, [editor, hasChanges, onSave]);
+
+	return (
+		<div className="mt-1 space-y-1.5">
+			<EditorContent editor={editor} />
+			<div className="flex gap-2">
+				<Button
+					variant="subtle"
+					size="xs"
+					leftSection={<Check size={12} aria-hidden="true" />}
+					disabled={!hasChanges || isSaving}
+					loading={isSaving}
+					onClick={handleSave}
+					className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
+				>
+					Save
+				</Button>
+				<Button
+					variant="subtle"
+					size="xs"
+					leftSection={<X size={12} aria-hidden="true" />}
+					onClick={onCancel}
+					className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+				>
+					Cancel
+				</Button>
+			</div>
+		</div>
+	);
 }
 
 /** Derive a stable avatar tone from a user id so the same author always renders the same colour. */
@@ -194,13 +455,16 @@ export function PostCard({
 	session: Session | null;
 }) {
 	const [commentOpen, setCommentOpen] = useState(false);
-	const [commentText, setCommentText] = useState("");
 	const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-	const [editCommentText, setEditCommentText] = useState("");
 	const [editingPost, setEditingPost] = useState(false);
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+	const [deleteCommentConfirmOpen, setDeleteCommentConfirmOpen] =
+		useState(false);
+	const [deletingCommentId, setDeletingCommentId] = useState({
+		postId: "",
+		commentId: "",
+	});
 	const [likesModalOpen, setLikesModalOpen] = useState(false);
-	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const toggleLike = useToggleLike();
 	const createComment = useCreateComment();
@@ -242,40 +506,28 @@ export function PostCard({
 		);
 	}, [session, post.id, viewerId, toggleLike]);
 
-	const handleComment = useCallback(() => {
-		if (!commentText.trim()) return;
-		createComment.mutate(
-			{ postId: post.id, content: commentText.trim() },
-			{
-				onError: (error) => {
-					const message =
-						error instanceof ApiError
-							? error.message
-							: "Could not post comment. Please try again.";
-					notifications.show({
-						title: "Comment failed",
-						message,
-						color: "red",
-						autoClose: 5000,
-					});
+	const handleComment = useCallback(
+		(contentJson: string) => {
+			createComment.mutate(
+				{ postId: post.id, contentJson },
+				{
+					onError: (error) => {
+						const message =
+							error instanceof ApiError
+								? error.message
+								: "Could not post comment. Please try again.";
+						notifications.show({
+							title: "Comment failed",
+							message,
+							color: "red",
+							autoClose: 5000,
+						});
+					},
 				},
-				onSettled: () => {
-					setCommentText("");
-					// Reset textarea height after clearing content.
-					if (textareaRef.current) {
-						textareaRef.current.style.height = "auto";
-					}
-				},
-			},
-		);
-	}, [commentText, post.id, createComment]);
-
-	// Focus the textarea when the comment section opens.
-	useEffect(() => {
-		if (commentOpen && textareaRef.current) {
-			textareaRef.current.focus();
-		}
-	}, [commentOpen]);
+			);
+		},
+		[post.id, createComment],
+	);
 
 	const hasEngagement = post.reactions.length > 0 || likeCount > 0;
 	const editable = canEditPost(viewerId, post);
@@ -373,6 +625,69 @@ export function PostCard({
 								},
 								onSettled: () => setDeleteConfirmOpen(false),
 							});
+						}}
+						className="rounded-full text-[12px] font-semibold"
+					>
+						Delete
+					</Button>
+				</div>
+			</Modal>
+
+			<Modal
+				opened={deleteCommentConfirmOpen}
+				onClose={() => setDeleteCommentConfirmOpen(false)}
+				title="Delete comment"
+				size="sm"
+				centered
+			>
+				<p className="text-[13px] text-[var(--feed-ink)]">
+					Are you sure you want to delete this comment? This action cannot be
+					undone.
+				</p>
+				<div className="mt-4 flex justify-end gap-2">
+					<Button
+						variant="subtle"
+						size="xs"
+						onClick={() => setDeleteCommentConfirmOpen(false)}
+						className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+					>
+						Cancel
+					</Button>
+					<Button
+						color="red"
+						size="xs"
+						loading={deleteComment.isPending}
+						disabled={deleteComment.isPending}
+						onClick={() => {
+							deleteComment.mutate(
+								{
+									postId: deletingCommentId.postId,
+									commentId: deletingCommentId.commentId,
+								},
+								{
+									onSuccess: () => {
+										notifications.show({
+											title: "Comment deleted",
+											message: "Your comment has been deleted.",
+											color: "teal",
+											autoClose: 3000,
+										});
+									},
+									onError: (error) => {
+										const message =
+											error instanceof ApiError
+												? error.message
+												: "Could not delete comment. Please try again.";
+										notifications.show({
+											title: "Delete failed",
+											message,
+											color: "red",
+											autoClose: 5000,
+										});
+									},
+									onSettled: () => setDeleteCommentConfirmOpen(false),
+								},
+							);
 						}}
 						className="rounded-full text-[12px] font-semibold"
 					>
@@ -600,41 +915,16 @@ export function PostCard({
 
 			{commentOpen && (
 				<div className="mt-3 border-t border-[var(--feed-line)] pt-3">
-					{session && (
-						<div className="flex gap-2">
-							<Textarea
-								ref={textareaRef}
-								placeholder="Write a comment..."
-								value={commentText}
-								onChange={(e) => setCommentText(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter" && !e.shiftKey) {
-										e.preventDefault();
-										handleComment();
-									}
-								}}
-								autosize
-								minRows={1}
-								maxRows={4}
-								className="flex-1"
-								styles={{
-									input: {
-										className:
-											"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
-									},
-								}}
-							/>
-							<Button
-								variant="subtle"
-								size="xs"
-								disabled={!commentText.trim() || createComment.isPending}
-								loading={createComment.isPending}
-								onClick={handleComment}
-								className="shrink-0 rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								<Send size={14} aria-hidden="true" />
-							</Button>
-						</div>
+					{session?.user && (
+						<NewCommentEditor
+							onSubmit={handleComment}
+							isSubmitting={createComment.isPending}
+							user={{
+								id: session.user.id,
+								name: session.user.displayName ?? session.user.name,
+								avatarUrl: session.user.avatarUrl,
+							}}
+						/>
 					)}
 
 					{!session && (
@@ -667,171 +957,82 @@ export function PostCard({
 												<span className="text-[11px] text-[var(--feed-ink-dim)]">
 													{formatRelativeTime(comment.createdAt)}
 												</span>
-
-												{isEditing ? (
-													<div className="ml-auto flex gap-1">
-														<Button
-															variant="subtle"
-															size="xs"
-															leftSection={
-																<Check size={12} aria-hidden="true" />
-															}
-															disabled={updateComment.isPending}
-															loading={updateComment.isPending}
-															onClick={() => {
-																if (
-																	editCommentText.trim() === comment.content
-																) {
-																	setEditingCommentId(null);
-																	return;
+												{!isEditing && editable && (
+													<Menu position="bottom-end" shadow="xs" width={140}>
+														<Menu.Target>
+															<button
+																type="button"
+																aria-label="Comment actions"
+																className="ml-auto grid h-5 w-5 shrink-0 place-items-center rounded text-[var(--feed-ink-dim)] transition hover:bg-[var(--feed-hover)] hover:text-[var(--feed-ink)]"
+															>
+																<MoreHorizontal size={12} aria-hidden="true" />
+															</button>
+														</Menu.Target>
+														<Menu.Dropdown>
+															<Menu.Item
+																leftSection={
+																	<Edit size={12} aria-hidden="true" />
 																}
-																updateComment.mutate(
-																	{
+																onClick={() => {
+																	setEditingCommentId(comment.id);
+																}}
+															>
+																Edit
+															</Menu.Item>
+															<Menu.Item
+																color="red"
+																leftSection={
+																	<Trash2 size={12} aria-hidden="true" />
+																}
+																onClick={() => {
+																	setDeletingCommentId({
 																		postId: post.id,
 																		commentId: comment.id,
-																		content: editCommentText.trim(),
-																	},
-																	{
-																		onError: (error) => {
-																			const message =
-																				error instanceof ApiError
-																					? error.message
-																					: "Could not update comment. Please try again.";
-																			notifications.show({
-																				title: "Update failed",
-																				message,
-																				color: "red",
-																				autoClose: 5000,
-																			});
-																		},
-																		onSettled: () => setEditingCommentId(null),
-																	},
-																);
-															}}
-															className="rounded-full p-0 h-5 w-5 text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
-														/>
-														<Button
-															variant="subtle"
-															size="xs"
-															leftSection={<X size={12} aria-hidden="true" />}
-															onClick={() => {
-																setEditingCommentId(null);
-																setEditCommentText("");
-															}}
-															className="rounded-full p-0 h-5 w-5 text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
-														/>
-													</div>
-												) : (
-													editable && (
-														<Menu position="bottom-end" shadow="xs" width={140}>
-															<Menu.Target>
-																<button
-																	type="button"
-																	aria-label="Comment actions"
-																	className="ml-auto grid h-5 w-5 shrink-0 place-items-center rounded text-[var(--feed-ink-dim)] transition hover:bg-[var(--feed-hover)] hover:text-[var(--feed-ink)]"
-																>
-																	<MoreHorizontal
-																		size={12}
-																		aria-hidden="true"
-																	/>
-																</button>
-															</Menu.Target>
-															<Menu.Dropdown>
-																<Menu.Item
-																	leftSection={
-																		<Edit size={12} aria-hidden="true" />
-																	}
-																	onClick={() => {
-																		setEditingCommentId(comment.id);
-																		setEditCommentText(comment.content);
-																	}}
-																>
-																	Edit
-																</Menu.Item>
-																<Menu.Item
-																	color="red"
-																	leftSection={
-																		<Trash2 size={12} aria-hidden="true" />
-																	}
-																	onClick={() => {
-																		deleteComment.mutate(
-																			{
-																				postId: post.id,
-																				commentId: comment.id,
-																			},
-																			{
-																				onError: (error) => {
-																					const message =
-																						error instanceof ApiError
-																							? error.message
-																							: "Could not delete comment. Please try again.";
-																					notifications.show({
-																						title: "Delete failed",
-																						message,
-																						color: "red",
-																						autoClose: 5000,
-																					});
-																				},
-																			},
-																		);
-																	}}
-																>
-																	Delete
-																</Menu.Item>
-															</Menu.Dropdown>
-														</Menu>
-													)
+																	});
+																	setDeleteCommentConfirmOpen(true);
+																}}
+															>
+																Delete
+															</Menu.Item>
+														</Menu.Dropdown>
+													</Menu>
 												)}
 											</div>
 
 											{isEditing ? (
-												<Textarea
-													value={editCommentText}
-													onChange={(e) => setEditCommentText(e.target.value)}
-													onKeyDown={(e) => {
-														if (e.key === "Enter" && !e.shiftKey) {
-															e.preventDefault();
-															if (editCommentText.trim()) {
-																updateComment.mutate(
-																	{
-																		postId: post.id,
-																		commentId: comment.id,
-																		content: editCommentText.trim(),
-																	},
-																	{
-																		onError: (error) => {
-																			const message =
-																				error instanceof ApiError
-																					? error.message
-																					: "Could not update comment. Please try again.";
-																			notifications.show({
-																				title: "Update failed",
-																				message,
-																				color: "red",
-																				autoClose: 5000,
-																			});
-																		},
-																		onSettled: () => setEditingCommentId(null),
-																	},
-																);
-															}
-														}
+												<EditCommentEditor
+													contentJson={comment.contentJson}
+													onSave={(contentJson) => {
+														updateComment.mutate(
+															{
+																postId: post.id,
+																commentId: comment.id,
+																contentJson,
+															},
+															{
+																onError: (error) => {
+																	const message =
+																		error instanceof ApiError
+																			? error.message
+																			: "Could not update comment. Please try again.";
+																	notifications.show({
+																		title: "Update failed",
+																		message,
+																		color: "red",
+																		autoClose: 5000,
+																	});
+																},
+																onSettled: () => setEditingCommentId(null),
+															},
+														);
 													}}
-													autosize
-													minRows={1}
-													maxRows={3}
-													className="mt-1"
-													styles={{
-														input: {
-															className:
-																"bg-[var(--feed-inset)] text-[12px] text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
-														},
-													}}
+													onCancel={() => setEditingCommentId(null)}
+													isSaving={updateComment.isPending}
 												/>
 											) : (
-												<p className="m-0 text-[12px] text-[var(--feed-ink-soft)]">
-													{comment.content}
-												</p>
+												<div className="mt-1">
+													<TiptapRenderer contentJson={comment.contentJson} />
+												</div>
 											)}
 										</div>
 									</div>

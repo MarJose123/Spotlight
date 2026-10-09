@@ -24,7 +24,7 @@ export class Comments {
   id: string = randomUUID();
 
   @Property({ type: 'text' })
-  content!: string;
+  contentJson!: string;
 
   @ManyToOne(() => Posts)
   post!: Rel<Posts>;

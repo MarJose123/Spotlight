@@ -44,7 +44,7 @@ export class CommentsService {
     post.commentsCount += 1;
 
     const comment = new Comments();
-    comment.content = dto.content;
+    comment.contentJson = dto.contentJson;
     comment.post = this.em.getReference(Posts, postId);
     comment.user = this.em.getReference(User, userId);
 
@@ -97,7 +97,7 @@ export class CommentsService {
     }
     this.assertAuthorAndTimeWindow(comment, userId);
 
-    comment.content = dto.content;
+    comment.contentJson = dto.contentJson;
     await this.em.flush();
 
     return CommentMapper.toResponse(comment)!;
