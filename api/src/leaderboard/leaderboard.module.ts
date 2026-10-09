@@ -9,6 +9,7 @@ import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LeaderboardController } from '#/leaderboard/leaderboard.controller.js';
 import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
+import { LeaderboardCron } from '#/leaderboard/cron/leaderboard.cron.js';
 import { AuthModule } from '#/auth/auth.module.js';
 import { LeaderboardScore } from '#/leaderboard/entities/leaderboard-score.entity.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
@@ -21,6 +22,6 @@ import { UserMapper } from '#/users/mappers/user.mapper.js';
     MikroOrmModule.forFeature([LeaderboardScore, Posts, User]),
   ],
   controllers: [LeaderboardController],
-  providers: [LeaderboardService, UserMapper],
+  providers: [LeaderboardService, LeaderboardCron, UserMapper],
 })
 export class LeaderboardModule {}

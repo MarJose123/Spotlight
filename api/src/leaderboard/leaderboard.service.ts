@@ -81,12 +81,9 @@ export class LeaderboardService {
   }
 
   /**
-   * Read the current month's leaderboard. Recalculates scores from the likes
-   * table on each call.
+   * Read the current month's leaderboard. Scores are pre-computed by a cron job.
    */
   async getLeaderboard(): Promise<LeaderboardEntryDto[]> {
-    await this.recalculateScores();
-
     const month = this.currentMonth();
 
     const scores = await this.scoreRepository.find(
