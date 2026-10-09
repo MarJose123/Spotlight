@@ -16,7 +16,15 @@ export class PostsFactory extends Factory<Posts> {
 
   definition(): Partial<Posts> {
     return {
-      content: faker.lorem.sentence(),
+      contentJson: JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: faker.lorem.sentence() }],
+          },
+        ],
+      }),
       attachments: [
         { key: 'posts/seed-image.png', type: AttachmentType.IMAGE },
       ],
