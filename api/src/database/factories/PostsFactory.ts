@@ -21,7 +21,12 @@ export class PostsFactory extends Factory<Posts> {
         content: [
           {
             type: 'paragraph',
-            content: [{ type: 'text', text: faker.lorem.sentence() }],
+            content: [
+              {
+                type: 'text',
+                text: faker.word.words({ count: { min: 4, max: 12 } }),
+              },
+            ],
           },
         ],
       }),
