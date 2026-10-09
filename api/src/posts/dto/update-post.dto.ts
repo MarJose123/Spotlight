@@ -10,9 +10,10 @@ import { IsNotEmpty } from 'class-validator';
 
 export class UpdatePostDto {
   @ApiProperty({
-    description: 'Updated body of the post.',
-    example: 'Thanks for the help shipping the release — updated!',
+    description: 'Updated Tiptap JSON content for rich text rendering.',
+    example:
+      '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}]}',
   })
   @IsNotEmpty()
-  content!: string;
+  contentJson!: string;
 }

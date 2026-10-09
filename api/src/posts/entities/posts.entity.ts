@@ -39,7 +39,7 @@ export class Posts {
   @ApiProperty({ type: 'string' })
   @Property({ type: 'text' })
   @IsNotEmpty()
-  content!: string;
+  contentJson!: string;
 
   @ApiProperty({
     type: 'array',

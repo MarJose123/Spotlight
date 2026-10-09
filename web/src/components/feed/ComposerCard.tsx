@@ -11,6 +11,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
 import { notifications } from "@mantine/notifications";
 import { RichTextEditor } from "@mantine/tiptap";
+import { InputRule } from "@tiptap/core";
 import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji";
 import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -61,28 +62,6 @@ const IMAGE_MIME_TYPES = "image/jpeg,image/png,image/webp";
 
 /** Video MIME types the composer accepts. */
 const VIDEO_MIME_TYPES = "video/mp4,video/webm,video/quicktime";
-
-/**
- * Extract plain text from a Tiptap editor, converting mention nodes into
- * `@username` (or `@name`) text so the existing API contract stays intact.
- */
-function extractPlainText(editor: ReturnType<typeof useEditor> | null): string {
-	if (!editor) return "";
-	const { doc } = editor.state;
-	const parts: string[] = [];
-
-	doc.descendants((node) => {
-		if (node.type.name === "mention") {
-			const label = node.attrs.label ?? node.attrs.id ?? "";
-			parts.push(`@${label}`);
-		} else if (node.type.name === "emoji") {
-			parts.push(node.attrs.name ?? "");
-		} else if (node.isText) {
-			parts.push(node.text ?? "");
-		}
-	});
-	return parts.join("");
-}
 
 /**
  * Count characters in the editor content. Each mention counts as 1 character
@@ -325,6 +304,34 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	const mentionUsersRef = useRef(mentionUsers);
 	mentionUsersRef.current = mentionUsers;
 
+	// Build an emoticon map for quick lookup (emoticon -> emoji name)
+	const emoticonMap = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const emoji of gitHubEmojis) {
+			if (emoji.emoticons) {
+				for (const emoticon of emoji.emoticons) {
+					map.set(emoticon, emoji.name);
+				}
+			}
+		}
+		return map;
+	}, []);
+
+	// Build regex that matches emoticons without requiring a trailing space.
+	// Sorted longest-first so "<3" matches before "<" if both existed.
+	// Capture the leading space in group 1 and the emoticon in group 2,
+	// so the handler can preserve the space.
+	const emoticonRegex = useMemo(() => {
+		const emoticons = Array.from(emoticonMap.keys()).sort(
+			(a, b) => b.length - a.length,
+		);
+		if (emoticons.length === 0) return null;
+		const escaped = emoticons.map((e) =>
+			e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+		);
+		return new RegExp(`(^|\\s)(${escaped.join("|")})$`);
+	}, [emoticonMap]);
+
 	// Build the Tiptap editor with Mention extension
 	const editor = useEditor({
 		content: "",
@@ -350,9 +357,55 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				suggestion: buildMentionSuggestion(() => mentionUsersRef.current),
 			}),
 			Emoji.configure({
-				enableEmoticons: true,
+				enableEmoticons: false,
 				emojis: gitHubEmojis,
 				forceFallbackImages: true,
+			}).extend({
+				addInputRules() {
+					const inputRules = [...(this.parent?.() ?? [])];
+
+					// Add a custom input rule that converts emoticons without
+					// requiring a trailing space — the built-in rule needs ` $`
+					// at the end, so typing "<3" and pressing Enter never fires.
+					if (emoticonRegex) {
+						inputRules.push(
+							new InputRule({
+								find: emoticonRegex,
+								handler: ({ range, match, chain }) => {
+									// match[1] is the leading space (or empty at start),
+									// match[2] is the emoticon itself.
+									const prefix = match[1];
+									const emoticon = match[2];
+									const emojiName = emoticonMap.get(emoticon);
+									if (!emojiName) return;
+
+									// Only replace the emoticon portion, preserving the
+									// leading space so "test <3" becomes "test ❤️".
+									const emoticonFrom = range.from + prefix.length;
+									const emoticonTo = range.to;
+
+									chain()
+										.insertContentAt(
+											{ from: emoticonFrom, to: emoticonTo },
+											{
+												type: "emoji",
+												attrs: { name: emojiName },
+											},
+										)
+										.command(({ tr, state }) => {
+											tr.setStoredMarks(
+												state.doc.resolve(state.selection.to - 1).marks(),
+											);
+											return true;
+										})
+										.run();
+								},
+							}),
+						);
+					}
+
+					return inputRules;
+				},
 			}),
 		],
 		editorProps: {
@@ -377,17 +430,15 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	}, [editor]);
 	const remaining = MAX_LENGTH - charCount;
 
-	const getEditorContent = useCallback(() => {
-		return extractPlainText(editor);
-	}, [editor]);
-
 	const handleSubmit = useCallback(() => {
 		const session = readSession();
 		if (!session) {
 			return;
 		}
 
-		const content = getEditorContent();
+		const contentJson = editor?.getJSON()
+			? JSON.stringify(editor.getJSON())
+			: undefined;
 		const hasFiles = photos.length > 0 || videos.length > 0;
 		const attachmentType =
 			videos.length > 0
@@ -400,7 +451,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 
 		createPost(
 			{
-				content,
+				contentJson: contentJson ?? "",
 				attachmentType,
 				files: hasFiles
 					? [...photos.map((p) => p.file), ...videos.map((v) => v.file)]
@@ -428,7 +479,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				},
 			},
 		);
-	}, [getEditorContent, photos, videos, selectedGif, createPost, editor]);
+	}, [photos, videos, selectedGif, createPost, editor]);
 
 	const active =
 		charCount > 0 ||

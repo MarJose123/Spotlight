@@ -56,7 +56,8 @@ export interface FeedPost {
 	createdAt: string;
 	/** Human-readable relative time for display. */
 	time: string;
-	body: string;
+	/** Tiptap JSON for rich text rendering. */
+	contentJson: string;
 	reactions: Array<{ id: string; emoji: string; tone: AvatarTone }>;
 	reactionCount: string;
 	commentCount: string;
@@ -95,7 +96,8 @@ export const POSTS: FeedPost[] = [
 		author: { name: VIEWER.name, handle: VIEWER.handle, tone: VIEWER.tone },
 		createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
 		time: "3 minutes ago",
-		body: "Just shipped the new feed redesign — check it out and let me know what you think!",
+		contentJson:
+			"Just shipped the new feed redesign — check it out and let me know what you think!",
 		reactions: [{ id: "cheers", emoji: "🎉", tone: "amber" }],
 		reactionCount: "12",
 		commentCount: "3 Comments",
@@ -107,7 +109,8 @@ export const POSTS: FeedPost[] = [
 		verified: true,
 		createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
 		time: "Few minutes ago",
-		body: "Let's set an age limit after which you can't run for political office, perhaps a number just below 70 …",
+		contentJson:
+			"Let's set an age limit after which you can't run for political office, perhaps a number just below 70 …",
 		reactions: [
 			{ id: "laud", emoji: "❤️", tone: "rose" },
 			{ id: "grin", emoji: "😂", tone: "amber" },
@@ -124,7 +127,7 @@ export const POSTS: FeedPost[] = [
 		verified: true,
 		createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
 		time: "2 hours ago",
-		body: "Sole Mates: Ralph Sugutan and the Nike KD 4 'Easter'",
+		contentJson: "Sole Mates: Ralph Sugutan and the Nike KD 4 'Easter'",
 		reactions: [
 			{ id: "fire", emoji: "🔥", tone: "rose" },
 			{ id: "clap", emoji: "👏", tone: "sky" },

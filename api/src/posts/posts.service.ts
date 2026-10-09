@@ -139,7 +139,7 @@ export class PostsService {
     }
 
     const post = new Posts();
-    post.content = dto.content;
+    post.contentJson = dto.contentJson;
     post.attachments = attachments;
     post.user = this.em.getReference(User, userId);
     this.postRepository.create(post);
@@ -224,7 +224,7 @@ export class PostsService {
     }
     this.assertAuthorAndTimeWindow(post, userId);
 
-    post.content = dto.content;
+    post.contentJson = dto.contentJson;
     await this.em.flush();
 
     return this.mapPostsToResponse([post])[0];

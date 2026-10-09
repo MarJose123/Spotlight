@@ -21,7 +21,8 @@ export interface ApiAttachment {
 export interface ApiPost {
 	id: string;
 	author: ApiPostAuthor;
-	content: string;
+	/** Tiptap JSON for rich text rendering. */
+	contentJson: string;
 	attachments: ApiAttachment[];
 	postType: string;
 	likedBy?: string[];
@@ -51,7 +52,8 @@ export interface FetchPostsParams {
 }
 
 export interface CreatePostRequest {
-	content: string;
+	/** Tiptap JSON for rich text rendering. */
+	contentJson: string;
 	attachmentType: "text" | "image" | "video" | "gif";
 	/** GIF URL — required when attachmentType is gif. */
 	gifUrl?: string;
@@ -60,5 +62,6 @@ export interface CreatePostRequest {
 }
 
 export interface UpdatePostRequest {
-	content: string;
+	/** Tiptap JSON for rich text rendering. */
+	contentJson: string;
 }

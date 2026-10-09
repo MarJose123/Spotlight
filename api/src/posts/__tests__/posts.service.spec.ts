@@ -33,7 +33,7 @@ describe('PostsService', () => {
     const post = new Posts();
     Object.assign(post, {
       id: 'post-123',
-      content: 'Great work!',
+      contentJson: 'Great work!',
       attachments: [{ key: 'posts/img.png', type: AttachmentType.IMAGE }],
       postType: PostType.USER,
       user: makeUser(),
@@ -160,7 +160,7 @@ describe('PostsService', () => {
 
     it('should create and persist a post', async () => {
       const dto = {
-        content: 'Thanks!',
+        contentJson: 'Thanks!',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.IMAGE,
@@ -175,7 +175,7 @@ describe('PostsService', () => {
       expect(bucketService.uploadFile).toHaveBeenCalledTimes(1);
       expect(postRepository.create).toHaveBeenCalled();
       expect(em.flush).toHaveBeenCalled();
-      expect(result!.content).toBe('Thanks!');
+      expect(result!.contentJson).toBe('Thanks!');
       expect(result!.attachments[0].url).toBe(
         '/api/v1/posts/attachment/posts%2F123-img.png',
       );
@@ -183,7 +183,7 @@ describe('PostsService', () => {
 
     it('should reject more than 5 images', async () => {
       const dto = {
-        content: 'Too many',
+        contentJson: 'Too many',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.IMAGE,
@@ -197,7 +197,7 @@ describe('PostsService', () => {
 
     it('should reject more than 1 video', async () => {
       const dto = {
-        content: 'Too many',
+        contentJson: 'Too many',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.VIDEO,
@@ -211,7 +211,7 @@ describe('PostsService', () => {
 
     it('should reject more than 1 GIF without a URL', async () => {
       const dto = {
-        content: 'GIF post',
+        contentJson: 'GIF post',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.GIF,
@@ -225,7 +225,7 @@ describe('PostsService', () => {
 
     it('should create a GIF post with a URL', async () => {
       const dto = {
-        content: 'Funny GIF',
+        contentJson: 'Funny GIF',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.GIF,
@@ -237,7 +237,7 @@ describe('PostsService', () => {
 
       expect(bucketService.uploadFile).not.toHaveBeenCalled();
       expect(postRepository.create).toHaveBeenCalled();
-      expect(result!.content).toBe('Funny GIF');
+      expect(result!.contentJson).toBe('Funny GIF');
       expect(result!.attachments[0].url).toBe(
         'https://media.giphy.com/media/abc123/giphy.gif',
       );
@@ -245,7 +245,7 @@ describe('PostsService', () => {
 
     it('should reject GIF post with empty URL', async () => {
       const dto = {
-        content: 'GIF post',
+        contentJson: 'GIF post',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.GIF,
@@ -260,7 +260,7 @@ describe('PostsService', () => {
 
     it('should accept up to 5 images', async () => {
       const dto = {
-        content: 'Multiple images',
+        contentJson: 'Multiple images',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.IMAGE,
@@ -274,7 +274,7 @@ describe('PostsService', () => {
 
       expect(bucketService.uploadFile).toHaveBeenCalledTimes(5);
       expect(postRepository.create).toHaveBeenCalled();
-      expect(result!.content).toBe('Multiple images');
+      expect(result!.contentJson).toBe('Multiple images');
       expect(result!.attachments).toHaveLength(5);
     });
   });
@@ -370,18 +370,18 @@ describe('PostsService', () => {
       postRepository.findOne.mockResolvedValue(post);
 
       const result = await service.update('post-123', 'user-123', {
-        content: 'Updated content',
+        contentJson: 'Updated content',
       });
 
-      expect(post.content).toBe('Updated content');
-      expect(result.content).toBe('Updated content');
+      expect(post.contentJson).toBe('Updated content');
+      expect(result.contentJson).toBe('Updated content');
     });
 
     it('should throw NotFoundException when post does not exist', async () => {
       postRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.update('missing', 'user-123', { content: 'New content' }),
+        service.update('missing', 'user-123', { contentJson: 'New content' }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -390,7 +390,9 @@ describe('PostsService', () => {
       postRepository.findOne.mockResolvedValue(post);
 
       await expect(
-        service.update('post-123', 'other-user', { content: 'New content' }),
+        service.update('post-123', 'other-user', {
+          contentJson: 'New content',
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -401,7 +403,7 @@ describe('PostsService', () => {
       postRepository.findOne.mockResolvedValue(post);
 
       await expect(
-        service.update('post-123', 'user-123', { content: 'New content' }),
+        service.update('post-123', 'user-123', { contentJson: 'New content' }),
       ).rejects.toThrow(ForbiddenException);
     });
   });

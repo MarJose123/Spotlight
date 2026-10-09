@@ -17,6 +17,10 @@ import {
 	Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji";
+import Mention from "@tiptap/extension-mention";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import {
@@ -44,6 +48,7 @@ import {
 import type { Session } from "#/lib/session";
 import type { AvatarTone, FeedPost } from "../../lib/feed-data";
 import { Avatar, MediaGrid, toneGradient } from "./media";
+import { TiptapRenderer } from "./TiptapRenderer";
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -83,6 +88,102 @@ function formatRelativeTime(iso: string): string {
 	return dayjs(iso).fromNow();
 }
 
+interface EditPostEditorProps {
+	postId: string;
+	contentJson: string;
+	onSave: (contentJson: string) => void;
+	onCancel: () => void;
+	isSaving: boolean;
+}
+
+function EditPostEditor({
+	contentJson,
+	onSave,
+	onCancel,
+	isSaving,
+}: EditPostEditorProps) {
+	const originalContent = JSON.parse(contentJson);
+	const [hasChanges, setHasChanges] = useState(false);
+
+	const editor = useEditor({
+		content: originalContent,
+		extensions: [
+			StarterKit.configure({
+				bulletList: false,
+				orderedList: false,
+				blockquote: false,
+				horizontalRule: false,
+				codeBlock: false,
+				hardBreak: false,
+			}),
+			Mention.configure({
+				HTMLAttributes: { class: "mention" },
+				renderText: (props) =>
+					`@${props.node.attrs.label ?? props.node.attrs.id ?? ""}`,
+			}),
+			Emoji.configure({
+				emojis: gitHubEmojis,
+				forceFallbackImages: true,
+			}),
+		],
+		editorProps: {
+			attributes: {
+				class:
+					"block w-full rounded-xl border border-[var(--feed-line)] bg-[var(--feed-inset)] px-3 py-2 text-[12px] leading-[1.35] text-[var(--feed-ink)] focus:border-[var(--feed-ink-soft)] focus:outline-none [overflow-wrap:anywhere]",
+			},
+		},
+	});
+
+	useEffect(() => {
+		if (!editor) return;
+		editor.commands.focus("end");
+		const handler = () => {
+			setHasChanges(
+				JSON.stringify(editor.getJSON()) !== JSON.stringify(originalContent),
+			);
+		};
+		handler();
+		editor.on("update", handler);
+		return () => {
+			editor.off("update", handler);
+		};
+	}, [editor, originalContent]);
+
+	const handleSave = useCallback(() => {
+		if (editor && hasChanges) {
+			onSave(JSON.stringify(editor.getJSON()));
+		}
+	}, [editor, hasChanges, onSave]);
+
+	return (
+		<div className="space-y-2">
+			<EditorContent editor={editor} />
+			<div className="flex gap-2">
+				<Button
+					variant="subtle"
+					size="xs"
+					leftSection={<Check size={12} aria-hidden="true" />}
+					disabled={!hasChanges || isSaving}
+					loading={isSaving}
+					onClick={handleSave}
+					className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
+				>
+					Save
+				</Button>
+				<Button
+					variant="subtle"
+					size="xs"
+					leftSection={<X size={12} aria-hidden="true" />}
+					onClick={onCancel}
+					className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
+				>
+					Cancel
+				</Button>
+			</div>
+		</div>
+	);
+}
+
 export function PostCard({
 	post,
 	viewerId,
@@ -97,7 +198,6 @@ export function PostCard({
 	const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 	const [editCommentText, setEditCommentText] = useState("");
 	const [editingPost, setEditingPost] = useState(false);
-	const [editPostText, setEditPostText] = useState("");
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const [likesModalOpen, setLikesModalOpen] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -210,10 +310,7 @@ export function PostCard({
 						<Menu.Dropdown>
 							<Menu.Item
 								leftSection={<Edit size={14} aria-hidden="true" />}
-								onClick={() => {
-									setEditingPost(true);
-									setEditPostText(post.body);
-								}}
+								onClick={() => setEditingPost(true)}
 							>
 								Edit
 							</Menu.Item>
@@ -381,119 +478,45 @@ export function PostCard({
 
 			{editingPost ? (
 				<div className="mt-2.5 space-y-2">
-					<Textarea
-						value={editPostText}
-						onChange={(e) => setEditPostText(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && !e.shiftKey) {
-								e.preventDefault();
-								if (editPostText.trim() && editPostText.trim() !== post.body) {
-									updatePostMutation.mutate(
-										{ postId: post.id, content: editPostText.trim() },
-										{
-											onSuccess: () => {
-												notifications.show({
-													title: "Post updated",
-													message: "Your post has been updated.",
-													color: "teal",
-													autoClose: 3000,
-												});
-											},
-											onError: (error) => {
-												const message =
-													error instanceof ApiError
-														? error.message
-														: "Could not update post. Please try again.";
-												notifications.show({
-													title: "Update failed",
-													message,
-													color: "red",
-													autoClose: 5000,
-												});
-											},
-											onSettled: () => setEditingPost(false),
-										},
-									);
-								} else {
-									setEditingPost(false);
-								}
-							}
+					<EditPostEditor
+						postId={post.id}
+						contentJson={post.contentJson}
+						onSave={(contentJson) => {
+							updatePostMutation.mutate(
+								{ postId: post.id, contentJson },
+								{
+									onSuccess: () => {
+										notifications.show({
+											title: "Post updated",
+											message: "Your post has been updated.",
+											color: "teal",
+											autoClose: 3000,
+										});
+									},
+									onError: (error) => {
+										const message =
+											error instanceof ApiError
+												? error.message
+												: "Could not update post. Please try again.";
+										notifications.show({
+											title: "Update failed",
+											message,
+											color: "red",
+											autoClose: 5000,
+										});
+									},
+									onSettled: () => setEditingPost(false),
+								},
+							);
 						}}
-						autosize
-						minRows={1}
-						maxRows={6}
-						styles={{
-							input: {
-								className:
-									"bg-[var(--feed-inset)] text-[13px] leading-6 text-[var(--feed-ink)] placeholder:text-[var(--feed-ink-dim)]",
-							},
-						}}
+						onCancel={() => setEditingPost(false)}
+						isSaving={updatePostMutation.isPending}
 					/>
-					<div className="flex gap-2">
-						<Button
-							variant="subtle"
-							size="xs"
-							leftSection={<Check size={12} aria-hidden="true" />}
-							disabled={
-								!editPostText.trim() ||
-								editPostText.trim() === post.body ||
-								updatePostMutation.isPending
-							}
-							loading={updatePostMutation.isPending}
-							onClick={() => {
-								if (editPostText.trim() && editPostText.trim() !== post.body) {
-									updatePostMutation.mutate(
-										{ postId: post.id, content: editPostText.trim() },
-										{
-											onSuccess: () => {
-												notifications.show({
-													title: "Post updated",
-													message: "Your post has been updated.",
-													color: "teal",
-													autoClose: 3000,
-												});
-											},
-											onError: (error) => {
-												const message =
-													error instanceof ApiError
-														? error.message
-														: "Could not update post. Please try again.";
-												notifications.show({
-													title: "Update failed",
-													message,
-													color: "red",
-													autoClose: 5000,
-												});
-											},
-											onSettled: () => setEditingPost(false),
-										},
-									);
-								} else {
-									setEditingPost(false);
-								}
-							}}
-							className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)]"
-						>
-							Save
-						</Button>
-						<Button
-							variant="subtle"
-							size="xs"
-							leftSection={<X size={12} aria-hidden="true" />}
-							onClick={() => {
-								setEditingPost(false);
-								setEditPostText("");
-							}}
-							className="rounded-full text-[12px] font-semibold text-[var(--feed-ink-dim)] hover:text-[var(--feed-ink)]"
-						>
-							Cancel
-						</Button>
-					</div>
 				</div>
 			) : (
-				<p className="mt-2.5 mb-0 text-[13px] leading-6 text-[var(--feed-ink)]">
-					{post.body}
-				</p>
+				<div className="mt-2.5">
+					<TiptapRenderer contentJson={post.contentJson} />
+				</div>
 			)}
 
 			{post.mediaItems && post.mediaItems.length > 0 && (

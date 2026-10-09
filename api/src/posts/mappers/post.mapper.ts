@@ -17,7 +17,7 @@ type PostResponseSource = Pick<
   Posts,
   | 'id'
   | 'user'
-  | 'content'
+  | 'contentJson'
   | 'postType'
   | 'likes'
   | 'likesCount'
@@ -50,7 +50,7 @@ export class PostMapper {
     return {
       id: post.id,
       author: mapAuthor(post),
-      content: post.content,
+      contentJson: post.contentJson,
       postType: post.postType,
       likedBy: post.likes?.map((like: Likes) => like.user.id),
       likesCount: post.likesCount,

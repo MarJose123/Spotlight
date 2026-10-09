@@ -69,18 +69,43 @@ function formatRelativeTime(iso: string): string {
 
 const APP_VERSION = import.meta.env.APP_VERSION;
 
+/** Extract plain text from Tiptap JSON for alt text and subtitles. */
+function extractPlainText(contentJson: string): string {
+	try {
+		const json = JSON.parse(contentJson);
+		const texts: string[] = [];
+		function walk(node: unknown) {
+			if (!node || typeof node !== "object") return;
+			const obj = node as Record<string, unknown>;
+			if (obj.type === "text" && typeof obj.text === "string") {
+				texts.push(obj.text);
+			}
+			if (Array.isArray(obj.content)) {
+				for (const child of obj.content) walk(child);
+			}
+		}
+		if (Array.isArray(json?.content)) {
+			for (const node of json.content) walk(node);
+		}
+		return texts.join(" ");
+	} catch {
+		return contentJson;
+	}
+}
+
 /** Convert a raw API post into the shape PostCard expects. */
 function mapPost(post: ApiPost) {
 	const tone = toneForId(post.author.id);
+	const plainText = extractPlainText(post.contentJson);
 	const mediaItems = post.attachments.map((attachment) => ({
-		alt: post.content.slice(0, 120),
+		alt: plainText.slice(0, 120),
 		title:
 			attachment.type === "image"
 				? "Photo"
 				: attachment.type === "video"
 					? "Video"
 					: "GIF",
-		subtitle: post.content.slice(0, 80),
+		subtitle: plainText.slice(0, 80),
 		url: attachment.url,
 		type: (attachment.type === "video" || attachment.type === "image"
 			? attachment.type
@@ -97,7 +122,7 @@ function mapPost(post: ApiPost) {
 		},
 		createdAt: post.createdAt,
 		time: formatRelativeTime(post.createdAt),
-		body: post.content,
+		contentJson: post.contentJson,
 		reactions: (post.likedBy ?? []).map((id) => ({
 			id,
 			emoji: "❤️",

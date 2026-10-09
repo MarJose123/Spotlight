@@ -14,6 +14,7 @@ import {
 import type {
 	ApiComment,
 	ApiLeaderboardEntry,
+	ApiPost,
 	ApiPostLiker,
 	ApiUser,
 	CreatePostRequest,
@@ -107,10 +108,57 @@ export function useCreatePost() {
 export function useUpdatePost() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (params: { postId: string; content: string }) =>
-			updatePost(params.postId, { content: params.content }),
+		mutationFn: (params: { postId: string; contentJson: string }) =>
+			updatePost(params.postId, { contentJson: params.contentJson }),
+		onMutate: ({ postId, contentJson }) => {
+			// Optimistically update the post in all posts queries, including infinite pages.
+			queryClient.setQueriesData(
+				{ queryKey: posts(), exact: false },
+				(old: unknown) => {
+					if (!old || typeof old !== "object") return old;
+					const obj = old as Record<string, unknown>;
+
+					// Handle useInfiniteQuery shape: { pages: [{ data: ApiPost[] }], pageParams: [...] }
+					if (Array.isArray(obj.pages)) {
+						return {
+							...old,
+							pages: obj.pages.map((page: unknown) => {
+								if (!page || typeof page !== "object") return page;
+								const p = page as { data: ApiPost[] };
+								if (!Array.isArray(p.data)) return page;
+								return {
+									...page,
+									data: p.data.map((post) =>
+										post.id === postId ? { ...post, contentJson } : post,
+									),
+								};
+							}),
+						};
+					}
+
+					// Handle regular useQuery shape: { data: ApiPost[] }
+					if (Array.isArray(obj.data)) {
+						return {
+							...old,
+							data: (obj.data as ApiPost[]).map((post) =>
+								post.id === postId ? { ...post, contentJson } : post,
+							),
+						};
+					}
+					return old;
+				},
+			);
+		},
+		onError: () => {
+			// Revert on failure by refetching.
+			void queryClient.invalidateQueries({ queryKey: posts() });
+		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: posts() });
+			queryClient.invalidateQueries({
+				queryKey: profileStatsAll(),
+				exact: false,
+			});
 		},
 	});
 }

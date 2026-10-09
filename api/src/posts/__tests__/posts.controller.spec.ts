@@ -28,7 +28,7 @@ describe('PostsController', () => {
       username: undefined,
       avatarUrl: undefined,
     },
-    content: 'Great work!',
+    contentJson: 'Great work!',
     attachments: [
       {
         url: '/api/v1/posts/attachment/posts%2Fimg.png',
@@ -107,7 +107,7 @@ describe('PostsController', () => {
   describe('createPost', () => {
     it('should create a post with files and a single attachment type', async () => {
       const dto = {
-        content: 'Thanks!',
+        contentJson: 'Thanks!',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.IMAGE,
@@ -121,7 +121,10 @@ describe('PostsController', () => {
           buffer: Buffer.from('test'),
         },
       ];
-      const created = makePostResponse({ id: 'new-post', content: 'Thanks!' });
+      const created = makePostResponse({
+        id: 'new-post',
+        contentJson: 'Thanks!',
+      });
       vi.mocked(postsService.create).mockResolvedValue(created);
 
       const mockReq = { auth: { sub: 'user-123', user: {} } } as any;
@@ -133,7 +136,7 @@ describe('PostsController', () => {
 
     it('should create a GIF post with a URL and no files', async () => {
       const dto = {
-        content: 'Funny GIF',
+        contentJson: 'Funny GIF',
         postType: PostType.USER,
         user: 'user-123',
         attachmentType: AttachmentType.GIF,
@@ -142,7 +145,7 @@ describe('PostsController', () => {
       const files: FastifyMultipartFile[] = [];
       const created = makePostResponse({
         id: 'new-post',
-        content: 'Funny GIF',
+        contentJson: 'Funny GIF',
         attachments: [
           {
             url: 'https://media.giphy.com/media/abc123/giphy.gif',

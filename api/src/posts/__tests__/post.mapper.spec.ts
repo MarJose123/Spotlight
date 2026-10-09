@@ -30,7 +30,7 @@ describe('PostMapper', () => {
     const post = new Posts();
     Object.assign(post, {
       id: 'post-123',
-      content: 'Great work!',
+      contentJson: 'Great work!',
       attachments: [{ key: 'posts/img.png', type: AttachmentType.IMAGE }],
       postType: PostType.USER,
       user: makeUser(),
@@ -55,7 +55,7 @@ describe('PostMapper', () => {
       expect(result!.id).toBe('post-123');
       expect(result!.author.id).toBe('user-123');
       expect(result!.author.name).toBeUndefined();
-      expect(result!.content).toBe('Great work!');
+      expect(result!.contentJson).toBe('Great work!');
       expect(result!.postType).toBe(PostType.USER);
       expect(result!.likedBy).toEqual(['user-456', 'user-789']);
       expect(result!.likesCount).toBe(2);

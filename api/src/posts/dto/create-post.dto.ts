@@ -11,11 +11,12 @@ import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 
 export class CreatePostDto {
   @ApiProperty({
-    description: 'Body of the post.',
-    example: 'Thanks for the help shipping the release!',
+    description: 'Tiptap JSON content for rich text rendering.',
+    example:
+      '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}]}',
   })
   @IsNotEmpty()
-  content!: string;
+  contentJson!: string;
 
   @ApiProperty({
     description: 'The type of attachment for the post.',

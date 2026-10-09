@@ -47,8 +47,8 @@ export class PostResponseDto {
   })
   author: PostAuthorDto;
 
-  @ApiProperty({ description: 'Body of the post.' })
-  content: string;
+  @ApiProperty({ description: 'Tiptap JSON content for rich text rendering.' })
+  contentJson: string;
 
   @ApiProperty({
     description: 'Attached media items, each with a URL and type.',

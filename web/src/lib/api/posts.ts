@@ -40,7 +40,7 @@ export async function fetchPosts(
 
 export function createPost(params: CreatePostRequest): Promise<unknown> {
 	const formData = new FormData();
-	formData.append("content", params.content);
+	formData.append("contentJson", params.contentJson);
 	formData.append("attachmentType", params.attachmentType);
 
 	if (params.attachmentType === "gif" && params.gifUrl) {
