@@ -17,6 +17,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RichTextEditor } from "@mantine/tiptap";
+import { Link as RouterLink } from "@tanstack/react-router";
 import { InputRule } from "@tiptap/core";
 import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji";
 import Mention from "@tiptap/extension-mention";
@@ -539,9 +540,13 @@ export function PostCard({
 				<Avatar name={post.author.name} tone={post.author.tone} size={38} />
 
 				<div className="min-w-0 flex-1">
-					<span className="truncate text-[13px] font-bold">
+					<RouterLink
+						to="/users"
+						search={{ search: post.author.name }}
+						className="truncate text-[13px] font-bold text-[var(--feed-ink)] hover:underline"
+					>
 						{post.author.name}
-					</span>
+					</RouterLink>
 					<p className="m-0 text-[11.5px] text-[var(--feed-ink-dim)]">
 						{formatRelativeTime(post.createdAt)}
 					</p>

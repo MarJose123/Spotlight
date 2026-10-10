@@ -32,24 +32,14 @@ interface UserCardProps {
 	name: string;
 	email: string;
 	role?: string;
-	status?: string;
 }
 
-export function UserCard({ id, name, email, role, status }: UserCardProps) {
+export function UserCard({ id, name, email, role }: UserCardProps) {
 	const tone = toneForId(id);
-	const isActive = status === "ACTIVE";
 
 	return (
 		<article className="group flex flex-col items-center gap-3 rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-6 transition-colors hover:border-[var(--lagoon)]">
-			<div className="relative">
-				<Avatar name={name} tone={tone} size={56} />
-				<output
-					aria-label={isActive ? "Active" : "Inactive"}
-					className={`absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-[var(--feed-card)] ${
-						isActive ? "bg-[var(--lagoon)]" : "bg-[var(--feed-ink-dim)]"
-					}`}
-				/>
-			</div>
+			<Avatar name={name} tone={tone} size={56} />
 
 			<div className="text-center">
 				<h3 className="m-0 text-[15px] font-bold text-[var(--sea-ink)]">

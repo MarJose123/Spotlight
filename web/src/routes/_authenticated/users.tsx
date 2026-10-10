@@ -9,9 +9,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserDirectory } from "#/components/UserDirectory";
 
+export type UsersSearch = {
+	search?: string;
+};
+
 export const Route = createFileRoute("/_authenticated/users")({
 	head: () => ({
 		meta: [{ title: "All Users · Spotlight" }],
+	}),
+	validateSearch: (search: Record<string, unknown>): UsersSearch => ({
+		search: typeof search.search === "string" ? search.search : undefined,
 	}),
 	component: UserDirectory,
 });

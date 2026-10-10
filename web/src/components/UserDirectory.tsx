@@ -7,6 +7,7 @@
  */
 
 import { Button } from "@mantine/core";
+import { useSearch } from "@tanstack/react-router";
 import { ArrowUp, RefreshCw, Search, Users, WifiOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUsersDirectory } from "#/lib/api-queries";
@@ -58,6 +59,7 @@ const PAGE_SIZE = 20;
 export function UserDirectory() {
 	const session = useSession();
 	const sessionUser = session?.user;
+	const searchParams = useSearch({ from: "/_authenticated/users" });
 
 	const viewerId = sessionUser?.id;
 	const viewer: FeedViewer = {
@@ -69,7 +71,7 @@ export function UserDirectory() {
 	};
 
 	const [roleFilter, setRoleFilter] = useState<string | undefined>();
-	const [searchQuery, setSearchQuery] = useState("");
+	const [searchQuery, setSearchQuery] = useState(searchParams.search ?? "");
 	const [page, setPage] = useState(1);
 	const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -204,15 +206,14 @@ export function UserDirectory() {
 							className="w-full rounded-full border border-[var(--feed-line)] bg-[var(--feed-card)] py-2 pl-9 pr-8 text-sm text-[var(--sea-ink)] placeholder-[var(--feed-ink-dim)] transition-colors focus:border-[var(--lagoon)] focus:outline-none"
 						/>
 						{searchQuery && (
-							<Button
-								variant="subtle"
-								size="xs"
+							<button
+								type="button"
 								onClick={() => handleSearchChange("")}
-								className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--feed-ink-dim)] transition-colors hover:text-[var(--sea-ink)]"
+								className="absolute right-2 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full text-[var(--feed-ink-dim)] transition-colors hover:text-[var(--sea-ink)]"
 								aria-label="Clear search"
 							>
-								<X size={16} aria-hidden={true} />
-							</Button>
+								<X size={14} aria-hidden={true} />
+							</button>
 						)}
 					</div>
 				</div>
@@ -225,7 +226,6 @@ export function UserDirectory() {
 							name={user.displayName || user.name}
 							email={user.email}
 							role={user.role}
-							status={user.status}
 						/>
 					))}
 				</div>
