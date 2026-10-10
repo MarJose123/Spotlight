@@ -56,6 +56,7 @@ export {
 	createPost,
 	deletePost,
 	fetchPosts,
+	fetchUserPosts,
 	fetchUserPostsCount,
 	updatePost,
 } from "./posts";

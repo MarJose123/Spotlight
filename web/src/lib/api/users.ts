@@ -38,12 +38,22 @@ export async function fetchUserProfileStats(
 	return { postsCount, likesCount };
 }
 
+export interface PaginationMeta {
+	total: number;
+	itemCount: number;
+	perPage: number;
+	totalPages: number;
+	currentPage: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+}
+
 /** Fetch a page of users for the mention dropdown. */
 export async function fetchUsers(
 	page = 1,
 	limit = 100,
-): Promise<{ data: ApiUser[]; meta: { total: number } }> {
-	return requestJsonAuth<{ data: ApiUser[]; meta: { total: number } }>(
+): Promise<{ data: ApiUser[]; meta: PaginationMeta }> {
+	return requestJsonAuth<{ data: ApiUser[]; meta: PaginationMeta }>(
 		`/users?page=${page}&limit=${limit}`,
 		{},
 	);

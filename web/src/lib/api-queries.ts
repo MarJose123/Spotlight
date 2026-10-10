@@ -31,6 +31,7 @@ import {
 	fetchLeaderboard,
 	fetchPostLikes,
 	fetchPosts,
+	fetchUserPosts,
 	fetchUserProfileStats,
 	fetchUsers,
 	toggleLikePost,
@@ -49,7 +50,9 @@ import {
 	posts,
 	profileStats,
 	profileStatsAll,
+	userPosts,
 	users,
+	usersDirectory,
 } from "./query-keys";
 import { readSession } from "./session";
 
@@ -448,5 +451,52 @@ export function useUsers() {
 		queryKey: users(),
 		queryFn: () => fetchUsers(1, 100).then((res) => res.data),
 		staleTime: 5 * 60 * 1000,
+	});
+}
+
+// ── User posts query ─────────────────────────────────────────────────────────
+
+export function useUserPosts(userId: string | undefined) {
+	return useQuery({
+		queryKey: userId ? userPosts(userId) : [],
+		queryFn: () => {
+			if (!userId) throw new Error("No user id");
+			return fetchUserPosts(userId);
+		},
+		enabled: !!userId,
+		staleTime: 30_000,
+	});
+}
+
+// ── Users directory query (paginated, with optional role filter) ─────────────
+
+interface UseUsersDirectoryOptions {
+	role?: string;
+	search?: string;
+	page?: number;
+	limit?: number;
+}
+
+export function useUsersDirectory(options: UseUsersDirectoryOptions = {}) {
+	const { role, search, page = 1, limit = 20 } = options;
+	return useQuery({
+		queryKey: usersDirectory(role, search),
+		queryFn: () => fetchUsers(page, limit),
+		staleTime: 5 * 60 * 1000,
+		select: (res) => {
+			let data = res.data;
+			if (role) {
+				data = data.filter((u) => u.role === role);
+			}
+			if (search) {
+				const q = search.toLowerCase();
+				data = data.filter(
+					(u) =>
+						u.displayName.toLowerCase().includes(q) ||
+						u.email.toLowerCase().includes(q),
+				);
+			}
+			return { data, meta: res.meta };
+		},
 	});
 }

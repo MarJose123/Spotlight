@@ -52,3 +52,11 @@ export function gifsSearch(query: string) {
 export function users() {
 	return ["users"] as const;
 }
+
+export function usersDirectory(role?: string, search?: string) {
+	return ["usersDirectory", role, search] as const;
+}
+
+export function userPosts(userId: string) {
+	return ["userPosts", userId] as const;
+}

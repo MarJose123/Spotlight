@@ -67,6 +67,23 @@ export async function fetchUserPostsCount(userId: string): Promise<number> {
 	return result.meta.total;
 }
 
+/** Fetch a paginated list of posts by a specific user. */
+export async function fetchUserPosts(
+	userId: string,
+	params: FetchPostsParams = {},
+): Promise<ApiPaginatedPosts> {
+	const search = new URLSearchParams();
+	if (params.page) search.set("page", String(params.page));
+	if (params.limit) search.set("limit", String(params.limit));
+	const query = search.toString();
+	const path = query
+		? `/posts/user/${encodeURIComponent(userId)}?${query}`
+		: `/posts/user/${encodeURIComponent(userId)}`;
+	return requestJsonAuth<ApiPaginatedPosts>(path, {
+		headers: { accept: "application/json" },
+	});
+}
+
 export async function updatePost(
 	postId: string,
 	params: UpdatePostRequest,
