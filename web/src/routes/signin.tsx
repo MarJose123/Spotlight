@@ -11,6 +11,7 @@ import {
 	Button,
 	Divider,
 	Group,
+	LoadingOverlay,
 	Paper,
 	PasswordInput,
 	SimpleGrid,
@@ -98,95 +99,101 @@ function SignIn() {
 					</Text>
 				</Stack>
 
-				<Paper radius="lg" p="lg" withBorder className="rise-in">
-					<Stack gap="lg">
-						<div>
-							<Text size="lg" fw={500} c="bright">
-								{hasSso
-									? "Welcome to Spotlight, sign in with"
-									: "Sign in to Spotlight"}
-							</Text>
+				<div style={{ position: "relative" }}>
+					<Paper radius="lg" p="lg" withBorder className="rise-in">
+						<LoadingOverlay visible={submitting} />
+						<Stack gap="lg">
+							<div>
+								<Text size="lg" fw={500} c="bright">
+									{hasSso
+										? "Welcome to Spotlight, sign in with"
+										: "Sign in to Spotlight"}
+								</Text>
+
+								{hasSso && (
+									// A row would squeeze long provider names into ellipses.
+									<SimpleGrid
+										cols={ids.length === 1 ? 1 : { base: 1, xs: 2 }}
+										spacing="xs"
+										mt="md"
+									>
+										{ids.map((provider) => (
+											<ProviderButton
+												key={provider}
+												provider={provider}
+												redirectTo={redirect}
+												onError={setFailure}
+											/>
+										))}
+									</SimpleGrid>
+								)}
+							</div>
 
 							{hasSso && (
-								// A row would squeeze long provider names into ellipses.
-								<SimpleGrid
-									cols={ids.length === 1 ? 1 : { base: 1, xs: 2 }}
-									spacing="xs"
-									mt="md"
-								>
-									{ids.map((provider) => (
-										<ProviderButton
-											key={provider}
-											provider={provider}
-											redirectTo={redirect}
-											onError={setFailure}
-										/>
-									))}
-								</SimpleGrid>
+								<Divider
+									label="Or continue with email"
+									labelPosition="center"
+								/>
 							)}
-						</div>
 
-						{hasSso && (
-							<Divider label="Or continue with email" labelPosition="center" />
-						)}
+							{failure && (
+								<Alert
+									color="red"
+									variant="light"
+									icon={<TriangleAlert size={16} aria-hidden="true" />}
+								>
+									{failure}
+								</Alert>
+							)}
 
-						{failure && (
-							<Alert
-								color="red"
-								variant="light"
-								icon={<TriangleAlert size={16} aria-hidden="true" />}
+							{!reachable && (
+								<Alert
+									color="yellow"
+									variant="light"
+									icon={<TriangleAlert size={16} aria-hidden="true" />}
+								>
+									Single sign-on providers could not be loaded. Refresh the page
+									to try again.
+								</Alert>
+							)}
+
+							<form
+								onSubmit={form.onSubmit((values) => {
+									void submit(values);
+								})}
 							>
-								{failure}
-							</Alert>
-						)}
+								<Stack>
+									<TextInput
+										withAsterisk
+										label="Email"
+										placeholder="you@company.com"
+										autoComplete="email"
+										radius="md"
+										{...form.getInputProps("email")}
+									/>
 
-						{!reachable && (
-							<Alert
-								color="yellow"
-								variant="light"
-								icon={<TriangleAlert size={16} aria-hidden="true" />}
-							>
-								Single sign-on providers could not be loaded. Refresh the page
-								to try again.
-							</Alert>
-						)}
+									<PasswordInput
+										withAsterisk
+										label="Password"
+										placeholder="Your password"
+										autoComplete="current-password"
+										radius="md"
+										{...form.getInputProps("password")}
+									/>
+								</Stack>
 
-						<form
-							onSubmit={form.onSubmit((values) => {
-								void submit(values);
-							})}
-						>
-							<Stack>
-								<TextInput
-									withAsterisk
-									label="Email"
-									placeholder="you@company.com"
-									autoComplete="email"
-									radius="md"
-									{...form.getInputProps("email")}
-								/>
-
-								<PasswordInput
-									withAsterisk
-									label="Password"
-									placeholder="Your password"
-									autoComplete="current-password"
-									radius="md"
-									{...form.getInputProps("password")}
-								/>
-							</Stack>
-
-							<Group justify="space-between" align="center" mt="xl" gap="sm">
-								<Text size="xs" c="dimmed">
-									Accounts are provisioned by an administrator.
-								</Text>
-								<Button type="submit" radius="xl" loading={submitting}>
-									Sign in
-								</Button>
-							</Group>
-						</form>
-					</Stack>
-				</Paper>
+								<Group justify="space-between" align="center" mt="xl" gap="sm">
+									<Text size="xs" c="dimmed">
+										Accounts are provisioned by an administrator.
+									</Text>
+									<Button type="submit" radius="xl" loading={submitting}>
+										Sign in
+									</Button>
+								</Group>
+							</form>
+						</Stack>
+					</Paper>
+				</div>
 			</section>
 		</main>
 	);
