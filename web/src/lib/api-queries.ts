@@ -19,6 +19,7 @@ import type {
 	ApiUser,
 	CreatePostRequest,
 	FetchPostsParams,
+	InviteUserRequest,
 	UserProfileStats,
 } from "./api";
 import {
@@ -34,6 +35,7 @@ import {
 	fetchUserPosts,
 	fetchUserProfileStats,
 	fetchUsers,
+	inviteUser,
 	toggleLikePost,
 	updateComment,
 	updatePost,
@@ -497,6 +499,22 @@ export function useUsersDirectory(options: UseUsersDirectoryOptions = {}) {
 				);
 			}
 			return { data, meta: res.meta };
+		},
+	});
+}
+
+// ── Invite user mutation ─────────────────────────────────────────────────────
+
+export function useInviteUser() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (request: InviteUserRequest) => inviteUser(request),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: users() });
+			queryClient.invalidateQueries({
+				queryKey: usersDirectory(),
+				exact: false,
+			});
 		},
 	});
 }

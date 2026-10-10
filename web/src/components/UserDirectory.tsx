@@ -6,11 +6,27 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button } from "@mantine/core";
+import { Button, Group, Modal, TextInput } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { useSearch } from "@tanstack/react-router";
-import { ArrowUp, RefreshCw, Search, Users, WifiOff, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useUsersDirectory } from "#/lib/api-queries";
+import {
+	ArrowUp,
+	MailPlus,
+	RefreshCw,
+	Search,
+	Users,
+	WifiOff,
+	X,
+} from "lucide-react";
+import { zod4Resolver } from "mantine-form-zod-resolver";
+import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
+import {
+	useCurrentUser,
+	useInviteUser,
+	useUsersDirectory,
+} from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
 import { VIEWER } from "#/lib/feed-data";
 import { readSession } from "#/lib/session";
@@ -61,6 +77,9 @@ export function UserDirectory() {
 	const sessionUser = session?.user;
 	const searchParams = useSearch({ from: "/_authenticated/users" });
 
+	const { data: currentUserData } = useCurrentUser();
+	const isAdmin = currentUserData?.user.role === "ADMIN";
+
 	const viewerId = sessionUser?.id;
 	const viewer: FeedViewer = {
 		...VIEWER,
@@ -74,6 +93,24 @@ export function UserDirectory() {
 	const [searchQuery, setSearchQuery] = useState(searchParams.search ?? "");
 	const [page, setPage] = useState(1);
 	const [showScrollTop, setShowScrollTop] = useState(false);
+
+	// Invite modal state
+	const [inviteModalOpened, setInviteModalOpened] = useState(false);
+	const inviteInputRef = useRef<HTMLInputElement>(null);
+	const inviteMutation = useInviteUser();
+
+	const inviteSchema = z.object({
+		name: z
+			.string()
+			.min(1, "Name is required")
+			.max(100, "Name must be 100 characters or less"),
+		email: z.string().email("Please enter a valid email"),
+	});
+
+	const inviteForm = useForm({
+		initialValues: { name: "", email: "" },
+		validate: zod4Resolver(inviteSchema),
+	});
 
 	const { data, isLoading, isError } = useUsersDirectory({
 		role: roleFilter,
@@ -188,10 +225,22 @@ export function UserDirectory() {
 								system
 							</p>
 						</div>
-						<UserDirectoryFilter
-							value={roleFilter}
-							onChange={handleRoleChange}
-						/>
+						<Group gap="sm">
+							{isAdmin && (
+								<Button
+									variant="light"
+									leftSection={<MailPlus size={16} aria-hidden={true} />}
+									onClick={() => setInviteModalOpened(true)}
+									className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
+								>
+									Invite User
+								</Button>
+							)}
+							<UserDirectoryFilter
+								value={roleFilter}
+								onChange={handleRoleChange}
+							/>
+						</Group>
 					</div>
 					<div className="relative">
 						<Search
@@ -265,6 +314,92 @@ export function UserDirectory() {
 					</div>
 				)}
 			</div>
+
+			<Modal
+				opened={inviteModalOpened}
+				onClose={() => {
+					inviteForm.reset();
+					setInviteModalOpened(false);
+				}}
+				onEnterTransitionEnd={() => {
+					inviteInputRef.current?.focus();
+				}}
+				title={
+					<div className="flex items-center gap-2">
+						<MailPlus
+							size={18}
+							className="text-[var(--lagoon-deep)]"
+							aria-hidden="true"
+						/>
+						<div>
+							<p className="m-0 text-base font-semibold text-[var(--sea-ink)]">
+								Invite User
+							</p>
+							<p className="m-0 text-xs text-[var(--sea-ink-soft)]">
+								Send an invitation by email
+							</p>
+						</div>
+					</div>
+				}
+				centered
+				size="md"
+				withinPortal
+			>
+				<form
+					onSubmit={inviteForm.onSubmit((values) => {
+						inviteMutation.mutate(
+							{ name: values.name, email: values.email },
+							{
+								onSuccess: () => {
+									notifications.show({
+										title: "User created",
+										message: `${values.name} has been added to Spotlight.`,
+										color: "teal",
+									});
+									inviteForm.reset();
+									setInviteModalOpened(false);
+								},
+								onError: (error) => {
+									const message =
+										error instanceof Error
+											? error.message
+											: "Could not send invitation. Please try again.";
+									notifications.show({
+										title: "Invitation failed",
+										message,
+										color: "red",
+									});
+								},
+							},
+						);
+					})}
+				>
+					<div className="flex flex-col gap-4">
+						<TextInput
+							ref={inviteInputRef}
+							label="Name"
+							placeholder="Jane Doe"
+							withAsterisk
+							{...inviteForm.getInputProps("name")}
+						/>
+						<TextInput
+							label="Email address"
+							placeholder="colleague@company.com"
+							withAsterisk
+							type="email"
+							{...inviteForm.getInputProps("email")}
+						/>
+						<Button
+							type="submit"
+							loading={inviteMutation.isPending}
+							disabled={inviteMutation.isPending}
+							className="mt-2 w-full rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] font-semibold text-[var(--lagoon-deep)] transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
+						>
+							Send Invitation
+						</Button>
+					</div>
+				</form>
+			</Modal>
 		</div>
 	);
 }

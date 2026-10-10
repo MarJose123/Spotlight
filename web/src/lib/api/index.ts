@@ -63,7 +63,13 @@ export {
 
 // ── Users ────────────────────────────────────────────────────────────────────
 
-export { fetchCurrentUser, fetchUserProfileStats, fetchUsers } from "./users";
+export type { InviteUserRequest } from "./users";
+export {
+	fetchCurrentUser,
+	fetchUserProfileStats,
+	fetchUsers,
+	inviteUser,
+} from "./users";
 
 // ── Likes ────────────────────────────────────────────────────────────────────
 

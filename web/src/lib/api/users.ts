@@ -58,3 +58,19 @@ export async function fetchUsers(
 		{},
 	);
 }
+
+export interface InviteUserRequest {
+	name: string;
+	email: string;
+}
+
+/** Invite a new user by creating an account via the admin endpoint. */
+export async function inviteUser(
+	request: InviteUserRequest,
+): Promise<ApiUser | null> {
+	return requestJsonAuth<ApiUser | null>("/users", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(request),
+	});
+}
