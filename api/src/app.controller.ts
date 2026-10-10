@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { minutes, Throttle } from '@nestjs/throttler';
+import { minutes, seconds, Throttle } from '@nestjs/throttler';
 import {
   AuthService,
   INVALID_CREDENTIALS_MESSAGE,
@@ -61,6 +61,9 @@ export class AppController {
   }
 
   @ApiRefresh()
+  @Throttle({
+    default: { limit: 3, ttl: seconds(5), blockDuration: minutes(1) },
+  })
   @Post('refresh')
   async refresh(@Body('refresh_token') refreshToken: string) {
     return await this.authService.refresh(refreshToken);
