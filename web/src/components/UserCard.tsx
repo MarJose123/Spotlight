@@ -71,7 +71,7 @@ export function UserCard({
 	return (
 		<>
 			<article className="group relative flex flex-col items-center gap-3 rounded-2xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-6 transition-colors hover:border-[var(--lagoon)]">
-				{!isSelf && (
+				{isAdmin && !isSelf && (
 					<Menu position="bottom-end" shadow="sm" width={180}>
 						<Menu.Target>
 							<button
