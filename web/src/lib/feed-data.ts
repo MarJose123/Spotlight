@@ -33,6 +33,7 @@ export interface FeedViewer {
 export interface FeedPerson {
 	name: string;
 	handle: string;
+	email?: string;
 	tone: AvatarTone;
 }
 

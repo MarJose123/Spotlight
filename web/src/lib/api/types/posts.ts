@@ -9,6 +9,7 @@
 export interface ApiPostAuthor {
 	id: string;
 	name: string;
+	email: string;
 	username?: string;
 	avatarUrl?: string;
 }

@@ -17,6 +17,9 @@ export class PostAuthorDto {
   @ApiProperty({ description: 'Author display name.' })
   name: string;
 
+  @ApiProperty({ description: 'Author email address.' })
+  email: string;
+
   @ApiPropertyOptional({ description: 'Author username, may be absent.' })
   username: string | undefined;
 

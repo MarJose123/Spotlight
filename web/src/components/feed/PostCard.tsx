@@ -9,6 +9,7 @@
 import {
 	Button,
 	Group,
+	HoverCard,
 	Menu,
 	Modal,
 	Skeleton,
@@ -25,8 +26,10 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import dayjs from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat.js";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import {
+	Calendar,
 	Check,
 	Edit,
 	Heart,
@@ -344,10 +347,16 @@ function toneForId(id: string): AvatarTone {
 }
 
 dayjs.extend(relativeTime);
+dayjs.extend(advancedFormat);
 
 /** Format an ISO timestamp as a relative string ("3 minutes ago", "2 hours ago"). */
 function formatRelativeTime(iso: string): string {
 	return dayjs(iso).fromNow();
+}
+
+/** Format an ISO timestamp as a human-readable absolute date and time. */
+function formatAbsoluteTime(iso: string): string {
+	return dayjs(iso).format("MMMM D, YYYY h:mm A");
 }
 
 interface EditPostEditorProps {
@@ -540,13 +549,46 @@ export function PostCard({
 				<Avatar name={post.author.name} tone={post.author.tone} size={38} />
 
 				<div className="min-w-0 flex-1">
-					<RouterLink
-						to="/users"
-						search={{ search: post.author.name }}
-						className="truncate text-[13px] font-bold text-[var(--feed-ink)] hover:underline"
+					<HoverCard
+						width="auto"
+						position="bottom-start"
+						withArrow
+						shadow="md"
+						offset={6}
 					>
-						{post.author.name}
-					</RouterLink>
+						<HoverCard.Target>
+							<RouterLink
+								to="/users"
+								search={{ search: post.author.name }}
+								className="truncate text-[13px] font-bold text-[var(--feed-ink)] hover:underline"
+							>
+								{post.author.name}
+							</RouterLink>
+						</HoverCard.Target>
+						<HoverCard.Dropdown className="w-[220px] rounded-xl border border-[var(--feed-line)] bg-[var(--feed-card)] p-3 shadow-lg">
+							<div className="flex items-center gap-2.5">
+								<Avatar
+									name={post.author.name}
+									tone={post.author.tone}
+									size={32}
+								/>
+								<div className="min-w-0">
+									<p className="m-0 truncate text-[13px] font-bold text-[var(--feed-ink)]">
+										{post.author.name}
+									</p>
+									{post.author.email && (
+										<p className="m-0 truncate text-[11px] text-[var(--feed-ink-dim)]">
+											{post.author.email}
+										</p>
+									)}
+								</div>
+							</div>
+							<div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-[var(--feed-ink-soft)]">
+								<Calendar size={12} aria-hidden={true} />
+								<span>{formatAbsoluteTime(post.createdAt)}</span>
+							</div>
+						</HoverCard.Dropdown>
+					</HoverCard>
 					<p className="m-0 text-[11.5px] text-[var(--feed-ink-dim)]">
 						{formatRelativeTime(post.createdAt)}
 					</p>

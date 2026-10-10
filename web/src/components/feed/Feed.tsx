@@ -118,6 +118,7 @@ function mapPost(post: ApiPost) {
 		author: {
 			name: post.author.name,
 			handle: post.author.username ? `@${post.author.username}` : "",
+			email: post.author.email,
 			tone,
 		},
 		createdAt: post.createdAt,
