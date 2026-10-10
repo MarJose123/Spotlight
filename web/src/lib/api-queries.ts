@@ -23,10 +23,13 @@ import type {
 	UserProfileStats,
 } from "./api";
 import {
+	activateUser,
 	createComment,
 	createPost,
+	deactivateUser,
 	deleteComment,
 	deletePost,
+	deleteUser,
 	fetchComments,
 	fetchCurrentUser,
 	fetchLeaderboard,
@@ -39,6 +42,7 @@ import {
 	toggleLikePost,
 	updateComment,
 	updatePost,
+	updateUserRole,
 } from "./api";
 import type { GiphyGif } from "./api/gif";
 import { fetchTrendingGifs, searchGifs } from "./api/gif";
@@ -509,6 +513,71 @@ export function useInviteUser() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (request: InviteUserRequest) => inviteUser(request),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: users() });
+			queryClient.invalidateQueries({
+				queryKey: usersDirectory(),
+				exact: false,
+			});
+		},
+	});
+}
+
+// ── Update user role mutation ────────────────────────────────────────────────
+
+export function useUpdateUserRole() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+			updateUserRole(userId, { role }),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: users() });
+			queryClient.invalidateQueries({
+				queryKey: usersDirectory(),
+				exact: false,
+			});
+		},
+	});
+}
+
+// ── Activate user mutation ───────────────────────────────────────────────────
+
+export function useActivateUser() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (userId: string) => activateUser(userId),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: users() });
+			queryClient.invalidateQueries({
+				queryKey: usersDirectory(),
+				exact: false,
+			});
+		},
+	});
+}
+
+// ── Deactivate user mutation ─────────────────────────────────────────────────
+
+export function useDeactivateUser() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (userId: string) => deactivateUser(userId),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: users() });
+			queryClient.invalidateQueries({
+				queryKey: usersDirectory(),
+				exact: false,
+			});
+		},
+	});
+}
+
+// ── Delete user mutation ─────────────────────────────────────────────────────
+
+export function useDeleteUser() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (userId: string) => deleteUser(userId),
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: users() });
 			queryClient.invalidateQueries({

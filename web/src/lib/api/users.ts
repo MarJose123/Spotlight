@@ -74,3 +74,40 @@ export async function inviteUser(
 		body: JSON.stringify(request),
 	});
 }
+
+export interface UpdateUserRoleRequest {
+	role: string;
+}
+
+/** Update a user's role (admin only). */
+export async function updateUserRole(
+	userId: string,
+	request: UpdateUserRoleRequest,
+): Promise<ApiUser | null> {
+	return requestJsonAuth<ApiUser | null>(`/users/${userId}/role`, {
+		method: "PATCH",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(request),
+	});
+}
+
+/** Activate a user (admin only). */
+export async function activateUser(userId: string): Promise<ApiUser | null> {
+	return requestJsonAuth<ApiUser | null>(`/users/${userId}/activate`, {
+		method: "PATCH",
+	});
+}
+
+/** Deactivate a user (admin only). */
+export async function deactivateUser(userId: string): Promise<ApiUser | null> {
+	return requestJsonAuth<ApiUser | null>(`/users/${userId}/deactivate`, {
+		method: "PATCH",
+	});
+}
+
+/** Delete a user permanently (admin only). */
+export async function deleteUser(userId: string): Promise<void> {
+	return requestJsonAuth<void>(`/users/${userId}`, {
+		method: "DELETE",
+	});
+}

@@ -205,11 +205,17 @@ export class UsersService {
     return this.userMapper.toResponse(user);
   }
 
-  /** Deletes a user by id and returns the removed user (or throws 404). */
+  /** Deletes a user by id, only allowed when the user is inactive. */
   async delete(id: string): Promise<void> {
-    const user = await this.findById(id);
+    const user = await this.userRepository.findOne({ id });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    if (user.status !== UserStatus.INACTIVE) {
+      throw new ForbiddenException(
+        'Can only delete users with inactive status. Deactivate the user first.',
+      );
     }
 
     await this.userRepository.nativeDelete({ id: user.id });

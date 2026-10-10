@@ -23,8 +23,12 @@ import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
+	useActivateUser,
 	useCurrentUser,
+	useDeactivateUser,
+	useDeleteUser,
 	useInviteUser,
+	useUpdateUserRole,
 	useUsersDirectory,
 } from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
@@ -98,6 +102,10 @@ export function UserDirectory() {
 	const [inviteModalOpened, setInviteModalOpened] = useState(false);
 	const inviteInputRef = useRef<HTMLInputElement>(null);
 	const inviteMutation = useInviteUser();
+	const updateRoleMutation = useUpdateUserRole();
+	const activateMutation = useActivateUser();
+	const deactivateMutation = useDeactivateUser();
+	const deleteMutation = useDeleteUser();
 
 	const inviteSchema = z.object({
 		name: z
@@ -275,6 +283,113 @@ export function UserDirectory() {
 							name={user.displayName || user.name}
 							email={user.email}
 							role={user.role}
+							status={user.status}
+							isAdmin={isAdmin}
+							isSelf={user.id === viewerId}
+							onToggleRole={
+								isAdmin
+									? (userId, role) => {
+											updateRoleMutation.mutate(
+												{ userId, role },
+												{
+													onSuccess: () => {
+														notifications.show({
+															title:
+																role === "ADMIN"
+																	? "Role updated"
+																	: "Role updated",
+															message:
+																role === "ADMIN"
+																	? "User has been promoted to admin."
+																	: "User has been demoted to regular user.",
+															color: "teal",
+														});
+													},
+													onError: () => {
+														notifications.show({
+															title: "Failed to update role",
+															message:
+																"Could not update the user's role. Please try again.",
+															color: "red",
+														});
+													},
+												},
+											);
+										}
+									: undefined
+							}
+							onToggleStatus={
+								isAdmin
+									? (userId) => {
+											const userEntry = userList.find((u) => u.id === userId);
+											if (!userEntry) return;
+											const userName = userEntry.displayName || userEntry.name;
+											if (userEntry.status === "Active") {
+												deactivateMutation.mutate(userId, {
+													onSuccess: () => {
+														notifications.show({
+															title: "User deactivated",
+															message: `${userName} has been deactivated.`,
+															color: "teal",
+														});
+													},
+													onError: () => {
+														notifications.show({
+															title: "Failed to deactivate",
+															message:
+																"Could not deactivate the user. Please try again.",
+															color: "red",
+														});
+													},
+												});
+											} else {
+												activateMutation.mutate(userId, {
+													onSuccess: () => {
+														notifications.show({
+															title: "User activated",
+															message: `${userName} has been activated.`,
+															color: "teal",
+														});
+													},
+													onError: () => {
+														notifications.show({
+															title: "Failed to activate",
+															message:
+																"Could not activate the user. Please try again.",
+															color: "red",
+														});
+													},
+												});
+											}
+										}
+									: undefined
+							}
+							onDelete={
+								isAdmin
+									? (userId) => {
+											const userEntry = userList.find((u) => u.id === userId);
+											const userName =
+												userEntry?.displayName || userEntry?.name;
+											deleteMutation.mutate(userId, {
+												onSuccess: () => {
+													notifications.show({
+														title: "User deleted",
+														message: `${userName} has been deleted.`,
+														color: "teal",
+													});
+												},
+												onError: () => {
+													notifications.show({
+														title: "Failed to delete",
+														message:
+															"Could not delete the user. Please try again.",
+														color: "red",
+													});
+												},
+											});
+										}
+									: undefined
+							}
 						/>
 					))}
 				</div>
