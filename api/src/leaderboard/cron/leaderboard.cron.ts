@@ -15,7 +15,7 @@ export class LeaderboardCron {
 
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_HOUR)
   async recalculateLeaderboard() {
     this.logger.log('Scheduled leaderboard recalculation');
     await this.leaderboardService.recalculateScores();
