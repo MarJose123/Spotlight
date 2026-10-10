@@ -36,13 +36,17 @@ export class LeaderboardService {
   /**
    * Recalculate all leaderboard scores for the current month from the likes
    * table. Each like on a post counts toward the post's author.
+   *
+   * Uses a forked EntityManager so this works both from a request context
+   * (controller) and from a cron job that has no request-scoped context.
    */
   async recalculateScores(): Promise<void> {
+    const contextEm = this.em.fork();
     const month = this.currentMonth();
     this.logger.log(`Recalculating leaderboard scores for ${month}`);
 
     // Clear current month scores
-    await this.scoreRepository.nativeDelete({ month });
+    await contextEm.nativeDelete(LeaderboardScore, { month });
 
     // Aggregate likes per post author for the current month
     // A like counts if the post was created in the current month
@@ -51,7 +55,7 @@ export class LeaderboardService {
 
     // Find all posts created this month — no need to populate user;
     // the FK (user.id) is available on the unpopulated reference.
-    const posts = await this.postsRepository.find({
+    const posts = await contextEm.find(Posts, {
       createdAt: { $gte: startOfMonth, $lte: endOfMonth },
     });
 
@@ -67,13 +71,13 @@ export class LeaderboardService {
     for (const [userId, count] of userLikesMap) {
       if (count > 0) {
         const score = new LeaderboardScore();
-        score.user = this.em.getReference(User, userId);
+        score.user = contextEm.getReference(User, userId);
         score.likesCount = count;
         score.month = month;
-        this.scoreRepository.create(score);
+        contextEm.persist(score);
       }
     }
-    await this.em.flush();
+    await contextEm.flush();
 
     this.logger.warn(
       `Leaderboard recalculated: ${userLikesMap.size} users for ${month}`,
