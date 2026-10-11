@@ -998,9 +998,13 @@ export function PostCard({
 										/>
 										<div className="min-w-0 flex-1">
 											<div className="flex items-center gap-1.5">
-												<span className="text-[12px] font-semibold text-[var(--feed-ink)]">
+												<RouterLink
+													to="/users"
+													search={{ search: comment.author.name }}
+													className="text-[12px] font-semibold text-[var(--feed-ink)] hover:underline"
+												>
 													{comment.author.name}
-												</span>
+												</RouterLink>
 												<span className="text-[11px] text-[var(--feed-ink-dim)]">
 													{formatRelativeTime(comment.createdAt)}
 												</span>
