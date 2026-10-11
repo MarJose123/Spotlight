@@ -395,14 +395,13 @@ export function UserDirectory() {
 				</div>
 
 				{showScrollTop && (
-					<Button
-						variant="subtle"
+					<div
 						onClick={scrollToTop}
 						className="fixed bottom-6 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-[var(--feed-line)] bg-[var(--feed-card)] text-[var(--sea-ink)] shadow-md transition-opacity hover:border-[var(--lagoon)]"
 						aria-label="Scroll to top"
 					>
 						<ArrowUp size={20} aria-hidden={true} />
-					</Button>
+					</div>
 				)}
 
 				{totalPages > 1 && (
