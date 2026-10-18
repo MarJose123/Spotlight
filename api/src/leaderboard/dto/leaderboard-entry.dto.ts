@@ -16,6 +16,13 @@ export class LeaderboardEntryDto {
   @ApiProperty({ description: 'User profile.' })
   user: UserResponseDto;
 
-  @ApiProperty({ description: 'Total likes on posts created this month.' })
-  likesCount: number;
+  @ApiProperty({
+    description: 'Points earned from being recognized this month.',
+  })
+  pointsEarned: number;
+
+  @ApiProperty({
+    description: 'Points shared by giving recognition this month.',
+  })
+  pointsShare: number;
 }

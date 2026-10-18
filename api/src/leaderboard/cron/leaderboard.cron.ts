@@ -20,4 +20,11 @@ export class LeaderboardCron {
     this.logger.log('Scheduled leaderboard recalculation');
     await this.leaderboardService.recalculateScores();
   }
+
+  // Every 15 minutes
+  @Cron('0 */15 * * * *')
+  async processPendingAllocations() {
+    this.logger.log('Scheduled pending allocation processing');
+    await this.leaderboardService.processPendingAllocations();
+  }
 }

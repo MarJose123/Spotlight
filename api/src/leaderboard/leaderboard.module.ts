@@ -12,6 +12,10 @@ import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 import { LeaderboardCron } from '#/leaderboard/cron/leaderboard.cron.js';
 import { AuthModule } from '#/auth/auth.module.js';
 import { LeaderboardScore } from '#/leaderboard/entities/leaderboard-score.entity.js';
+import { PointAllocation } from '#/leaderboard/entities/point-allocation.entity.js';
+import { PendingPointAllocation } from '#/leaderboard/entities/pending-point-allocation.entity.js';
+import { UserMonthlyPoints } from '#/leaderboard/entities/user-monthly-points.entity.js';
+import { AppSettings } from '#/leaderboard/entities/app-settings.entity.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { User } from '#/users/entities/user.entity.js';
 import { UserMapper } from '#/users/mappers/user.mapper.js';
@@ -19,9 +23,18 @@ import { UserMapper } from '#/users/mappers/user.mapper.js';
 @Module({
   imports: [
     AuthModule,
-    MikroOrmModule.forFeature([LeaderboardScore, Posts, User]),
+    MikroOrmModule.forFeature([
+      LeaderboardScore,
+      PointAllocation,
+      PendingPointAllocation,
+      UserMonthlyPoints,
+      AppSettings,
+      Posts,
+      User,
+    ]),
   ],
   controllers: [LeaderboardController],
   providers: [LeaderboardService, LeaderboardCron, UserMapper],
+  exports: [LeaderboardService],
 })
 export class LeaderboardModule {}
