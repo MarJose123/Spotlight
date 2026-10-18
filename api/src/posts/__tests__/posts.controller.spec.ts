@@ -165,24 +165,29 @@ describe('PostsController', () => {
   });
 
   describe('likePost', () => {
-    it('should toggle like via PUT /like', async () => {
+    it('should toggle like via PUT /like using authenticated user', async () => {
       const dto = { postId: 'post-123', userId: 'user-456' };
       const result = { like: true, post: makePostResponse({ likesCount: 1 }) };
       vi.mocked(postsService.likePost).mockResolvedValue(result);
 
-      const response = await controller.likePost(dto);
+      const mockReq = { auth: { sub: 'user-789', user: {} } } as any;
+      const response = await controller.likePost(mockReq, dto);
 
       expect(response).toBe(result);
-      expect(postsService.likePost).toHaveBeenCalledWith(dto);
+      expect(postsService.likePost).toHaveBeenCalledWith({
+        postId: 'post-123',
+        userId: 'user-789',
+      });
     });
   });
 
   describe('likePostById', () => {
-    it('should toggle like via POST /:id/like', async () => {
+    it('should toggle like via POST /:id/like using authenticated user', async () => {
       const result = { like: false, post: makePostResponse() };
       vi.mocked(postsService.likePost).mockResolvedValue(result);
 
-      const response = await controller.likePostById('post-123', 'user-456');
+      const mockReq = { auth: { sub: 'user-456', user: {} } } as any;
+      const response = await controller.likePostById('post-123', mockReq);
 
       expect(response).toBe(result);
       expect(postsService.likePost).toHaveBeenCalledWith({
@@ -196,9 +201,10 @@ describe('PostsController', () => {
         new NotFoundException(),
       );
 
-      await expect(
-        controller.likePostById('missing', 'user-123'),
-      ).rejects.toThrow(NotFoundException);
+      const mockReq = { auth: { sub: 'user-123', user: {} } } as any;
+      await expect(controller.likePostById('missing', mockReq)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

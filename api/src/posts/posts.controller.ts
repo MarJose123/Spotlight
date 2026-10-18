@@ -94,8 +94,11 @@ export class PostsController {
     default: { limit: 2, ttl: seconds(1), blockDuration: minutes(5) },
   })
   @Put('/like')
-  async likePost(@Body() dto: LikePostDto) {
-    return await this.postsService.likePost(dto);
+  async likePost(@Req() req: AuthenticatedRequest, @Body() dto: LikePostDto) {
+    return await this.postsService.likePost({
+      postId: dto.postId,
+      userId: req.auth.sub,
+    });
   }
 
   @ApiLikePostById()
@@ -103,8 +106,14 @@ export class PostsController {
     default: { limit: 2, ttl: seconds(1), blockDuration: minutes(5) },
   })
   @Post('/:id/like')
-  async likePostById(@Param('id') id: string, @Body('user') user: string) {
-    return await this.postsService.likePost({ postId: id, userId: user });
+  async likePostById(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return await this.postsService.likePost({
+      postId: id,
+      userId: req.auth.sub,
+    });
   }
 
   @ApiListLikes()

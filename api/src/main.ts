@@ -46,7 +46,10 @@ async function bootstrap() {
   );
   const orm = app.get(MikroORM);
   app.setGlobalPrefix('api');
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.WEB_URL ?? 'http://localhost:5173',
+    credentials: true,
+  });
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
@@ -54,7 +57,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   await app.register(helmet);
   await app.register(multipart, {
-    limits: { fieldNameSize: 100, fields: 10, fileSize: 1024 * 1024 * 1024 },
+    limits: { fieldNameSize: 100, fields: 10, fileSize: 50 * 1024 * 1024 },
   });
   app.useGlobalPipes(
     new ValidationPipe({
@@ -80,9 +83,9 @@ async function bootstrap() {
     }),
   );
   // In development only, make sure the database exists and the schema is up to
-  // date (a missing SQLite database file is created programmatically in
-  // `src/config/mikro-orm.config.ts`). Production should rely on migrations.
-  if ((process.env.NODE_ENV ?? 'development') === 'development') {
+  // date. Production should rely on migrations. NODE_ENV must be set explicitly
+  // — an unset value does not default to development.
+  if (process.env.NODE_ENV === 'development') {
     await orm.schema.ensureDatabase();
     await orm.schema.update();
   }

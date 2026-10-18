@@ -87,9 +87,10 @@ export class BucketService {
    * Uploads a file directly to S3 and returns the object key.
    * Validates the MIME type against the declared attachment type before uploading.
    */
-  // Maximum file sizes: 50 MB for images, 1 GB for videos
+  // Maximum file sizes: 50 MB for both images and videos, matching the
+  // multipart fileSize limit in main.ts to stay within the container budget.
   private readonly MAX_IMAGE_SIZE = 50 * 1024 * 1024;
-  private readonly MAX_VIDEO_SIZE = 1024 * 1024 * 1024;
+  private readonly MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
   async uploadFile(
     file: FastifyMultipartFile,

@@ -5,7 +5,7 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LikePostDto {
@@ -18,12 +18,14 @@ export class LikePostDto {
   postId: string;
 
   @ApiProperty({
-    description: 'Id of the user liking the post.',
+    description:
+      'Id of the user liking the post (deprecated: derived from JWT).',
     format: 'uuid',
+    required: false,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  userId: string;
+  userId?: string;
 }
 
 /**

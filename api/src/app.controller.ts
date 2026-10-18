@@ -20,6 +20,7 @@ import {
   INVALID_CREDENTIALS_MESSAGE,
 } from './auth/auth.service.js';
 import { CredentialLoginDto } from '#/auth/dto/credential-login.dto.js';
+import { RefreshTokenDto } from '#/auth/dto/refresh-token.dto.js';
 import { Auth } from '#/auth/guard/auth.guard.js';
 import type { AuthenticatedRequest } from '#/auth/interface/payload.interface.js';
 import {
@@ -48,16 +49,13 @@ export class AppController {
   @ApiLogout()
   @Post('logout')
   @UseGuards(Auth)
-  async logout(
-    @Body('refresh_token') refreshToken: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
+  async logout(@Body() dto: RefreshTokenDto, @Req() req: AuthenticatedRequest) {
     const userId = req.auth?.sub;
     if (!userId) {
       throw new UnauthorizedException();
     }
 
-    await this.authService.logout(refreshToken, userId);
+    await this.authService.logout(dto.refresh_token, userId);
   }
 
   @ApiRefresh()
@@ -65,7 +63,7 @@ export class AppController {
     default: { limit: 3, ttl: seconds(5), blockDuration: minutes(1) },
   })
   @Post('refresh')
-  async refresh(@Body('refresh_token') refreshToken: string) {
-    return await this.authService.refresh(refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    return await this.authService.refresh(dto.refresh_token);
   }
 }

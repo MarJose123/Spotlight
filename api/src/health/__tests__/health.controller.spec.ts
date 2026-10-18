@@ -13,6 +13,7 @@ import {
   DiskHealthIndicator,
 } from '@nestjs/terminus';
 import { DatabaseHealth } from '#/health/database.health.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -20,6 +21,7 @@ describe('HealthController', () => {
   let http: HttpHealthIndicator;
   let db: DatabaseHealth;
   let disk: DiskHealthIndicator;
+  let config: ConfigService;
 
   const mockHealthCheckService = () => ({
     check: vi.fn(),
@@ -35,13 +37,18 @@ describe('HealthController', () => {
     checkStorage: vi.fn(),
   });
 
+  const mockConfigService = () => ({
+    get: vi.fn(),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     health = mockHealthCheckService() as unknown as HealthCheckService;
     http = mockHttpHealthIndicator() as unknown as HttpHealthIndicator;
     db = mockDatabaseHealth() as unknown as DatabaseHealth;
     disk = mockDiskHealthIndicator() as unknown as DiskHealthIndicator;
-    controller = new HealthController(health, http, db, disk);
+    config = mockConfigService() as unknown as ConfigService;
+    controller = new HealthController(health, http, db, disk, config);
   });
 
   describe('check', () => {

@@ -14,8 +14,16 @@ export interface AppConfig {
   url: string;
 }
 
-export default registerAs<AppConfig>('app', () => ({
-  name: process.env.APP_NAME || 'Spotlight',
-  key: process.env.APP_KEY || 'spotlight',
-  url: (process.env.WEB_URL || 'http://localhost:5173').replace(/\/+$/, ''),
-}));
+export default registerAs<AppConfig>('app', () => {
+  const appKey = process.env.APP_KEY;
+  if (!appKey) {
+    throw new Error(
+      'APP_KEY environment variable is required and must not be empty',
+    );
+  }
+  return {
+    name: process.env.APP_NAME || 'Spotlight',
+    key: appKey,
+    url: (process.env.WEB_URL || 'http://localhost:5173').replace(/\/+$/, ''),
+  };
+});

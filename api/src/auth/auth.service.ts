@@ -114,12 +114,26 @@ export class AuthService {
         message: 'Invalid authenticated user',
       });
 
+    // Revoke the old refresh token
+    storedToken.revokedAt = new Date();
+
+    // Issue a new refresh token
+    const newRefreshToken = this.tokenService.createRefreshToken();
+    const newRefreshTokenModel = new RefreshToken();
+    Object.assign(newRefreshTokenModel, {
+      userId: user.id,
+      tokenHash: this.tokenService.hashRefreshToken(newRefreshToken),
+      expiresAt: this.getRefreshTokenExpiration(),
+    });
+    this.refreshTokenRepository.create(newRefreshTokenModel);
+    await this.em.flush();
+
     const newAccessToken = this.tokenService.createAccessToken(user);
 
     return this.jwtTokenMapper.toResponse({
       user,
       access_token: newAccessToken,
-      refresh_token: token,
+      refresh_token: newRefreshToken,
       expires_in: ACCESS_TOKEN_TTL_SECONDS,
       token_type: 'Bearer',
     });

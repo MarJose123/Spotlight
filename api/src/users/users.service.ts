@@ -25,6 +25,7 @@ import { User } from '#/users/entities/user.entity.js';
 import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
 import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { UserMapper } from '#/users/mappers/user.mapper.js';
 import { UserResponseDto } from '#/users/dto/user-response.dto.js';
@@ -328,11 +329,12 @@ export class UsersService {
   }
 
   private randomSuffix(): string {
-    // 4-character alphanumeric suffix: ~1.4 million combinations.
+    // 4-character alphanumeric suffix using cryptographically secure random.
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const bytes = crypto.randomBytes(4);
     let result = '';
     for (let i = 0; i < 4; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)];
+      result += chars[bytes[i] % chars.length];
     }
     return result;
   }

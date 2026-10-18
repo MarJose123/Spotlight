@@ -28,6 +28,8 @@ import {
 } from '#/leaderboard/decorators/leaderboard-api.decorator.js';
 import { PaginationQueryDto } from '#/common/dto/pagination/pagination-query.dto.js';
 import { PaginationResponseDto } from '#/common/dto/pagination/pagination-response.dto.js';
+import { UpdateSettingDto } from '#/leaderboard/dto/update-setting.dto.js';
+import { SetUserBudgetDto } from '#/leaderboard/dto/set-user-budget.dto.js';
 
 @ApiLeaderboardController()
 @Controller('leaderboard')
@@ -54,8 +56,8 @@ export class LeaderboardController {
 
   @Put('settings/:key')
   @Roles(UserRole.ADMIN)
-  updateSetting(@Param('key') key: string, @Body('value') value: string) {
-    return this.leaderboardService.updateSetting(key, value);
+  updateSetting(@Param('key') key: string, @Body() dto: UpdateSettingDto) {
+    return this.leaderboardService.updateSetting(key, dto.value);
   }
 
   @Get('settings/users')
@@ -74,8 +76,8 @@ export class LeaderboardController {
   @Roles(UserRole.ADMIN)
   setUserBudget(
     @Param('userId', new ParseUUIDPipe({ version: '4' })) userId: string,
-    @Body('customBudget') customBudget: number | null,
+    @Body() dto: SetUserBudgetDto,
   ) {
-    return this.leaderboardService.setUserBudget(userId, customBudget);
+    return this.leaderboardService.setUserBudget(userId, dto.customBudget);
   }
 }

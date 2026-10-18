@@ -6,6 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { Controller, Get } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   DiskHealthIndicator,
   HealthCheck,
@@ -29,6 +30,7 @@ export class HealthController {
     private http: HttpHealthIndicator,
     private db: DatabaseHealth,
     private disk: DiskHealthIndicator,
+    private readonly config: ConfigService,
   ) {}
 
   @ApiOperation({
@@ -43,12 +45,20 @@ export class HealthController {
   @HealthCheck()
   @Throttle({ default: { limit: 3, ttl: seconds(2) } })
   check() {
+    // Skip disk check in development — it causes false failures on developer
+    // machines with large disks and is only meaningful for production monitoring.
+    if (process.env.NODE_ENV === 'development') {
+      return this.health.check([() => this.db.isHealthy()]);
+    }
+
+    const thresholdGb =
+      Number(this.config.get('HEALTH_DISK_THRESHOLD_GB', 250)) || 250;
     return this.health.check([
       () => this.db.isHealthy(),
       () =>
         this.disk.checkStorage('storage', {
           path: '/',
-          threshold: 250 * 1024 * 1024 * 1024,
+          threshold: thresholdGb * 1024 * 1024 * 1024,
         }),
     ]);
   }

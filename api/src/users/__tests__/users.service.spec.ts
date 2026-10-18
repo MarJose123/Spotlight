@@ -420,7 +420,7 @@ describe('UsersService', () => {
 
   describe('delete', () => {
     it('should delete the user', async () => {
-      const user = makeUser();
+      const user = makeUser({ status: UserStatus.INACTIVE });
       userRepository.findOne.mockResolvedValue(user);
 
       await service.delete('user-123');

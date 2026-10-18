@@ -108,6 +108,7 @@ export class UsersController {
   }
 
   @ApiUpdateUser()
+  @Roles(UserRole.ADMIN)
   @Patch(':id')
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

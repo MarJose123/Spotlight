@@ -400,6 +400,15 @@ export class LeaderboardService {
     if (!setting) {
       throw new BadRequestException(`Setting "${key}" not found`);
     }
+
+    // All current settings are non-negative integers stored as strings
+    const num = parseInt(value, 10);
+    if (Number.isNaN(num) || num < 0 || String(num) !== value) {
+      throw new BadRequestException(
+        `Setting "${key}" requires a non-negative integer`,
+      );
+    }
+
     setting.value = value;
     await this.em.flush();
   }

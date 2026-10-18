@@ -11,17 +11,14 @@ import type { ApiPostLikeResponse, ApiPostLiker } from "./types/likes";
 
 export type { ApiPostLikeResponse, ApiPostLiker } from "./types/likes";
 
-export function toggleLikePost(
-	postId: string,
-	userId: string,
-): Promise<ApiPostLikeResponse> {
+export function toggleLikePost(postId: string): Promise<ApiPostLikeResponse> {
 	return requestJsonAuth<ApiPostLikeResponse>("/posts/like", {
 		method: "PUT",
 		headers: {
 			"content-type": "application/json",
 			accept: "application/json",
 		},
-		body: JSON.stringify({ postId, userId }),
+		body: JSON.stringify({ postId }),
 	});
 }
 

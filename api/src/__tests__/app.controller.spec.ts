@@ -104,7 +104,7 @@ describe('AppController', () => {
       const auth = makeAuth();
       const req = makeReq(auth);
 
-      await controller.logout('refresh-123', req as never);
+      await controller.logout({ refresh_token: 'refresh-123' }, req as never);
 
       expect(authService.logout).toHaveBeenCalledWith(
         'refresh-123',
@@ -117,7 +117,7 @@ describe('AppController', () => {
       const req = makeReq(auth);
 
       await expect(
-        controller.logout('refresh-123', req as never),
+        controller.logout({ refresh_token: 'refresh-123' }, req as never),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
@@ -133,7 +133,7 @@ describe('AppController', () => {
       };
       vi.mocked(authService.refresh).mockResolvedValue(tokens);
 
-      const result = await controller.refresh('refresh-123');
+      const result = await controller.refresh({ refresh_token: 'refresh-123' });
 
       expect(result).toBe(tokens);
       expect(authService.refresh).toHaveBeenCalledWith('refresh-123');
@@ -144,9 +144,9 @@ describe('AppController', () => {
         new Error('Invalid refresh token'),
       );
 
-      await expect(controller.refresh('bad-token')).rejects.toThrow(
-        'Invalid refresh token',
-      );
+      await expect(
+        controller.refresh({ refresh_token: 'bad-token' }),
+      ).rejects.toThrow('Invalid refresh token');
     });
 
     it('should propagate TypeError when refresh token is undefined', async () => {
@@ -154,9 +154,9 @@ describe('AppController', () => {
         new TypeError('The first argument must be of type string'),
       );
 
-      await expect(controller.refresh(undefined as never)).rejects.toThrow(
-        TypeError,
-      );
+      await expect(
+        controller.refresh({ refresh_token: undefined as never }),
+      ).rejects.toThrow(TypeError);
     });
   });
 

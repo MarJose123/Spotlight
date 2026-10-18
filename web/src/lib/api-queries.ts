@@ -226,8 +226,7 @@ export function useComments(postId: string) {
 export function useToggleLike() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (params: { postId: string; userId: string }) =>
-			toggleLikePost(params.postId, params.userId),
+		mutationFn: (postId: string) => toggleLikePost(postId),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: posts() });
 			void queryClient.invalidateQueries({

@@ -494,27 +494,21 @@ export function PostCard({
 
 	const handleLike = useCallback(() => {
 		if (!session) return;
-		toggleLike.mutate(
-			{
-				postId: post.id,
-				userId: session.user?.id ?? viewerId,
+		toggleLike.mutate(post.id, {
+			onError: (error) => {
+				const message =
+					error instanceof ApiError
+						? error.message
+						: "Could not update like. Please try again.";
+				notifications.show({
+					title: "Like failed",
+					message,
+					color: "red",
+					autoClose: 5000,
+				});
 			},
-			{
-				onError: (error) => {
-					const message =
-						error instanceof ApiError
-							? error.message
-							: "Could not update like. Please try again.";
-					notifications.show({
-						title: "Like failed",
-						message,
-						color: "red",
-						autoClose: 5000,
-					});
-				},
-			},
-		);
-	}, [session, post.id, viewerId, toggleLike]);
+		});
+	}, [post.id, session, toggleLike]);
 
 	const handleComment = useCallback(
 		(contentJson: string) => {

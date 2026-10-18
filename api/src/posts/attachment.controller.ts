@@ -5,12 +5,20 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Auth } from '#/auth/guard/auth.guard.js';
 import { BucketService } from '#/bucket/bucket.service.js';
 import { ApiGetAttachment } from '#/posts/decorators/post-api.decorator.js';
 import { ApiAuthenticated } from '#/common/decorators/api-authenticated.decorator.js';
+import { PostsService } from '#/posts/posts.service.js';
 import type { FastifyReply } from 'fastify';
 
 /**
@@ -23,11 +31,20 @@ import type { FastifyReply } from 'fastify';
 @UseGuards(Auth)
 @Controller('posts')
 export class AttachmentController {
-  constructor(private readonly bucketService: BucketService) {}
+  constructor(
+    private readonly bucketService: BucketService,
+    private readonly postsService: PostsService,
+  ) {}
 
   @ApiGetAttachment()
   @Get('/attachment/:key')
   async getAttachment(@Param('key') key: string, @Res() reply: FastifyReply) {
+    // Verify the attachment key belongs to an existing post
+    const post = await this.postsService.findPostByAttachmentKey(key);
+    if (!post) {
+      throw new NotFoundException('Attachment not found');
+    }
+
     const { body, contentType, contentLength } =
       await this.bucketService.getObjectStream(key);
 
