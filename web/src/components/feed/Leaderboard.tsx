@@ -137,7 +137,7 @@ export function Leaderboard() {
 								</span>
 							</div>
 							<span className="shrink-0 text-[11px] font-semibold text-[var(--feed-accent)]">
-								{formatCount(entry.likesCount)}
+								{formatCount(entry.pointsEarned)} pts
 							</span>
 						</div>
 					</li>

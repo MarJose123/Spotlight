@@ -7,6 +7,7 @@
  */
 
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { ScrollToTop } from "#/components/ScrollToTop";
 import { refreshAccessToken } from "#/lib/api";
 import { throwUnauthorized } from "#/lib/auth-guard";
 import { isExpired, readSession } from "#/lib/session";
@@ -27,5 +28,10 @@ export const Route = createFileRoute("/_authenticated")({
 			}
 		}
 	},
-	component: () => <Outlet />,
+	component: () => (
+		<>
+			<Outlet />
+			<ScrollToTop />
+		</>
+	),
 });

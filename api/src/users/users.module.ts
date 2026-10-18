@@ -13,12 +13,14 @@ import { UsersService } from '#/users/users.service.js';
 import { AuthModule } from '#/auth/auth.module.js';
 import { MailerModule } from '#/mailer/mailer.module.js';
 import { BucketModule } from '#/bucket/bucket.module.js';
+import { LeaderboardModule } from '#/leaderboard/leaderboard.module.js';
 
 @Module({
   imports: [
     AuthModule,
     MailerModule,
     BucketModule,
+    LeaderboardModule,
     MikroOrmModule.forFeature([User]),
   ],
   controllers: [UsersController],

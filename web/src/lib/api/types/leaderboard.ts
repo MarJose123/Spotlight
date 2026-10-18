@@ -24,5 +24,16 @@ export interface ApiLeaderboardUser {
 export interface ApiLeaderboardEntry {
 	rank: number;
 	user: ApiLeaderboardUser;
-	likesCount: number;
+	pointsEarned: number;
+	pointsShare: number;
+}
+
+/** Current user's points summary. */
+export interface ApiUserPoints {
+	month: string;
+	totalPoints: number;
+	pointsSpent: number;
+	pointsPending: number;
+	pointsRemaining: number;
+	pointsEarned: number;
 }

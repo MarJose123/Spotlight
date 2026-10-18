@@ -22,6 +22,7 @@ import { Route as R401RouteImport } from './routes/401'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app-settings'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as SigninCallbackRouteImport } from './routes/signin_.callback'
@@ -50,6 +51,12 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppSettingsRoute =
+  AuthenticatedAppSettingsRouteImport.update({
+    id: '/app-settings',
+    path: '/app-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
+  '/app-settings': typeof AuthenticatedAppSettingsRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/users': typeof AuthenticatedUsersRoute
   '/signin/callback': typeof SigninCallbackRoute
@@ -80,6 +88,7 @@ export interface FileRoutesByTo {
   '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
+  '/app-settings': typeof AuthenticatedAppSettingsRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/users': typeof AuthenticatedUsersRoute
   '/signin/callback': typeof SigninCallbackRoute
@@ -91,6 +100,7 @@ export interface FileRoutesById {
   '/401': typeof R401Route
   '/about': typeof AboutRoute
   '/signin': typeof SigninRoute
+  '/_authenticated/app-settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/signin_/callback': typeof SigninCallbackRoute
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/401'
     | '/about'
     | '/signin'
+    | '/app-settings'
     | '/feed'
     | '/users'
     | '/signin/callback'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/401'
     | '/about'
     | '/signin'
+    | '/app-settings'
     | '/feed'
     | '/users'
     | '/signin/callback'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '/401'
     | '/about'
     | '/signin'
+    | '/_authenticated/app-settings'
     | '/_authenticated/feed'
     | '/_authenticated/users'
     | '/signin_/callback'
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app-settings': {
+      id: '/_authenticated/app-settings'
+      path: '/app-settings'
+      fullPath: '/app-settings'
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/feed': {
       id: '/_authenticated/feed'
       path: '/feed'
@@ -197,11 +217,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }

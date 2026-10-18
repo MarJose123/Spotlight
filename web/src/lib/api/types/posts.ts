@@ -52,6 +52,11 @@ export interface FetchPostsParams {
 	limit?: number;
 }
 
+export interface PointAllocation {
+	userId: string;
+	points: number;
+}
+
 export interface CreatePostRequest {
 	/** Tiptap JSON for rich text rendering. */
 	contentJson: string;
@@ -60,9 +65,13 @@ export interface CreatePostRequest {
 	gifUrl?: string;
 	/** Files to upload — required for image and video; ignored for gif and text. */
 	files?: File[];
+	/** Points to award to mentioned users. */
+	pointAllocations?: PointAllocation[];
 }
 
 export interface UpdatePostRequest {
 	/** Tiptap JSON for rich text rendering. */
 	contentJson: string;
+	/** Updated points to award to mentioned users. */
+	pointAllocations?: PointAllocation[];
 }

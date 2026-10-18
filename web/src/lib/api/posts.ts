@@ -51,6 +51,13 @@ export function createPost(params: CreatePostRequest): Promise<unknown> {
 		}
 	}
 
+	if (params.pointAllocations && params.pointAllocations.length > 0) {
+		formData.append(
+			"pointAllocations",
+			JSON.stringify(params.pointAllocations),
+		);
+	}
+
 	return requestJsonAuth<unknown>("/posts", {
 		method: "POST",
 		headers: { accept: "application/json" },

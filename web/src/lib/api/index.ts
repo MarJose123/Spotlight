@@ -29,6 +29,8 @@ export type {
 	ApiPostLikeResponse,
 	ApiPostLiker,
 	ApiUser,
+	ApiUserPoints,
+	AppSetting,
 	CreatePostRequest,
 	EnabledProviders,
 	FetchPostsParams,
@@ -36,7 +38,10 @@ export type {
 	GifSearchResponse,
 	GifTrendingResponse,
 	GiphyGif,
+	PaginatedResponse,
+	PaginationMeta,
 	UpdatePostRequest,
+	UserBudget,
 	UserProfileStats,
 } from "./types";
 
@@ -93,4 +98,13 @@ export {
 
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 
-export { fetchLeaderboard } from "./leaderboard";
+export { fetchLeaderboard, fetchUserPoints } from "./leaderboard";
+
+// ── Application Settings ─────────────────────────────────────────────────────
+
+export {
+	fetchSettings,
+	fetchUsersWithBudgets,
+	updateSetting,
+	updateUserBudget,
+} from "./app-settings";

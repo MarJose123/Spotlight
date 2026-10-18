@@ -121,6 +121,11 @@ describe('UsersService', () => {
     deleteFile: vi.fn(),
   });
 
+  const mockLeaderboardService = () => ({
+    ensureMonthlyPoints: vi.fn(),
+    currentMonth: vi.fn(() => '2026-01'),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     userRepository = mockUserRepo();
@@ -129,6 +134,7 @@ describe('UsersService', () => {
     config = mockConfig() as unknown as ConfigService;
     userMapper = mockUserMapper();
     bucketService = mockBucketService();
+    const leaderboardService = mockLeaderboardService() as any;
     service = new UsersService(
       userRepository,
       em,
@@ -136,6 +142,7 @@ describe('UsersService', () => {
       config,
       userMapper,
       bucketService,
+      leaderboardService,
     );
   });
 

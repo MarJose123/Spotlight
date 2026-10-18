@@ -7,11 +7,12 @@
  */
 import type { EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
+import { AppSettingsSeeder } from './AppSettingsSeeder.js';
 import { UserSeeder } from './UserSeeder.js';
 import { PostsSeeder } from './PostsSeeder.js';
 
 export class DatabaseSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
-    return this.call(em, [UserSeeder, PostsSeeder]);
+    return this.call(em, [AppSettingsSeeder, UserSeeder, PostsSeeder]);
   }
 }

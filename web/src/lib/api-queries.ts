@@ -17,9 +17,13 @@ import type {
 	ApiPost,
 	ApiPostLiker,
 	ApiUser,
+	ApiUserPoints,
+	AppSetting,
 	CreatePostRequest,
 	FetchPostsParams,
 	InviteUserRequest,
+	PaginatedResponse,
+	UserBudget,
 	UserProfileStats,
 } from "./api";
 import {
@@ -35,18 +39,24 @@ import {
 	fetchLeaderboard,
 	fetchPostLikes,
 	fetchPosts,
+	fetchSettings,
+	fetchUserPoints,
 	fetchUserPosts,
 	fetchUserProfileStats,
 	fetchUsers,
+	fetchUsersWithBudgets,
 	inviteUser,
 	toggleLikePost,
 	updateComment,
 	updatePost,
+	updateSetting,
+	updateUserBudget,
 	updateUserRole,
 } from "./api";
 import type { GiphyGif } from "./api/gif";
 import { fetchTrendingGifs, searchGifs } from "./api/gif";
 import {
+	appSettings,
 	comments,
 	currentUser,
 	gifsSearch,
@@ -59,6 +69,7 @@ import {
 	userPosts,
 	users,
 	usersDirectory,
+	usersWithBudgets,
 } from "./query-keys";
 import { readSession } from "./session";
 
@@ -410,6 +421,14 @@ export function useLeaderboard() {
 	});
 }
 
+export function useUserPoints() {
+	return useQuery<ApiUserPoints>({
+		queryKey: ["leaderboard-me"],
+		queryFn: fetchUserPoints,
+		staleTime: 30_000,
+	});
+}
+
 // ── Profile stats query ──────────────────────────────────────────────────────
 
 export function useUserProfileStats(userId: string | undefined) {
@@ -584,6 +603,94 @@ export function useDeleteUser() {
 				queryKey: usersDirectory(),
 				exact: false,
 			});
+		},
+	});
+}
+
+// ── Application Settings queries (admin only) ────────────────────────────────
+
+export function useAppSettings() {
+	return useQuery<AppSetting[]>({
+		queryKey: appSettings(),
+		queryFn: fetchSettings,
+		staleTime: 30_000,
+	});
+}
+
+export function useUpdateAppSetting() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ key, value }: { key: string; value: string }) =>
+			updateSetting(key, value),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: appSettings() });
+		},
+	});
+}
+
+interface UseUsersWithBudgetsOptions {
+	search?: string;
+	role?: string;
+	page?: number;
+	limit?: number;
+}
+
+export function useUsersWithBudgets(options: UseUsersWithBudgetsOptions = {}) {
+	const { search, role, page = 1, limit = 20 } = options;
+	// Fetch all users when filtering is active, otherwise use pagination
+	const fetchLimit = search || role ? 500 : limit;
+	const fetchPage = search || role ? 1 : page;
+	return useQuery<PaginatedResponse<UserBudget>>({
+		queryKey: usersWithBudgets(fetchPage, fetchLimit),
+		queryFn: () => fetchUsersWithBudgets(fetchPage, fetchLimit),
+		staleTime: 30_000,
+		select: (res) => {
+			let data = res.data;
+			if (role) {
+				data = data.filter((u) => u.user.role === role);
+			}
+			if (search) {
+				const q = search.toLowerCase();
+				data = data.filter(
+					(u) =>
+						u.user.name.toLowerCase().includes(q) ||
+						u.user.email.toLowerCase().includes(q),
+				);
+			}
+			// Client-side pagination after filtering
+			const total = data.length;
+			const totalPages = Math.max(1, Math.ceil(total / limit));
+			const skip = (page - 1) * limit;
+			const pagedData = data.slice(skip, skip + limit);
+			return {
+				data: pagedData,
+				meta: {
+					...res.meta,
+					total,
+					itemCount: pagedData.length,
+					perPage: limit,
+					totalPages,
+					currentPage: page,
+					hasNextPage: page < totalPages,
+					hasPreviousPage: page > 1,
+				},
+			};
+		},
+	});
+}
+
+export function useUpdateUserBudget() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			userId,
+			customBudget,
+		}: {
+			userId: string;
+			customBudget: number | null;
+		}) => updateUserBudget(userId, customBudget),
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["usersWithBudgets"] });
 		},
 	});
 }

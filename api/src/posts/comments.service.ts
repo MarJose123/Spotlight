@@ -19,6 +19,7 @@ import { CreateCommentDto } from '#/posts/dto/create-comment.dto.js';
 import { UpdateCommentDto } from '#/posts/dto/update-comment.dto.js';
 import { CommentResponseDto } from '#/posts/dto/comment-response.dto.js';
 import { CommentMapper } from '#/posts/mappers/comment.mapper.js';
+import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 
 @Injectable()
 export class CommentsService {
@@ -28,6 +29,7 @@ export class CommentsService {
     @InjectRepository(Posts)
     private readonly postsRepository: EntityRepository<Posts>,
     private readonly em: EntityManager,
+    private readonly leaderboardService: LeaderboardService,
   ) {}
 
   /** Create a comment on a post. Throws 404 if the post does not exist. */
@@ -66,18 +68,37 @@ export class CommentsService {
       .filter((c): c is CommentResponseDto => c !== null);
   }
 
-  /**
-   * Guard that ensures the request comes from the comment author and the comment
-   * is less than 15 minutes old. Throws 403 if either check fails.
-   */
-  private assertAuthorAndTimeWindow(comment: Comments, userId: string) {
+  /** Guard that ensures the request comes from the comment author. */
+  private assertAuthor(comment: Comments, userId: string) {
     if (comment.user.id !== userId) {
       throw new ForbiddenException('Only the author can modify this comment');
     }
+  }
+
+  /** Check whether a comment is within the configured edit window. */
+  private async assertEditWindow(comment: Comments) {
+    const windowMinutes = await this.leaderboardService.getSettingNumber(
+      'comments.editWindowMinutes',
+      15,
+    );
     const ageMinutes = (Date.now() - comment.createdAt.getTime()) / 60000;
-    if (ageMinutes > 15) {
+    if (ageMinutes > windowMinutes) {
       throw new ForbiddenException(
-        'Comments can only be edited or deleted within 15 minutes of creation',
+        `Comments can only be edited within ${windowMinutes} minutes of creation`,
+      );
+    }
+  }
+
+  /** Check whether a comment is within the configured delete window. */
+  private async assertDeleteWindow(comment: Comments) {
+    const windowMinutes = await this.leaderboardService.getSettingNumber(
+      'comments.deleteWindowMinutes',
+      15,
+    );
+    const ageMinutes = (Date.now() - comment.createdAt.getTime()) / 60000;
+    if (ageMinutes > windowMinutes) {
+      throw new ForbiddenException(
+        `Comments can only be deleted within ${windowMinutes} minutes of creation`,
       );
     }
   }
@@ -95,7 +116,8 @@ export class CommentsService {
     if (!comment) {
       throw new NotFoundException(`Comment with id ${commentId} not found`);
     }
-    this.assertAuthorAndTimeWindow(comment, userId);
+    this.assertAuthor(comment, userId);
+    await this.assertEditWindow(comment);
 
     comment.contentJson = dto.contentJson;
     await this.em.flush();
@@ -112,7 +134,8 @@ export class CommentsService {
     if (!comment) {
       throw new NotFoundException(`Comment with id ${commentId} not found`);
     }
-    this.assertAuthorAndTimeWindow(comment, userId);
+    this.assertAuthor(comment, userId);
+    await this.assertDeleteWindow(comment);
 
     // Decrement the post's comments count
     comment.post.commentsCount = Math.max(0, comment.post.commentsCount - 1);

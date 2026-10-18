@@ -6,8 +6,17 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
+import { PointAllocationDto } from '#/leaderboard/dto/point-allocation.dto.js';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -36,4 +45,14 @@ export class CreatePostDto {
   @IsOptional()
   @IsUrl()
   gifUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Points to award to mentioned users.',
+    type: [PointAllocationDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PointAllocationDto)
+  pointAllocations?: PointAllocationDto[];
 }

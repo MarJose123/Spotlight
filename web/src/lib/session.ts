@@ -25,6 +25,7 @@ export interface SessionUser {
 	displayName?: string;
 	username?: string;
 	avatarUrl?: string;
+	role?: string;
 }
 
 /** The pair `POST /auth/login` and `POST /auth/:provider/exchange` both return. */

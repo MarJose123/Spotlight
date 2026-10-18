@@ -6,6 +6,12 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
+export type {
+	AppSetting,
+	PaginatedResponse,
+	PaginationMeta,
+	UserBudget,
+} from "./app-settings";
 export type { EnabledProviders } from "./auth";
 export type { ApiComment } from "./comments";
 export type {
@@ -14,7 +20,11 @@ export type {
 	GifTrendingResponse,
 	GiphyGif,
 } from "./gif";
-export type { ApiLeaderboardEntry, ApiLeaderboardUser } from "./leaderboard";
+export type {
+	ApiLeaderboardEntry,
+	ApiLeaderboardUser,
+	ApiUserPoints,
+} from "./leaderboard";
 export type { ApiPostLikeResponse, ApiPostLiker } from "./likes";
 export type {
 	ApiAttachment,

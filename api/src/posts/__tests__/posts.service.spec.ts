@@ -14,6 +14,7 @@ import { User } from '#/users/entities/user.entity.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { PostType } from '#/posts/enums/post-type.enum.js';
 import type { BucketService } from '#/bucket/bucket.service.js';
+import type { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 describe('PostsService', () => {
@@ -22,6 +23,7 @@ describe('PostsService', () => {
   let likesRepository: any;
   let em: any;
   let bucketService: BucketService;
+  let leaderboardService: LeaderboardService;
 
   const makeUser = (id = 'user-123') => {
     const user = new User();
@@ -77,11 +79,18 @@ describe('PostsService', () => {
     likesRepository = mockLikesRepo();
     em = mockEm();
     bucketService = mockBucketService() as unknown as BucketService;
+    leaderboardService = {
+      getSettingNumber: vi.fn().mockResolvedValue(15),
+      storePendingAllocations: vi.fn().mockResolvedValue(undefined),
+      replacePendingAllocations: vi.fn().mockResolvedValue(undefined),
+      cleanupPendingAllocations: vi.fn().mockResolvedValue(undefined),
+    } as unknown as LeaderboardService;
     service = new PostsService(
       postRepository,
       likesRepository,
       em,
       bucketService,
+      leaderboardService,
     );
   });
 

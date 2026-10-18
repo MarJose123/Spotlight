@@ -60,3 +60,11 @@ export function usersDirectory(role?: string, search?: string) {
 export function userPosts(userId: string) {
 	return ["userPosts", userId] as const;
 }
+
+export function appSettings() {
+	return ["appSettings"] as const;
+}
+
+export function usersWithBudgets(page: number = 1, limit: number = 20) {
+	return ["usersWithBudgets", { page, limit }] as const;
+}

@@ -46,7 +46,7 @@ export function AuthTopBar({ viewer }: { viewer: FeedViewer }) {
 	};
 	return (
 		<header className="sticky top-0 z-30 shrink-0 border-b border-[var(--feed-line-soft)] bg-[var(--feed-panel)]">
-			<div className="mx-auto flex w-full max-w-[1360px] flex-wrap items-center gap-3 px-3 py-3.5 sm:px-5">
+			<div className="mx-auto flex w-full max-w-[1360px] flex-wrap items-center gap-3 px-3 py-5 sm:px-5">
 				<div className="flex min-w-0 items-center gap-3">
 					<Spotlight
 						size={22}

@@ -8,14 +8,21 @@
 
 import type { EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
+import dayjs from 'dayjs';
 import { User } from '#/users/entities/user.entity.js';
 import { UserRole } from '#/users/enums/role.enum.js';
 import { UserStatus } from '#/users/enums/status.enum.js';
+import { UserMonthlyPoints } from '#/leaderboard/entities/user-monthly-points.entity.js';
 import bcrypt from 'bcrypt';
 
 export class DefaultAdminSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
-    em.create(User, {
+    const existing = await em.findOne(User, {
+      email: 'admin@spotlight.local',
+    });
+    if (existing) return;
+
+    const user = em.create(User, {
       avatar: undefined,
       username: 'spotlight-admin',
       name: 'Default Admin',
@@ -23,6 +30,18 @@ export class DefaultAdminSeeder extends Seeder {
       password: bcrypt.hashSync('adminspotlight', 12),
       type: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Initialize monthly points for the admin user
+    const month = dayjs().format('YYYY-MM');
+    em.create(UserMonthlyPoints, {
+      user,
+      month,
+      totalPoints: 100,
+      pointsSpent: 0,
+      pointsEarned: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

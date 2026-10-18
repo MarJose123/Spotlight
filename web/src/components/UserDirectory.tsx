@@ -10,15 +10,7 @@ import { Button, Group, Modal, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useSearch } from "@tanstack/react-router";
-import {
-	ArrowUp,
-	MailPlus,
-	RefreshCw,
-	Search,
-	Users,
-	WifiOff,
-	X,
-} from "lucide-react";
+import { MailPlus, RefreshCw, Search, Users, WifiOff, X } from "lucide-react";
 import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -96,7 +88,6 @@ export function UserDirectory() {
 	const [roleFilter, setRoleFilter] = useState<string | undefined>();
 	const [searchQuery, setSearchQuery] = useState(searchParams.search ?? "");
 	const [page, setPage] = useState(1);
-	const [showScrollTop, setShowScrollTop] = useState(false);
 
 	// Invite modal state
 	const [inviteModalOpened, setInviteModalOpened] = useState(false);
@@ -137,17 +128,6 @@ export function UserDirectory() {
 	const handleSearchChange = (query: string) => {
 		setSearchQuery(query);
 		setPage(1);
-	};
-
-	// Track scroll position to show/hide the scroll-to-top button
-	useEffect(() => {
-		const onScroll = () => setShowScrollTop(window.scrollY > 200);
-		window.addEventListener("scroll", onScroll, { passive: true });
-		return () => window.removeEventListener("scroll", onScroll);
-	}, []);
-
-	const scrollToTop = () => {
-		window.scrollTo({ top: 0, behavior: "smooth" });
 	};
 
 	if (isLoading) {
@@ -393,16 +373,6 @@ export function UserDirectory() {
 						/>
 					))}
 				</div>
-
-				{showScrollTop && (
-					<div
-						onClick={scrollToTop}
-						className="fixed bottom-6 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-[var(--feed-line)] bg-[var(--feed-card)] text-[var(--sea-ink)] shadow-md transition-opacity hover:border-[var(--lagoon)]"
-						aria-label="Scroll to top"
-					>
-						<ArrowUp size={20} aria-hidden={true} />
-					</div>
-				)}
 
 				{totalPages > 1 && (
 					<div className="mt-6 flex items-center justify-center gap-4 pb-8">

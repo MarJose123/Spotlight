@@ -6,15 +6,22 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 import { requestJsonAuth } from "./client";
-import type { ApiLeaderboardEntry } from "./types/leaderboard";
+import type { ApiLeaderboardEntry, ApiUserPoints } from "./types/leaderboard";
 
 export type {
 	ApiLeaderboardEntry,
 	ApiLeaderboardUser,
+	ApiUserPoints,
 } from "./types/leaderboard";
 
 export async function fetchLeaderboard(): Promise<ApiLeaderboardEntry[]> {
 	return requestJsonAuth<ApiLeaderboardEntry[]>("/leaderboard", {
+		headers: { accept: "application/json" },
+	});
+}
+
+export async function fetchUserPoints(): Promise<ApiUserPoints> {
+	return requestJsonAuth<ApiUserPoints>("/leaderboard/me", {
 		headers: { accept: "application/json" },
 	});
 }

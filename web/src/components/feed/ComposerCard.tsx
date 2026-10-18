@@ -6,7 +6,7 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Button, ScrollArea } from "@mantine/core";
+import { Button, NumberInput, ScrollArea, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Lightbox, type LightboxSlideData } from "@mantine/lightbox";
 import { notifications } from "@mantine/notifications";
@@ -19,7 +19,7 @@ import { ReactRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { SuggestionOptions } from "@tiptap/suggestion";
 import { exitSuggestion } from "@tiptap/suggestion";
-import { Film, Image, Send, X } from "lucide-react";
+import { Film, Image, Send, Star, X } from "lucide-react";
 import {
 	Fragment,
 	forwardRef,
@@ -32,7 +32,8 @@ import {
 } from "react";
 import { ApiError } from "#/lib/api/client";
 import type { GiphyGif } from "#/lib/api/gif";
-import { useCreatePost, useUsers } from "#/lib/api-queries";
+import type { PointAllocation } from "#/lib/api/types/posts";
+import { useCreatePost, useUserPoints, useUsers } from "#/lib/api-queries";
 import type { AvatarTone, FeedViewer } from "#/lib/feed-data";
 import { COMPOSER_ACTIONS } from "#/lib/feed-data";
 import { readSession } from "#/lib/session";
@@ -82,6 +83,30 @@ function countCharacters(editor: ReturnType<typeof useEditor> | null): number {
 		}
 	});
 	return count;
+}
+
+/** Extract mention nodes from the Tiptap editor, returning unique user IDs and labels. */
+function extractMentions(
+	editor: ReturnType<typeof useEditor> | null,
+): Array<{ id: string; label: string }> {
+	if (!editor) return [];
+	const { doc } = editor.state;
+	const seen = new Set<string>();
+	const mentions: Array<{ id: string; label: string }> = [];
+
+	doc.descendants((node) => {
+		if (node.type.name === "mention" && node.attrs.id) {
+			const id = node.attrs.id;
+			if (!seen.has(id)) {
+				seen.add(id);
+				mentions.push({
+					id,
+					label: node.attrs.label ?? id,
+				});
+			}
+		}
+	});
+	return mentions;
 }
 
 /** Derive a stable avatar tone from a user id so the same user always renders the same colour. */
@@ -169,7 +194,7 @@ function buildMentionSuggestion(
 				.chain()
 				.focus()
 				.deleteRange(range)
-				.insertContentAt(range, {
+				.insertContentAt(range.from, {
 					type: "mention",
 					attrs: {
 						id: props.id,
@@ -281,11 +306,15 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 	>([]);
 	const [selectedGif, setSelectedGif] = useState<GiphyGif | null>(null);
 	const [gifOpened, gifHandlers] = useDisclosure(false);
+	const [pointAllocations, setPointAllocations] = useState<Map<string, number>>(
+		new Map(),
+	);
 	const counterId = useId();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const videoInputRef = useRef<HTMLInputElement>(null);
 	const { mutate: createPost, isPending } = useCreatePost();
 	const { data: allUsers = [] } = useUsers();
+	const { data: userPoints } = useUserPoints();
 
 	// Convert API users to mention-compatible format
 	const mentionUsers: MentionItem[] = useMemo(
@@ -416,6 +445,54 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 		},
 	});
 
+	// Extract mentions from the editor content
+	const mentions = useMemo(() => extractMentions(editor), [editor]);
+
+	// When mentions change, initialize point allocations with equal split
+	const prevMentionsRef = useRef(mentions);
+	useEffect(() => {
+		if (mentions.length === 0) {
+			setPointAllocations(new Map());
+			return;
+		}
+		const prevIds = new Set(prevMentionsRef.current.map((m) => m.id));
+		const hasNewMentions = mentions.some((m) => !prevIds.has(m.id));
+		if (hasNewMentions) {
+			setPointAllocations((prev) => {
+				const next = new Map(prev);
+				const remainingBudget = userPoints?.pointsRemaining ?? 100;
+				const defaultPoints = Math.max(
+					1,
+					Math.floor(remainingBudget / mentions.length),
+				);
+				for (const mention of mentions) {
+					if (!next.has(mention.id)) {
+						next.set(mention.id, defaultPoints);
+					}
+				}
+				return next;
+			});
+		}
+		prevMentionsRef.current = mentions;
+	}, [mentions, userPoints?.pointsRemaining]);
+
+	// Calculate total allocated points
+	const totalAllocated = useMemo(
+		() => Array.from(pointAllocations.values()).reduce((sum, n) => sum + n, 0),
+		[pointAllocations],
+	);
+
+	const updatePointAllocation = useCallback(
+		(userId: string, points: number) => {
+			setPointAllocations((prev) => {
+				const next = new Map(prev);
+				next.set(userId, Math.max(0, points));
+				return next;
+			});
+		},
+		[],
+	);
+
 	// Track character count — re-compute on every editor update so React
 	// re-renders and the composer actions appear when typing.
 	const [charCount, setCharCount] = useState(0);
@@ -449,6 +526,15 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 						? "gif"
 						: "text";
 
+		// Build point allocations array from the map
+		const allocations: PointAllocation[] | undefined =
+			pointAllocations.size > 0
+				? Array.from(pointAllocations.entries()).map(([userId, points]) => ({
+						userId,
+						points,
+					}))
+				: undefined;
+
 		createPost(
 			{
 				contentJson: contentJson ?? "",
@@ -457,6 +543,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 					? [...photos.map((p) => p.file), ...videos.map((v) => v.file)]
 					: undefined,
 				gifUrl: selectedGif?.url,
+				pointAllocations: allocations,
 			},
 			{
 				onSuccess: () => {
@@ -464,6 +551,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 					setPhotos([]);
 					setVideos([]);
 					setSelectedGif(null);
+					setPointAllocations(new Map());
 				},
 				onError: (error) => {
 					const message =
@@ -479,7 +567,7 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 				},
 			},
 		);
-	}, [photos, videos, selectedGif, createPost, editor]);
+	}, [photos, videos, selectedGif, createPost, editor, pointAllocations]);
 
 	const active =
 		charCount > 0 ||
@@ -654,6 +742,72 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 									</div>
 								)}
 
+								{mentions.length > 0 && (
+									<div className="mt-3 rounded-lg border border-[var(--feed-line)] bg-[var(--feed-inset)] p-3">
+										<Stack gap="xs">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-2">
+													<Star
+														size={14}
+														className="text-[var(--feed-ink-soft)]"
+														aria-hidden="true"
+													/>
+													<Text
+														size="xs"
+														className="font-medium text-[var(--feed-ink)]"
+													>
+														Assign Points
+													</Text>
+												</div>
+												<Text
+													size="xs"
+													className={`font-medium tabular-nums ${
+														totalAllocated >
+														(userPoints?.pointsRemaining ?? Infinity)
+															? "text-[var(--feed-danger)]"
+															: "text-[var(--feed-ink-dim)]"
+													}`}
+												>
+													{totalAllocated} / {userPoints?.pointsRemaining ?? 0}{" "}
+													pts used
+												</Text>
+											</div>
+											{mentions.map((mention) => (
+												<div
+													key={mention.id}
+													className="flex items-center gap-2"
+												>
+													<Avatar
+														name={mention.label}
+														tone={toneForId(mention.id)}
+														size={24}
+													/>
+													<Text
+														size="xs"
+														className="min-w-0 flex-1 truncate text-[var(--feed-ink)]"
+													>
+														{mention.label}
+													</Text>
+													<NumberInput
+														value={pointAllocations.get(mention.id) ?? 0}
+														onChange={(val) =>
+															updatePointAllocation(
+																mention.id,
+																typeof val === "number" ? val : 0,
+															)
+														}
+														min={0}
+														max={userPoints?.pointsRemaining ?? 100}
+														size="xs"
+														rightSection="pts"
+														className="w-24"
+													/>
+												</div>
+											))}
+										</Stack>
+									</div>
+								)}
+
 								<div className="mt-3 flex flex-wrap items-center gap-2">
 									<input
 										type="file"
@@ -750,7 +904,8 @@ export function ComposerCard({ viewer }: { viewer: FeedViewer }) {
 													videos.length === 0 &&
 													selectedGif === null) ||
 												remaining <= 0 ||
-												isPending
+												isPending ||
+												totalAllocated > (userPoints?.pointsRemaining ?? 0)
 											}
 											onClick={handleSubmit}
 											className="rounded-full border border-[var(--feed-line)] bg-[var(--feed-inset)] text-[12px] font-semibold text-[var(--feed-ink-soft)] hover:text-[var(--feed-ink)] disabled:cursor-not-allowed disabled:opacity-40"

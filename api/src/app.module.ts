@@ -27,6 +27,7 @@ import bucketConfig from '#/config/bucket.config.js';
 import servicesConfig from '#/config/services.config.js';
 import mailConfig from '#/config/mail.config.js';
 import giphyConfig from '#/config/giphy.config.js';
+import leaderboardConfig from '#/config/leaderboard.config.js';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import giphyConfig from '#/config/giphy.config.js';
         servicesConfig,
         mailConfig,
         giphyConfig,
+        leaderboardConfig,
       ],
     }),
     MikroOrmModule.forRootAsync({

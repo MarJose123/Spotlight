@@ -38,6 +38,7 @@ import { RefreshToken } from '#/auth/entities/refresh-token.entity.js';
 import { BucketService } from '#/bucket/bucket.service.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
+import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 
 @Injectable()
 export class UsersService {
@@ -51,6 +52,7 @@ export class UsersService {
     private readonly config: ConfigService,
     private readonly userMapper: UserMapper,
     private readonly bucketService: BucketService,
+    private readonly leaderboardService: LeaderboardService,
   ) {}
 
   /** Returns all users. */
@@ -105,6 +107,12 @@ export class UsersService {
 
     this.userRepository.create(user);
     await this.flushOrConflict();
+
+    // Initialize monthly points for the new user
+    await this.leaderboardService.ensureMonthlyPoints(
+      user.id,
+      this.leaderboardService.currentMonth(),
+    );
 
     await this.sendWelcomeEmail(user, invitedBy);
 

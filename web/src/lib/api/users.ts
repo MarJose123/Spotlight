@@ -34,7 +34,7 @@ export async function fetchUserProfileStats(
 		fetchLeaderboard(),
 	]);
 	const likesCount =
-		leaderboard.find((entry) => entry.user.id === userId)?.likesCount ?? 0;
+		leaderboard.find((entry) => entry.user.id === userId)?.pointsEarned ?? 0;
 	return { postsCount, likesCount };
 }
 

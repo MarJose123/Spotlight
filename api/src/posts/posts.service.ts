@@ -28,6 +28,7 @@ import { PostMapper } from '#/posts/mappers/post.mapper.js';
 import { PostLikeMapper } from '#/posts/mappers/post-like.mapper.js';
 import { AttachmentType } from '#/common/enums/attachment-type.enum.js';
 import { BucketService } from '#/bucket/bucket.service.js';
+import { LeaderboardService } from '#/leaderboard/leaderboard.service.js';
 import type { FastifyMultipartFile } from '#/common/interceptors/multipart-file.interceptor.js';
 
 @Injectable()
@@ -43,6 +44,7 @@ export class PostsService {
     private readonly likesRepository: EntityRepository<Likes>,
     private readonly em: EntityManager,
     private readonly bucketService: BucketService,
+    private readonly leaderboardService: LeaderboardService,
   ) {}
 
   /** Returns all posts. */
@@ -145,6 +147,14 @@ export class PostsService {
     this.postRepository.create(post);
     await this.em.flush();
 
+    // Store pending point allocations if provided
+    await this.leaderboardService.storePendingAllocations(
+      post.id,
+      userId,
+      dto.contentJson,
+      dto.pointAllocations,
+    );
+
     // Map the managed entity directly — user is a reference we set above,
     // likes are empty so no need to populate them for a fresh post.
     return this.mapPostsToResponse([post])[0];
@@ -193,18 +203,37 @@ export class PostsService {
     }
   }
 
-  /**
-   * Guard that ensures the request comes from the post author and the post is
-   * less than 15 minutes old. Throws 403 or 410 accordingly.
-   */
-  private assertAuthorAndTimeWindow(post: Posts, userId: string) {
+  /** Guard that ensures the request comes from the post author. */
+  private assertAuthor(post: Posts, userId: string) {
     if (post.user.id !== userId) {
       throw new ForbiddenException('Only the author can modify this post');
     }
+  }
+
+  /** Check whether a post is within the configured edit window. */
+  private async assertEditWindow(post: Posts) {
+    const windowMinutes = await this.leaderboardService.getSettingNumber(
+      'posts.editWindowMinutes',
+      15,
+    );
     const ageMinutes = (Date.now() - post.createdAt.getTime()) / 60000;
-    if (ageMinutes > 15) {
+    if (ageMinutes > windowMinutes) {
       throw new ForbiddenException(
-        'Posts can only be edited or deleted within 15 minutes of creation',
+        `Posts can only be edited within ${windowMinutes} minutes of creation`,
+      );
+    }
+  }
+
+  /** Check whether a post is within the configured delete window. */
+  private async assertDeleteWindow(post: Posts) {
+    const windowMinutes = await this.leaderboardService.getSettingNumber(
+      'posts.deleteWindowMinutes',
+      15,
+    );
+    const ageMinutes = (Date.now() - post.createdAt.getTime()) / 60000;
+    if (ageMinutes > windowMinutes) {
+      throw new ForbiddenException(
+        `Posts can only be deleted within ${windowMinutes} minutes of creation`,
       );
     }
   }
@@ -222,10 +251,19 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
-    this.assertAuthorAndTimeWindow(post, userId);
+    this.assertAuthor(post, userId);
+    await this.assertEditWindow(post);
 
     post.contentJson = dto.contentJson;
     await this.em.flush();
+
+    // Always validate self-mentions and update pending allocations
+    await this.leaderboardService.replacePendingAllocations(
+      post.id,
+      userId,
+      dto.contentJson,
+      dto.pointAllocations,
+    );
 
     return this.mapPostsToResponse([post])[0];
   }
@@ -236,7 +274,11 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
-    this.assertAuthorAndTimeWindow(post, userId);
+    this.assertAuthor(post, userId);
+    await this.assertDeleteWindow(post);
+
+    // Clean up pending allocations before deleting the post
+    await this.leaderboardService.cleanupPendingAllocations(id);
 
     await this.em.transactional(async () => {
       await this.postRepository.nativeDelete({ id });

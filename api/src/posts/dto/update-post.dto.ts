@@ -5,8 +5,15 @@
  * Part of Spotlight. Licensed under the GNU Affero General Public License,
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { PointAllocationDto } from '#/leaderboard/dto/point-allocation.dto.js';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -16,4 +23,14 @@ export class UpdatePostDto {
   })
   @IsNotEmpty()
   contentJson!: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated points to award to mentioned users.',
+    type: [PointAllocationDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PointAllocationDto)
+  pointAllocations?: PointAllocationDto[];
 }

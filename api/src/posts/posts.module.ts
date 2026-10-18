@@ -13,6 +13,7 @@ import { PostsService } from '#/posts/posts.service.js';
 import { CommentsService } from '#/posts/comments.service.js';
 import { AuthModule } from '#/auth/auth.module.js';
 import { BucketModule } from '#/bucket/bucket.module.js';
+import { LeaderboardModule } from '#/leaderboard/leaderboard.module.js';
 import { Posts } from '#/posts/entities/posts.entity.js';
 import { Likes } from '#/posts/entities/likes.entity.js';
 import { Comments } from '#/posts/entities/comments.entity.js';
@@ -21,6 +22,7 @@ import { Comments } from '#/posts/entities/comments.entity.js';
   imports: [
     AuthModule,
     BucketModule,
+    LeaderboardModule,
     MikroOrmModule.forFeature([Posts, Likes, Comments]),
   ],
   controllers: [PostsController, AttachmentController],

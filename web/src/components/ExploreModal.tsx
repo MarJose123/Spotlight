@@ -6,12 +6,13 @@
  * version 3 only. See the LICENSE file at the repository root for the full terms.
  */
 
-import { Flex, Modal, TextInput } from "@mantine/core";
+import { Modal, TextInput } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { Link } from "@tanstack/react-router";
-import { LayoutGrid, Search, Store, Users } from "lucide-react";
+import { LayoutGrid, Search, Settings, Store, Users } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useRef, useState } from "react";
+import { readSession } from "#/lib/session";
 
 type Icon = ComponentType<
 	SVGProps<SVGSVGElement> & { size?: number; strokeWidth?: number }
@@ -23,6 +24,7 @@ const SERVICES: Array<{
 	description: string;
 	icon: Icon;
 	gradient: string;
+	adminOnly?: boolean;
 }> = [
 	{
 		id: "users",
@@ -38,6 +40,14 @@ const SERVICES: Array<{
 		icon: Store,
 		gradient: "from-emerald-500 to-teal-400",
 	},
+	{
+		id: "app-settings",
+		title: "Application Settings",
+		description: "Configure system settings",
+		icon: Settings,
+		gradient: "from-violet-500 to-purple-400",
+		adminOnly: true,
+	},
 ];
 
 export interface ExploreModalProps {
@@ -50,10 +60,12 @@ export function ExploreModal({ opened, onClose }: ExploreModalProps) {
 	const [debouncedQuery] = useDebouncedValue(query, 200);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	const currentUserData = readSession();
 	const filtered = SERVICES.filter(
 		(s) =>
-			s.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-			s.description.toLowerCase().includes(debouncedQuery.toLowerCase()),
+			(!s.adminOnly || currentUserData?.user?.role === "ADMIN") &&
+			(s.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+				s.description.toLowerCase().includes(debouncedQuery.toLowerCase())),
 	);
 
 	return (
@@ -96,7 +108,7 @@ export function ExploreModal({ opened, onClose }: ExploreModalProps) {
 					onChange={(e) => setQuery(e.target.value)}
 					className="bg-(--surface) transition-colors hover:bg-(--link-bg-hover) "
 				/>
-				<Flex direction="row" justify="center" gap="md" p="md">
+				<div className="grid grid-cols-2 gap-3 p-md">
 					{filtered.map((service) => {
 						const ServiceIcon = service.icon;
 						return (
@@ -105,25 +117,25 @@ export function ExploreModal({ opened, onClose }: ExploreModalProps) {
 								// Routes for services are not yet defined in the route tree.
 								// @ts-expect-error - dynamic route not yet in route tree
 								to={`/${service.id}`}
-								className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-transparent bg-(--surface) px-4 py-6 text-center transition-colors hover:border-(--lagoon) hover:bg-(--lagoon)/10"
+								className="group flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border-2 border-transparent bg-(--surface) p-4 text-center transition-colors hover:border-(--lagoon) hover:bg-(--lagoon)/10"
 							>
 								<span
-									className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${service.gradient} text-white`}
+									className={`grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br ${service.gradient} text-white`}
 								>
 									<ServiceIcon size={20} strokeWidth={2} aria-hidden="true" />
 								</span>
-								<div className="space-y-1">
-									<p className="m-0 text-sm font-semibold text-(--sea-ink)">
+								<div className="space-y-1 break-words">
+									<p className="m-0 text-sm font-semibold leading-tight text-(--sea-ink)">
 										{service.title}
 									</p>
-									<p className="m-0 text-[11px] text-(--sea-ink-soft)">
+									<p className="m-0 text-[11px] leading-snug text-(--sea-ink-soft)">
 										{service.description}
 									</p>
 								</div>
 							</Link>
 						);
 					})}
-				</Flex>
+				</div>
 
 				{filtered.length === 0 && (
 					<div className="flex flex-col items-center gap-2 py-8 text-(--sea-ink-soft)">
